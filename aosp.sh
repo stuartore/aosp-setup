@@ -9,20 +9,20 @@ declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
-env_run_time=0
-aosp_source_dir_working=
+env_run_time=3
+aosp_source_dir_working=android/pe
 
 android_env_setup(){
 	# pre tool
 	lsb_os=$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)
 	if [[ ${lsb_os} =~ "ubuntu" ]];then
-		sudo apt install curl git android-platform-tools-base python3 -y
-	elif [[ ${lsb_os} =~ "manjaro" ]];then
-		sudo pacman -Sy curl git make yay patch pkg-config maven gradle
-	elif [[ ${lsb_os} =~ "fedora" ]];then
-		sudo yum install -y curl git
+		sudo apt install android-platform-tools-base python3 -y
+	elif [[ ${lsb_os} =~ "manjaro" ]] || [[ ${lsb_os} == "arch" ]];then
+		sudo pacman -Sy make yay patch pkg-config maven gradle
+	elif [[ ${lsb_os} =~ "solus" ]];then
+        	sudo eopkg it ccache
 	fi
-
+	
 	#git config
 	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
 		echo -e "\n==> Config git "
@@ -75,10 +75,12 @@ fi' $HOME/.bashrc
 	cd scripts
 	if [[ ${lsb_os} =~ "ubuntu" ]];then
      		./setup/android_build_env.sh
-  	elif [[ ${lsb_os} =~ "manjaro" ]];then
+	elif [[ ${lsb_os} =~ "manjaro" ]] || [[ ${lsb_os} == "arch" ]];then
      		./setup/arch-manjaro.sh
-     	elif [[ ${lsb_os} =~ "fedora" ]];then
+ 	elif [[ ${lsb_os} =~ "fedora" ]];then
      		./setup/fedora.sh
+	elif [[ ${lsb_os} =~ "solus" ]];then
+            ./setup/solus.sh
 	fi
 
 	# ssh
@@ -136,7 +138,7 @@ patch_when_raw_ram(){
 		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="32G"/g' /etc/default/zram-swap
 		sudo /usr/local/sbin/zram-swap.sh start
 		# remove directory because do not need patch another time
-		sudo rm -rf ~/zram-swap
+		#sudo rm -rf ~/zram-swap
 	fi
 	
 	# more patch for cmd.BuiltTool("metalava"). locate line and add java mem when running.
@@ -345,6 +347,20 @@ git_mirror_reset(){
 }
 
 handle_main(){
+	# pre tool
+	lsb_os=$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)
+	if [[ ! $(which git) ]] || [[ ! $(which curl) ]];then
+		if [[ ${lsb_os} =~ "ubuntu" ]];then
+			sudo apt install curl git -y
+		elif [[ ${lsb_os} =~ "manjaro" ]];then
+			sudo pacman -Sy curl git
+		elif [[ ${lsb_os} =~ "fedora" ]];then
+			sudo yum install -y curl git
+        elif [[ ${lsb_os} =~ "solus" ]];then
+            sudo eopkg it curl git
+        fi
+	fi
+
 	#for aosp | git mirrors
 	echo "Do you wanna use git & AOSP mirror ?"
 	select use_mirror_sel in "Yes" "No"
@@ -362,7 +378,7 @@ handle_main(){
 		esac
 		break
 	done
-
+	
 	#android environment setup
 	if [[ env_run_last_return != 0 ]] && [[ env_run_time -lt 3 ]];then
 		android_env_setup

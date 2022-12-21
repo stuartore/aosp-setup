@@ -12,6 +12,7 @@ git_mirror_reset(){
         git config --global core.compression -1
         git config --global http.lowSpeedLimit 0
         git config --global http.lowSpeedTime 999999
+	git config --global http.sslVerify false
 }
 
 non_freedom(){
