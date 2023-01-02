@@ -115,7 +115,14 @@ pixelplusui_sync(){
 }
 
 use_git_aosp_mirror(){
-	source helper.sh
+	if [[ -f aosp-setup/helper.sh ]];then
+		helper_tg=aosp-setup/helper.sh
+	elif [[ -f helper.sh ]];then
+		helper_tg=helper.sh
+	else
+		helper_tg=''
+	fi
+	source $helper_tg
 }
 
 ccache_fix(){
