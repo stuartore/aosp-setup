@@ -14,17 +14,17 @@ git clone https://github.com/pixelexperience/hardware_xiaomi -b thirteen hardwar
 git clone https://github.com/stuartore/device_xiaomi_psyche -b thirteen device/xiaomi/psyche
 git clone https://github.com/stuartore/device_xiaomi_sm8250-common -b thirteen device/xiaomi/sm8250-common
 git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b arrow-13.0 vendor/xiaomi/psyche
-git clone https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_xiaomi_sm8250-common -b thirteen vendor/xiaomi/sm8250-common
+git clone https://gitlab.com/stuartore/vendor_xiaomi_sm8250-common.git -b thirteen vendor/xiaomi/sm8250-common
 git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
 git clone https://github.com/stuartore/kernel_xiaomi_sm8250 -b thirteen kernel/xiaomi/sm8250
 
 # other
-echo 'include $(call all-subdir-makefiles)' > vendor/${my_device_brand}/Android.mk
+echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi/Android.mk
 
 # ssh
-sudo sed -i 's/#ClientAliveInterval 3/ClientAliveInterval 30/g' /etc/ssh/sshd_config
-sudo sed -i 's/#ClientAliveCountMax 0/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
-sudo systemctl restart sshd
+#sudo sed -i 's/#ClientAliveInterval 3/ClientAliveInterval 30/g' /etc/ssh/sshd_config
+#sudo sed -i 's/#ClientAliveCountMax 0/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
+#sudo systemctl restart sshd
 
 # fix ccache error on android 12+
 mkdir -p $HOME/.aosp_ccache
