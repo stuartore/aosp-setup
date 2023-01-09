@@ -10,7 +10,7 @@ android_env_setup(){
 
   lsb_os=$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')
   if [[ ${lsb_os} =~ "Ubuntu" ]];then
-     sudo apt install curl git android-tools python -y
+     sudo apt install curl git android-platform-tools-base python -y
   elif [[ ${lsb_os} =~ "Manjaro" ]];then
      sudo pacman -Sy curl git
   fi
@@ -65,6 +65,9 @@ fi' $HOME/.bashrc
   elif [[ ${lsb_os} =~ "Manjaro" ]];then
      ./setup/arch-manjaro.sh
   fi
+
+	# ssh
+	ssh_enlong_patch
 
 	#ccache fix
 	ccache_fix
@@ -125,15 +128,18 @@ use_git_aosp_mirror(){
 	source $helper_tg
 }
 
+ssh_enlong_patch(){
+	sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
+	sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
+	sudo systemctl restart sshd
+}
+
 ccache_fix(){
 		# Custom Ccache
 	custom_ccache_dir=
 
 	if [[ ! $(grep 'Generated ccache config' $HOME/.bashrc) ]];then
 		default_ccache_dir=/home/$USER/.aosp_ccache
-		if [[ $USER == 'stuart' ]];then
-			default_ccache_dir=/home/$USER/volume/.aosp_ccache
-		fi
 		if [[ $custom_ccache_dir == "" ]];then
 			custom_ccache_dir=$default_ccache_dir
 		fi

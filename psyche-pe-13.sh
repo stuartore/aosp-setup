@@ -1,8 +1,7 @@
 #!/bin/bash
 # This file is generated for Xiaomi 12X (psyche)
-# 2023年 01月 02日 星期一 20:56:04 CST
 
-cd /home/stuart/volume/android/pe
+cd $HOME/aosp-setup/android/pe
 
 # make new mkdir
 mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
@@ -19,24 +18,4 @@ git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen
 git clone https://github.com/xiaomi-sm8250-devs/android_kernel_xiaomi_sm8250 -b lineage-20 kernel/xiaomi/sm8250
 
 # other
-echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi/Android.mk
-
-# ssh
-#sudo sed -i 's/#ClientAliveInterval 3/ClientAliveInterval 30/g' /etc/ssh/sshd_config
-#sudo sed -i 's/#ClientAliveCountMax 0/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
-#sudo systemctl restart sshd
-
-# fix ccache error on android 12+
-mkdir -p $HOME/.aosp_ccache
-sudo mount --bind $HOME/.ccache $HOME/.aosp_ccache
-
-touch $HOME/.bashrc
-ccache_check=$(grep 'aosp_ccache' -l $HOME/.bashrc)
-if [[ $ccache_check == "" ]];then
-cat >>$HOME/.bashrc <<- CCACHELINES
-export USE_CCACHE=1
-export CCACHE_EXEC=/usr/bin/ccache
-export CCACHE_DIR=$HOME/.aosp_ccache
-ccache -M 50G -F 0
-CCACHELINES
-fi
+echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
