@@ -89,6 +89,7 @@ select_mirror(){
 							;;
 						'nanfang sci')
 							aom='https://mirrors.sustech.edu.cn/AOSP/'
+							;;
 						*)
 							aom='https://android.googlesource.com'
 							;;
