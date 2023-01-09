@@ -88,7 +88,7 @@ select_mirror(){
 							aom='https://mirrors.bfsu.edu.cn/git/AOSP/'
 							;;
 						'nanfang sci')
-							aom='https://mirrors.sustech.edu.cn/AOSP/'
+							aom='https://mirrors.sustech.edu.cn/AOSP'
 							;;
 						*)
 							aom='https://android.googlesource.com'
@@ -101,6 +101,15 @@ select_mirror(){
 				;;
 		esac
 	done
+}
+
+other_mirror(){
+	# repo use REPO_URL in $HOME/.bashrc if use mirror. defualt: tuna
+	repo_modi_tg=${HOME}/scripts/setup/android_build_env.sh
+	if [[ $aom != 'https://android.googlesource.com' ]];then
+		sed -i 's/https:\/\/storage.googleapis.com\/git-repo-downloads\/repo/$REPO_URL/g' $repo_modi_tg
+		sed -i 's/raw.githubusercontent.com/raw.kgithub.com/g' $repo_modi_tg
+	fi
 }
 
 more_end_info(){
@@ -119,4 +128,5 @@ EOF
 }
 non_freedom
 select_mirror
+other_mirror
 more_end_info

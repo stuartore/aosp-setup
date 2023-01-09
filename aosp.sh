@@ -2,15 +2,21 @@
 
 #1 which rom
 #2 branch
-pkg_list_str=""
 c_dir=$(pwd)
+
+declare -i env_run_last_return
+declare -i env_run_time
+
+# generated & record to avoid run android envsetup repeatly
+env_run_last_return=0
+env_run_time=1
 
 android_env_setup(){
 	# pre tool
 
   lsb_os=$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')
   if [[ ${lsb_os} =~ "Ubuntu" ]];then
-     sudo apt install curl git android-platform-tools-base python -y
+     sudo apt install curl git android-platform-tools-base python3 -y
   elif [[ ${lsb_os} =~ "Manjaro" ]];then
      sudo pacman -Sy curl git
   fi
@@ -61,10 +67,10 @@ fi' $HOME/.bashrc
 	fi
 	cd scripts
 	if [[ ${lsb_os} =~ "Ubuntu" ]];then
-     ./setup/android_build_env.sh
-  elif [[ ${lsb_os} =~ "Manjaro" ]];then
-     ./setup/arch-manjaro.sh
-  fi
+     		./setup/android_build_env.sh
+  	elif [[ ${lsb_os} =~ "Manjaro" ]];then
+     		./setup/arch-manjaro.sh
+	fi
 
 	# ssh
 	ssh_enlong_patch
@@ -74,6 +80,36 @@ fi' $HOME/.bashrc
 
 	cd $c_dir
 	source $HOME/.bashrc
+}
+
+lineageos_sync(){
+	echo
+}
+
+arrowos_sync(){
+	mkdir -p android/arrow
+
+	arrow_json="$(dirname $0)/arrow.json"
+	if [[ ! -f $arrow_json ]];then
+		curl https://api.github.com/repos/ArrowOS/android_manifest/branches -o $arrow_json
+	fi
+	arrow_branches=($(cat $arrow_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select arrow_branch in "${arrow_branches[@]}"
+	do
+		cd android/arrow
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/ArrowOS/android_manifest.git -b $arrow_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync
+		break
+	done
+	cd $c_dir
+	exit
+}
+
+evo_sync(){
+	echo
 }
 
 pixelexperience_sync(){
@@ -184,13 +220,23 @@ handle_main(){
 	done
 
 	#android environment setup
-	android_env_setup
+	if [[ env_run_last_return != 0 ]] && [[ env_run_time -lt 3 ]];then
+		android_env_setup
+		env_run_return=$?
+		env_run_time+=1
+		sed -i '11s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
+		sed -i '12s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
+	fi
 
 	#handle aosp source
 	echo "Which ROM source do you wann sync ?"
-	select aosp_source in "Pixel Experience" "PixelPlusUI"
+	rom_sources=("ArrowOS" "Pixel Experience" "PixelPlusUI")
+	select aosp_source in "${rom_sources[@]}"
 	do
 		case $aosp_source in
+			"ArrowOS")
+				arrowos_sync
+				;;
 			"Pixel Experience")
 				pixelexperience_sync
 				;;
