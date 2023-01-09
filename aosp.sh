@@ -9,7 +9,7 @@ declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
-env_run_time=0
+env_run_time=1
 
 android_env_setup(){
 	# pre tool
@@ -128,8 +128,25 @@ arrowos_sync(){
 	cd $c_dir
 }
 
-evo_sync(){
-	echo
+evolutionx_sync(){
+	mkdir -p android/evolutionx
+
+	evolutionx_json="$(dirname $0)/evolution-x.json"
+	if [[ ! -f $evolutionx_json ]];then
+		curl https://api.github.com/repos/Evolution-X/manifest/branches -o $evolutionx_json
+	fi
+	evolutionx_branches=($(cat $evolutionx_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select evolutionx_branch in "${evolutionx_branches[@]}"
+	do
+		cd android/evolutionx
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/Evolution-X/manifest.git -b $evolutionx_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
 }
 
 pixelexperience_sync(){
@@ -250,7 +267,7 @@ handle_main(){
 
 	#handle aosp source
 	echo "Which ROM source do you wann sync ?"
-	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "PixelPlusUI")
+	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
 		case $aosp_source in
@@ -262,6 +279,9 @@ handle_main(){
 				;;
 			"Pixel Experience")
 				pixelexperience_sync
+				;;
+			"Evolution-X")
+				evolutionx_sync
 				;;
 			"PixelPlusUI")
 				pixelplusui_sync
