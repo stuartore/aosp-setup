@@ -128,6 +128,27 @@ arrowos_sync(){
 	cd $c_dir
 }
 
+pixelexperience_sync(){
+	mkdir -p android/pe
+
+	pixelexperience_json="$(dirname $0)/pixelexperience.json"
+	if [[ ! -f $pixelexperience_json ]];then
+		curl https://api.github.com/repos/PixelExperience/manifest/branches -o $pixelexperience_json
+	fi
+	pe_branches=($(cat $pixelexperience_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select pe_branch in "${pe_branches[@]}"
+	do
+		cd android/pe
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/PixelExperience/manifest -b $pe_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+
 evolutionx_sync(){
 	mkdir -p android/evolutionx
 
@@ -148,23 +169,22 @@ evolutionx_sync(){
 	done
 	cd $c_dir
 }
+aospa_sync(){
+	mkdir -p android/aospa
 
-pixelexperience_sync(){
-	mkdir -p android/pe
-
-	pixelexperience_json="$(dirname $0)/pixelexperience.json"
+	aospa_json="$(dirname $0)/aospa.json"
 	if [[ ! -f $pixelexperience_json ]];then
-		curl https://api.github.com/repos/PixelExperience/manifest/branches -o $pixelexperience_json
+		curl https://api.github.com/repos/AOSPA/manifest/branches -o $aospa_json
 	fi
-	pe_branches=($(cat $pixelexperience_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	aospa_branches=($(cat $aospa_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
 	echo "Which branch you wanna sync ?"
-	select pe_branch in "${pe_branches[@]}"
+	select aospa_branch in "${aospa_branches[@]}"
 	do
-		cd android/pe
+		cd android/aospa
 		if [[ ! -d .repo ]];then
-			repo init -u https://github.com/PixelExperience/manifest -b $pe_branch
+			repo init -u https://github.com/AOSPA/manifest -b $aospa_branch
 		fi
-		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		repo sync --no-clone-bundle --current-branch --no-tags -j$(nproc --all)
 		break
 	done
 	cd $c_dir
@@ -267,7 +287,7 @@ handle_main(){
 
 	#handle aosp source
 	echo "Which ROM source do you wann sync ?"
-	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "PixelPlusUI")
+	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Paranoid Android (AOSPA)" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
 		case $aosp_source in
@@ -282,6 +302,9 @@ handle_main(){
 				;;
 			"Evolution-X")
 				evolutionx_sync
+				;;
+			"Paranoid Android (AOSPA)")
+				aospa_sync
 				;;
 			"PixelPlusUI")
 				pixelplusui_sync

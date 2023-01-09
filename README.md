@@ -8,4 +8,5 @@ bash aosp-setup/aosp.sh
 + ArrowOS
 + Pixel Experience
 + Evolution-X
++ Paranoid Android (AOSPA)
 + PixelPlusUI
