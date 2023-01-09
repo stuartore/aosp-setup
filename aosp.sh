@@ -9,11 +9,10 @@ declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
-env_run_time=1
+env_run_time=0
 
 android_env_setup(){
 	# pre tool
-
   lsb_os=$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')
   if [[ ${lsb_os} =~ "Ubuntu" ]];then
      sudo apt install curl git android-platform-tools-base python3 -y
@@ -60,7 +59,12 @@ fi' $HOME/.bashrc
 	sudo chmod a+x ~/bin/repo
 	chmod a+x ~/bin/repo
 
-	#android env from pixelexperience wiki
+	# android env from pixelexperience wiki
+
+	# lineageos:  bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
+	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
+	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
+
 	cd ~/
 	if [[ ! -f scripts/setup/android_build_env.sh ]];then
 		git clone https://github.com/akhilnarang/scripts
@@ -83,7 +87,24 @@ fi' $HOME/.bashrc
 }
 
 lineageos_sync(){
-	echo
+	mkdir -p android/lineage
+
+	lineage_json="$(dirname $0)/lineage.json"
+	if [[ ! -f $lineage_json ]];then
+		curl https://api.github.com/repos/LineageOS/android/branches -o $lineage_json
+	fi
+	lineage_branches=($(cat $lineage_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select lineage_branch in "${lineage_branches[@]}"
+	do
+		cd android/lineage
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/LineageOS/android.git -b $lineage_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync
+		break
+	done
+	cd $c_dir
 }
 
 arrowos_sync(){
@@ -105,7 +126,6 @@ arrowos_sync(){
 		break
 	done
 	cd $c_dir
-	exit
 }
 
 evo_sync(){
@@ -230,10 +250,13 @@ handle_main(){
 
 	#handle aosp source
 	echo "Which ROM source do you wann sync ?"
-	rom_sources=("ArrowOS" "Pixel Experience" "PixelPlusUI")
+	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
 		case $aosp_source in
+			"LineageOS")
+				lineageos_sync
+				;;
 			"ArrowOS")
 				arrowos_sync
 				;;

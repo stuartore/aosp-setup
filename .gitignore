@@ -1,4 +1,4 @@
-pixelexperience.json
-ppui.json
+*.json
 android
 test.sh
+t.sh
