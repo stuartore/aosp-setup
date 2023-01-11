@@ -48,7 +48,7 @@ fi
 select_mirror(){
 	if [[ $(which git) == "" ]];then echo -e '\nPlease install git';exit 1;fi
 	sel_github_list=('https://ghproxy.com/https://github.com' 'https://kgithub.com' 'https://hub.njuu.cf' 'https://hub.yzuu.cf' 'https://hub.nuaa.cf' 'https://github.moeyy.xyz/https://github.com')
-	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci' 'google')
+	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
 
 	# reset before use mirror
 	git_mirror_reset
@@ -90,8 +90,8 @@ select_mirror(){
 						'beijing bfsu')
 							aom='https://mirrors.bfsu.edu.cn/git/AOSP/'
 							;;
-						'nanfang sci')
-							aom='https://mirrors.sustech.edu.cn/AOSP'
+						'nanfang sci (not)')
+							aom='https://mirrors.sustech.edu.cn/AOSP/'
 							;;
 						*)
 							aom='https://android.googlesource.com'
