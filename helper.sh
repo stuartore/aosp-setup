@@ -10,11 +10,14 @@ git_mirror_reset(){
 
 non_freedom(){
 ### handle git-repo
+## Decline handle git-repo because scripts do it
+:<<REPOINS
 mkdir -p ~/bin
 if [[ ! -f $HOME/bin/repo ]];then
 	curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
 	sudo chmod a+x ~/bin/repo || chmod a+x ~/bin/repo
 fi
+REPOINS
 
 touch $HOME/.bashrc
 if [[ ! $(grep '# android sync-helper' $HOME/.bashrc) ]];then
@@ -105,7 +108,7 @@ select_mirror(){
 
 other_mirror(){
 	# repo use REPO_URL in $HOME/.bashrc if use mirror. defualt: tuna
-	repo_modi_tg=${HOME}/scripts/setup/android_build_env.sh
+	repo_modi_tg=${HOME}/scripts/setup/*.sh
 	if [[ $aom != 'https://android.googlesource.com' ]];then
 		sed -i 's/https:\/\/storage.googleapis.com\/git-repo-downloads\/repo/$REPO_URL/g' $repo_modi_tg
 		sed -i 's/raw.githubusercontent.com/raw.kgithub.com/g' $repo_modi_tg
