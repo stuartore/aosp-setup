@@ -10,6 +10,7 @@ declare -i env_run_time
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
 env_run_time=0
+aosp_source_dir_working=
 
 android_env_setup(){
 	# pre tool
@@ -114,11 +115,11 @@ patch_when_raw_ram(){
 	 	echo -e "\n\033[1;32m=>\033[0m Automaticly add RAM (now ${pc_ram}Mb) patch. SWAP RAM: $pc_sawp_ram"
 	 	pc_ram_patch=1
 	else
-		echo -e "\n\033[1;32m=>\033[0m RAM: ${pc_sawp_ram}Mb\n"
-		return
+		echo -e "\n\033[1;32m=>\033[0m RAM: ${pc_sawp_ram}Mb"
 	fi
 
 	if [[ $pc_ram_patch == 1 ]];then
+		# zram swap patch
 		cd ~/
 		if [[ ! -d zram-swap ]];then
 			git clone https://github.com/foundObjects/zram-swap.git
@@ -129,12 +130,35 @@ patch_when_raw_ram(){
 		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="32G"/g' /etc/default/zram-swap
 		sudo /usr/local/sbin/zram-swap.sh start
 		# remove directory because do not need patch another time
-		sudo rm -rf ~/zram-swap
+		#sudo rm -rf ~/zram-swap
+	fi
+	
+	# more patch for cmd.BuiltTool("metalava"). locate line and add java mem when running.
+	metalava_patch_file=${aosp_source_dir_working}/build/soong/java/droidstubs.go
+	if [[ -f $metalava_patch_file ]];then
+		declare -i locate_metalava_0
+		declare -i locate_metalava_1
+		locate_metalava_0=$(grep 'cmd.BuiltTool("metalava")' -ns $metalava_patch_file | awk  -F ':' '{print $1}')
+		locate_metalava_1=$(grep 'Flag(config.JavacVmFlags).' -ns $metalava_patch_file | awk  -F ':' '{print $1}')
+		declare -i locate_metalava_3=$locate_metalava_1-$locate_metalava_0
+		# make sure codes in the same method
+		if [[ $locate_metalava_3 -le 6 ]];then
+			# the second line declare the mem
+			if [[ ! $(grep 'Flag("-J-Xmx' -l $metalava_patch_file) ]];then
+				sed -i '/Flag(config.JavacVmFlags)./a Flag("-J-XmxMEMm")\.' $metalava_patch_file
+			fi
+			sed -i 's/Flag("-J-Xmx.*/Flag("-J-Xmx6144m")\./' $metalava_patch_file
+		fi
+		echo -e "\033[1;32m=>\033[0m Fixed Ran out of memory error on low ram pc\n"
+	else
+		echo -e "\033[1;33m=>\033[0m Try fix memory error next run because not sync completely\n"
 	fi
 }
 
 lineageos_sync(){
-	mkdir -p android/lineage
+	aosp_source_dir=android/lineage
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
 
 	lineage_json="$(dirname $0)/lineage.json"
 	if [[ ! -f $lineage_json ]];then
@@ -144,7 +168,7 @@ lineageos_sync(){
 	echo "Which branch you wanna sync ?"
 	select lineage_branch in "${lineage_branches[@]}"
 	do
-		cd android/lineage
+		cd $aosp_source_dir
 		if [[ ! -d .repo ]];then
 			repo init -u https://github.com/LineageOS/android.git -b $lineage_branch
 		fi
@@ -155,7 +179,9 @@ lineageos_sync(){
 }
 
 arrowos_sync(){
-	mkdir -p android/arrow
+	aosp_source_dir=android/arrow
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
 
 	arrow_json="$(dirname $0)/arrow.json"
 	if [[ ! -f $arrow_json ]];then
@@ -165,7 +191,7 @@ arrowos_sync(){
 	echo "Which branch you wanna sync ?"
 	select arrow_branch in "${arrow_branches[@]}"
 	do
-		cd android/arrow
+		cd $aosp_source_dir
 		if [[ ! -d .repo ]];then
 			repo init -u https://github.com/ArrowOS/android_manifest.git -b $arrow_branch
 		fi
@@ -176,8 +202,10 @@ arrowos_sync(){
 }
 
 pixelexperience_sync(){
-	mkdir -p android/pe
-
+	aosp_source_dir=android/pe
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+	
 	pixelexperience_json="$(dirname $0)/pixelexperience.json"
 	if [[ ! -f $pixelexperience_json ]];then
 		curl https://api.github.com/repos/PixelExperience/manifest/branches -o $pixelexperience_json
@@ -186,7 +214,7 @@ pixelexperience_sync(){
 	echo "Which branch you wanna sync ?"
 	select pe_branch in "${pe_branches[@]}"
 	do
-		cd android/pe
+		cd $aosp_source_dir
 		if [[ ! -d .repo ]];then
 			repo init -u https://github.com/PixelExperience/manifest -b $pe_branch
 		fi
@@ -197,7 +225,9 @@ pixelexperience_sync(){
 }
 
 evolutionx_sync(){
-	mkdir -p android/evolutionx
+	aosp_source_dir=android/evolutionx
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
 
 	evolutionx_json="$(dirname $0)/evolution-x.json"
 	if [[ ! -f $evolutionx_json ]];then
@@ -207,7 +237,7 @@ evolutionx_sync(){
 	echo "Which branch you wanna sync ?"
 	select evolutionx_branch in "${evolutionx_branches[@]}"
 	do
-		cd android/evolutionx
+		cd $aosp_source_dir
 		if [[ ! -d .repo ]];then
 			repo init -u https://github.com/Evolution-X/manifest.git -b $evolutionx_branch
 		fi
@@ -217,7 +247,9 @@ evolutionx_sync(){
 	cd $c_dir
 }
 aospa_sync(){
-	mkdir -p android/aospa
+	aosp_source_dir=android/aospa
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
 
 	aospa_json="$(dirname $0)/aospa.json"
 	if [[ ! -f $pixelexperience_json ]];then
@@ -227,7 +259,7 @@ aospa_sync(){
 	echo "Which branch you wanna sync ?"
 	select aospa_branch in "${aospa_branches[@]}"
 	do
-		cd android/aospa
+		cd $aosp_source_dir
 		if [[ ! -d .repo ]];then
 			repo init -u https://github.com/AOSPA/manifest -b $aospa_branch
 		fi
@@ -238,7 +270,9 @@ aospa_sync(){
 }
 
 pixelplusui_sync(){
-	mkdir -p WORKSPACE
+	aosp_source_dir=android/ppui
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
 
 	ppui_json="$(dirname $0)/ppui.json"
 	if [[ ! -f $ppui_json ]];then
@@ -247,7 +281,7 @@ pixelplusui_sync(){
 	ppui_branches=($(cat $ppui_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
 	select ppui_branch in "${ppui_branches[@]}"
 	do
-		cd WORKSPACE
+		cd $aosp_source_dir
 		if [[ ! -d .repo ]];then
 			repo init -u https://github.com/PixelPlusUI/manifest -b tiramisu
 		fi
@@ -275,7 +309,7 @@ ssh_enlong_patch(){
 }
 
 ccache_fix(){
-		# Custom Ccache
+	# Custom Ccache
 	custom_ccache_dir=
 
 	if [[ ! $(grep 'Generated ccache config' $HOME/.bashrc) ]];then
@@ -337,6 +371,7 @@ handle_main(){
 	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Paranoid Android (AOSPA)" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
+		
 		case $aosp_source in
 			"LineageOS")
 				lineageos_sync
