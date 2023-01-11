@@ -15,7 +15,7 @@ git clone https://github.com/stuartore/device_xiaomi_sm8250-common -b thirteen-r
 git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b arrow-13.0 vendor/xiaomi/psyche
 git clone https://gitlab.com/stuartore/vendor_xiaomi_sm8250-common.git -b thirteen vendor/xiaomi/sm8250-common
 git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
-git clone https://github.com/xiaomi-sm8250-devs/android_kernel_xiaomi_sm8250 -b lineage-20 kernel/xiaomi/sm8250
+git clone https://github.com/UtsavBalar1231/kernel_xiaomi_sm8250 -b android13-stable kernel/xiaomi/sm8250
 
 # other
 echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
