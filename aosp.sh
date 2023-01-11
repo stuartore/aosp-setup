@@ -130,7 +130,7 @@ patch_when_raw_ram(){
 		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="32G"/g' /etc/default/zram-swap
 		sudo /usr/local/sbin/zram-swap.sh start
 		# remove directory because do not need patch another time
-		#sudo rm -rf ~/zram-swap
+		sudo rm -rf ~/zram-swap
 	fi
 	
 	# more patch for cmd.BuiltTool("metalava"). locate line and add java mem when running.
