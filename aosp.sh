@@ -8,21 +8,17 @@ declare -i env_run_last_return
 declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
-env_run_last_return=027
-env_run_time=3
+env_run_last_return=0
+env_run_time=0
 
 android_env_setup(){
 	# pre tool
-	
-	# Fedora
-	if [[ $(env | grep HOSTNAME) =~ "fedora" ]];then sudo yum install -y redhat-lsb-core;fi
-	
-	lsb_os=$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')
-	if [[ ${lsb_os} =~ "Ubuntu" ]];then
+	lsb_os=$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)
+	if [[ ${lsb_os} =~ "ubuntu" ]];then
 		sudo apt install curl git android-platform-tools-base python3 -y
-	elif [[ ${lsb_os} =~ "Manjaro" ]];then
+	elif [[ ${lsb_os} =~ "manjaro" ]];then
 		sudo pacman -Sy curl git
-	elif [[ ${lsb_os} =~ "Fedora" ]];then
+	elif [[ ${lsb_os} =~ "fedora" ]];then
 		sudo yum install -y curl git
 	fi
 
@@ -92,6 +88,49 @@ fi' $HOME/.bashrc
 
 	cd $c_dir
 	source $HOME/.bashrc
+	
+	# low RAM patch less than 25Gb
+	patch_when_raw_ram
+}
+
+patch_when_raw_ram(){
+	# a patch that fix build on low ram PC less than 25Gb
+	# at least 25GB recommended
+
+	 get_pc_ram_raw=($(free -m | grep 'Mem:'))
+	 get_pc_ram=${get_pc_ram_raw[1]}
+	 declare -i pc_ram
+	 pc_ram=$get_pc_ram
+	 
+	 get_pc_swap_ram_raw=($(free -m | grep 'Swap:'))
+	 get_pc_swap_ram=${get_pc_swap_ram_raw[1]}
+	 declare -i pc_sawp_ram=0
+	 pc_sawp_ram=$get_pc_swap_ram
+
+	# need to patch when ram less than 25Gb
+	declare -i pc_ram_patch
+	pc_ram_patch=0
+	if [[ $pc_ram -lt 25600 ]] && [[ $pc_sawp_ram -lt 30000 ]];then
+	 	echo -e "\n\033[1;32m=>\033[0m Automaticly add RAM (now ${pc_ram}Mb) patch. SWAP RAM: $pc_sawp_ram"
+	 	pc_ram_patch=1
+	else
+		echo -e "\n\033[1;32m=>\033[0m RAM: ${pc_sawp_ram}Mb\n"
+		return
+	fi
+
+	if [[ $pc_ram_patch == 1 ]];then
+		cd ~/
+		if [[ ! -d zram-swap ]];then
+			git clone https://github.com/foundObjects/zram-swap.git
+		fi
+		cd zram-swap && sudo ./install.sh
+		cd $c_dir
+		sudo /usr/local/sbin/zram-swap.sh stop
+		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="32G"/g' /etc/default/zram-swap
+		sudo /usr/local/sbin/zram-swap.sh start
+		# remove directory because do not need patch another time
+		sudo rm -rf ~/zram-swap
+	fi
 }
 
 lineageos_sync(){
