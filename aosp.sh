@@ -8,17 +8,23 @@ declare -i env_run_last_return
 declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
-env_run_last_return=0
-env_run_time=1
+env_run_last_return=027
+env_run_time=3
 
 android_env_setup(){
 	# pre tool
-  lsb_os=$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')
-  if [[ ${lsb_os} =~ "Ubuntu" ]];then
-     sudo apt install curl git android-platform-tools-base python3 -y
-  elif [[ ${lsb_os} =~ "Manjaro" ]];then
-     sudo pacman -Sy curl git
-  fi
+	
+	# Fedora
+	if [[ $(env | grep HOSTNAME) =~ "fedora" ]];then sudo yum install -y redhat-lsb-core;fi
+	
+	lsb_os=$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')
+	if [[ ${lsb_os} =~ "Ubuntu" ]];then
+		sudo apt install curl git android-platform-tools-base python3 -y
+	elif [[ ${lsb_os} =~ "Manjaro" ]];then
+		sudo pacman -Sy curl git
+	elif [[ ${lsb_os} =~ "Fedora" ]];then
+		sudo yum install -y curl git
+	fi
 
 	#git config
 	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
@@ -30,9 +36,9 @@ android_env_setup(){
 	fi
 
 	if [[ $(git config user.email) == "" ]];then
-    read -p 'Your email: ' git_email
-    git config --global user.email "${git_email}"
-  fi
+		read -p 'Your email: ' git_email
+		git config --global user.email "${git_email}"
+	fi
 
 	#repo & adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
@@ -74,6 +80,8 @@ fi' $HOME/.bashrc
      		./setup/android_build_env.sh
   	elif [[ ${lsb_os} =~ "Manjaro" ]];then
      		./setup/arch-manjaro.sh
+     	elif [[ ${lsb_os} =~ "Fedora" ]];then
+     		./setup/fedora.sh
 	fi
 
 	# ssh
