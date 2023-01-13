@@ -9,8 +9,8 @@ declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
-env_run_time=0
-aosp_source_dir_working=
+env_run_time=2
+aosp_source_dir_working=android/pe
 
 android_env_setup(){
 	# pre tool
@@ -92,6 +92,12 @@ fi' $HOME/.bashrc
 	
 	# low RAM patch less than 25Gb
 	patch_when_raw_ram
+	
+	# try: fix git early eof
+	git config --global http.postBuffer 1048576000
+	git config --global core.compression -1
+	git config --global http.lowSpeedLimit 0
+	git config --global http.lowSpeedTime 999999
 }
 
 patch_when_raw_ram(){
