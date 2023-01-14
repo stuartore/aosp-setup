@@ -373,7 +373,7 @@ handle_main(){
 	fi
 
 	#handle aosp source
-	echo "Which ROM source do you wann sync ?"
+	echo "Which ROM source do you wanna sync ?"
 	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Paranoid Android (AOSPA)" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
