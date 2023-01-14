@@ -6,6 +6,12 @@ git_mirror_reset(){
 	rm -f $HOME/.gitconfig
 	git config --global user.name "${git_name}"
 	git config --global user.email "${git_email}"
+
+        # try: fix git early eof
+        git config --global http.postBuffer 1048576000
+        git config --global core.compression -1
+        git config --global http.lowSpeedLimit 0
+        git config --global http.lowSpeedTime 999999
 }
 
 non_freedom(){
