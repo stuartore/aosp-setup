@@ -9,8 +9,8 @@ declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
-env_run_time=2
-aosp_source_dir_working=android/pe
+env_run_time=0
+aosp_source_dir_working=
 
 android_env_setup(){
 	# pre tool
@@ -18,7 +18,7 @@ android_env_setup(){
 	if [[ ${lsb_os} =~ "ubuntu" ]];then
 		sudo apt install curl git android-platform-tools-base python3 -y
 	elif [[ ${lsb_os} =~ "manjaro" ]];then
-		sudo pacman -Sy curl git
+		sudo pacman -Sy curl git make yay patch pkg-config maven gradle
 	elif [[ ${lsb_os} =~ "fedora" ]];then
 		sudo yum install -y curl git
 	fi
@@ -73,11 +73,11 @@ fi' $HOME/.bashrc
 		git clone https://github.com/akhilnarang/scripts
 	fi
 	cd scripts
-	if [[ ${lsb_os} =~ "Ubuntu" ]];then
+	if [[ ${lsb_os} =~ "ubuntu" ]];then
      		./setup/android_build_env.sh
-  	elif [[ ${lsb_os} =~ "Manjaro" ]];then
+  	elif [[ ${lsb_os} =~ "manjaro" ]];then
      		./setup/arch-manjaro.sh
-     	elif [[ ${lsb_os} =~ "Fedora" ]];then
+     	elif [[ ${lsb_os} =~ "fedora" ]];then
      		./setup/fedora.sh
 	fi
 
