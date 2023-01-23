@@ -135,7 +135,7 @@ patch_when_raw_ram(){
 		cd zram-swap && sudo ./install.sh
 		cd $c_dir
 		sudo /usr/local/sbin/zram-swap.sh stop
-		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="32G"/g' /etc/default/zram-swap
+		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="64G"/g' /etc/default/zram-swap
 		sudo /usr/local/sbin/zram-swap.sh start
 		# remove directory because do not need patch another time
 		#sudo rm -rf ~/zram-swap
