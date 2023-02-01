@@ -9,4 +9,6 @@ cd aosp-setup && bash aosp.sh
 + Pixel Experience
 + Evolution-X
 + Paranoid Android (AOSPA)
++ PixysOS
++ SuperiorOS
 + PixelPlusUI

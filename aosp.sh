@@ -277,6 +277,52 @@ aospa_sync(){
 	cd $c_dir
 }
 
+pixysos_sync(){
+	aosp_source_dir=android/pixys
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+	
+	pixys_json="$(dirname $0)/pixys.json"
+	if [[ ! -f $pixys_json ]];then
+		curl https://api.github.com/repos/PixysOS/manifest/branches -o $pixys_json
+	fi
+	pixys_branches=($(cat $pixys_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select pixys_branch in "${pixys_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/PixysOS/manifest -b $pixys_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+
+superioros_sync(){
+	aosp_source_dir=android/superior
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+	
+	superior_json="$(dirname $0)/superior.json"
+	if [[ ! -f $superior_json ]];then
+		curl https://api.github.com/repos/SuperiorOS/manifest/branches -o $superior_json
+	fi
+	superior_branches=($(cat $superior_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select superior_branch in "${superior_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/SuperiorOS/manifest -b $superior_branch
+		fi
+		    repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+
 pixelplusui_sync(){
 	aosp_source_dir=android/ppui
 	mkdir -p $aosp_source_dir
@@ -390,7 +436,7 @@ handle_main(){
 
 	#handle aosp source
 	echo "Which ROM source do you wanna sync ?"
-	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Paranoid Android (AOSPA)" "PixelPlusUI")
+	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
 		
@@ -409,6 +455,12 @@ handle_main(){
 				;;
 			"Paranoid Android (AOSPA)")
 				aospa_sync
+				;;
+			"PixysOS")
+				pixysos_sync
+				;;
+			"SuperiorOS")
+				superioros_sync
 				;;
 			"PixelPlusUI")
 				pixelplusui_sync
