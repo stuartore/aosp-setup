@@ -9,7 +9,7 @@ declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
-env_run_time=0
+env_run_time=
 aosp_source_dir_working=
 
 str_to_arr(){
@@ -180,11 +180,6 @@ custom_sync(){
         rom_str=${str_to_arr_result[${os_str_num}]}
         manifest_str="$(echo ${str_to_arr_result[${manifest_str_num}]} | sed 's/.git$//g')"
 
-	echo -e "\033[1;4;32m\n---------- INFO ------------\033[0m"
-	echo -e "\033[1;33mROM\033[0m: $rom_str"
-	echo -e "\033[1;33mmanifest\033[0m: $manifest_str"
-	echo -e "\033[1;4;32m-----------------------------\033[0m\n"
-	
 	aosp_source_dir=android/${rom_str}
 	mkdir -p $aosp_source_dir
 	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}

@@ -9,8 +9,8 @@ declare -i env_run_time
 
 # generated & record to avoid run android envsetup repeatly
 env_run_last_return=0
-env_run_time=0
-aosp_source_dir_working=
+env_run_time=3
+aosp_source_dir_working=android/superior
 
 str_to_arr(){
 	# arg 1: string
@@ -23,11 +23,12 @@ str_to_arr(){
 
 android_env_setup(){
 	# pre tool
-	if [[ "$(command -v apt)" != "" ]]; then
+	lsb_os=$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)
+	if [[ ${lsb_os} =~ "ubuntu" ]];then
 		sudo apt install android-platform-tools-base python3 -y
-	elif [[ "$(command -v pacman)" != "" ]]; then
+	elif [[ ${lsb_os} =~ "manjaro" ]] || [[ ${lsb_os} == "arch" ]];then
 		sudo pacman -Sy make yay patch pkg-config maven gradle
-	elif [[ "$(command -v eopkg)" != "" ]]; then
+	elif [[ ${lsb_os} =~ "solus" ]];then
         	sudo eopkg it ccache
 	fi
 	
@@ -81,13 +82,13 @@ fi' $HOME/.bashrc
 		git clone https://github.com/akhilnarang/scripts
 	fi
 	cd scripts
-	if [[ "$(command -v apt)" != "" ]]; then
+	if [[ ${lsb_os} =~ "ubuntu" ]];then
      		./setup/android_build_env.sh
-	elif [[ "$(command -v pacman)" != "" ]]; then
+	elif [[ ${lsb_os} =~ "manjaro" ]] || [[ ${lsb_os} == "arch" ]];then
      		./setup/arch-manjaro.sh
- 	elif [[ "$(command -v yum)" != "" ]]; then
+ 	elif [[ ${lsb_os} =~ "fedora" ]];then
      		./setup/fedora.sh
-	elif [[ "$(command -v eopkg)" != "" ]]; then
+	elif [[ ${lsb_os} =~ "solus" ]];then
             ./setup/solus.sh
 	fi
 
@@ -171,6 +172,188 @@ patch_when_raw_ram(){
 	fi
 }
 
+lineageos_sync(){
+	aosp_source_dir=android/lineage
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+
+	lineage_json="$(dirname $0)/lineage.json"
+	if [[ ! -f $lineage_json ]];then
+		curl https://api.github.com/repos/LineageOS/android/branches -o $lineage_json
+	fi
+	lineage_branches=($(cat $lineage_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select lineage_branch in "${lineage_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/LineageOS/android.git -b $lineage_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync
+		break
+	done
+	cd $c_dir
+}
+
+arrowos_sync(){
+	aosp_source_dir=android/arrow
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+
+	arrow_json="$(dirname $0)/arrow.json"
+	if [[ ! -f $arrow_json ]];then
+		curl https://api.github.com/repos/ArrowOS/android_manifest/branches -o $arrow_json
+	fi
+	arrow_branches=($(cat $arrow_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select arrow_branch in "${arrow_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/ArrowOS/android_manifest.git -b $arrow_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync
+		break
+	done
+	cd $c_dir
+}
+
+pixelexperience_sync(){
+	aosp_source_dir=android/pe
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+	
+	pixelexperience_json="$(dirname $0)/pixelexperience.json"
+	if [[ ! -f $pixelexperience_json ]];then
+		curl https://api.github.com/repos/PixelExperience/manifest/branches -o $pixelexperience_json
+	fi
+	pe_branches=($(cat $pixelexperience_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select pe_branch in "${pe_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/PixelExperience/manifest -b $pe_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+
+evolutionx_sync(){
+	aosp_source_dir=android/evolutionx
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+
+	evolutionx_json="$(dirname $0)/evolution-x.json"
+	if [[ ! -f $evolutionx_json ]];then
+		curl https://api.github.com/repos/Evolution-X/manifest/branches -o $evolutionx_json
+	fi
+	evolutionx_branches=($(cat $evolutionx_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select evolutionx_branch in "${evolutionx_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/Evolution-X/manifest.git -b $evolutionx_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+aospa_sync(){
+	aosp_source_dir=android/aospa
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+
+	aospa_json="$(dirname $0)/aospa.json"
+	if [[ ! -f $pixelexperience_json ]];then
+		curl https://api.github.com/repos/AOSPA/manifest/branches -o $aospa_json
+	fi
+	aospa_branches=($(cat $aospa_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select aospa_branch in "${aospa_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/AOSPA/manifest -b $aospa_branch
+		fi
+		repo sync --no-clone-bundle --current-branch --no-tags -j$(nproc --all)
+		break
+	done
+	cd $c_dir
+}
+
+pixysos_sync(){
+	aosp_source_dir=android/pixys
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+	
+	pixys_json="$(dirname $0)/pixys.json"
+	if [[ ! -f $pixys_json ]];then
+		curl https://api.github.com/repos/PixysOS/manifest/branches -o $pixys_json
+	fi
+	pixys_branches=($(cat $pixys_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select pixys_branch in "${pixys_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/PixysOS/manifest -b $pixys_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+
+superioros_sync(){
+	aosp_source_dir=android/superior
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+	
+	superior_json="$(dirname $0)/superior.json"
+	if [[ ! -f $superior_json ]];then
+		curl https://api.github.com/repos/SuperiorOS/manifest/branches -o $superior_json
+	fi
+	superior_branches=($(cat $superior_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	echo "Which branch you wanna sync ?"
+	select superior_branch in "${superior_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/SuperiorOS/manifest -b $superior_branch
+		fi
+		    repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+
+pixelplusui_sync(){
+	aosp_source_dir=android/ppui
+	mkdir -p $aosp_source_dir
+	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+
+	ppui_json="$(dirname $0)/ppui.json"
+	if [[ ! -f $ppui_json ]];then
+		curl https://api.github.com/repos/PixelPlusui/manifest/branches -o $ppui_json
+	fi
+	ppui_branches=($(cat $ppui_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
+	select ppui_branch in "${ppui_branches[@]}"
+	do
+		cd $aosp_source_dir
+		if [[ ! -d .repo ]];then
+			repo init -u https://github.com/PixelPlusUI/manifest -b ppui_branch
+		fi
+		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		break
+	done
+	cd $c_dir
+}
+
 custom_sync(){
 	str_to_arr $1 '/'
         declare -i url_all_num
@@ -180,10 +363,10 @@ custom_sync(){
         rom_str=${str_to_arr_result[${os_str_num}]}
         manifest_str="$(echo ${str_to_arr_result[${manifest_str_num}]} | sed 's/.git$//g')"
 
-	echo -e "\033[1;4;32m\n---------- INFO ------------\033[0m"
-	echo -e "\033[1;33mROM\033[0m: $rom_str"
-	echo -e "\033[1;33mmanifest\033[0m: $manifest_str"
-	echo -e "\033[1;4;32m-----------------------------\033[0m\n"
+	echo -e "\n-------- INFO ----------"
+	echo "ROM: $rom_str"
+	echo "manifest: $manifest_str"
+	echo -e "-------------------------\n"
 	
 	aosp_source_dir=android/${rom_str}
 	mkdir -p $aosp_source_dir
@@ -257,16 +440,17 @@ git_mirror_reset(){
 
 handle_main(){
 	# pre tool
+	lsb_os=$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)
 	if [[ ! $(which git) ]] || [[ ! $(which curl) ]];then
-		if [[ "$(command -v apt)" != "" ]]; then
+		if [[ ${lsb_os} =~ "ubuntu" ]];then
 			sudo apt install curl git -y
-		elif [[ "$(command -v pacman)" != "" ]]; then
+		elif [[ ${lsb_os} =~ "manjaro" ]];then
 			sudo pacman -Sy curl git
-		elif [[ "$(command -v yum)" != "" ]]; then
+		elif [[ ${lsb_os} =~ "fedora" ]];then
 			sudo yum install -y curl git
-		elif [[ "$(command -v eopkg)" != "" ]]; then
-		    sudo eopkg it curl git
-        	fi
+        elif [[ ${lsb_os} =~ "solus" ]];then
+            sudo eopkg it curl git
+        fi
 	fi
 
 	#for aosp | git mirrors
@@ -318,31 +502,31 @@ EOF
 		
 		case $aosp_source in
 			"LineageOS")
-				custom_sync https://github.com/LineageOS/android.git
+				lineageos_sync
 				;;
 			"ArrowOS")
-				custom_sync https://github.com/ArrowOS/android_manifest.git
+				arrowos_sync
 				;;
 			"Pixel Experience")
-				custom_sync https://github.com/PixelExperience/manifest.git
+				pixelexperience_sync
 				;;
 			"Evolution-X")
-				custom_sync https://github.com/Evolution-X/manifest.git
+				evolutionx_sync
 				;;
 			"Paranoid Android (AOSPA)")
-				custom_sync https://github.com/AOSPA/manifest.git
+				aospa_sync
 				;;
 			"PixysOS")
-				custom_sync https://github.com/PixysOS/manifest.git
+				pixysos_sync
 				;;
 			"SuperiorOS")
-				custom_sync https://github.com/SuperiorOS/manifest.git
+				superioros_sync
 				;;
 			"PixelPlusUI")
-				custom_sync https://github.com/PixelPlusUI/manifest.git
+				pixelplusui_sync
 				;;
 			*)
-				echo 'ROM source not added crrently. Plese use: bash aosp.sh ${ROM_manifest_url}'
+				echo 'ROM source not added crrently'
 				exit 1
 				;;
 		esac
