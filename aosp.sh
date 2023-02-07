@@ -249,6 +249,12 @@ ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
 	fi
 }
 
+other_fix(){
+        # fix Disallowed PATH Tool error
+
+        disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
+}
+
 git_mirror_reset(){
 	git_name=$(git config --global user.name)
 	git_email=$(git config --global user.email)
