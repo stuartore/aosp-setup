@@ -24,8 +24,10 @@ str_to_arr(){
 android_env_setup(){
 	# pre tool
 	if [[ "$(command -v apt)" != "" ]]; then
+		sudo apt update -y && sudo apt-get update -y
 		sudo apt install android-platform-tools-base python3 -y
 	elif [[ "$(command -v pacman)" != "" ]]; then
+		sudo pacman -Syy
 		sudo pacman -Sy make yay patch pkg-config maven gradle
 	elif [[ "$(command -v eopkg)" != "" ]]; then
         	sudo eopkg it ccache
