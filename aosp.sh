@@ -98,9 +98,6 @@ fi' $HOME/.bashrc
 
 	#ccache fix
 	ccache_fix
-
-	cd $c_dir
-	source $HOME/.bashrc
 	
 	# low RAM patch less than 25Gb
 	patch_when_raw_ram
@@ -110,6 +107,8 @@ fi' $HOME/.bashrc
 	git config --global core.compression -1
 	git config --global http.lowSpeedLimit 0
 	git config --global http.lowSpeedTime 999999
+
+        cd $c_dir
 }
 
 patch_when_raw_ram(){
@@ -264,6 +263,9 @@ git_mirror_reset(){
 }
 
 handle_main(){
+        # source bashrc everytime sync source
+        source $HOME/.bashrc
+
 	# pre tool
 	if [[ ! $(which git) ]] || [[ ! $(which curl) ]];then
 		if [[ "$(command -v apt)" != "" ]]; then
