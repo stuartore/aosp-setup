@@ -360,7 +360,7 @@ EOF
 	done
 
         # run android source envsetup if sync successfully
-        if[[ $? == "0" ]];then
+        if [[ $? == "0" ]];then
                 echo -e "\033[1;33m=>\033[0m sync source \033[33msuccess\033[0m. Auto setup environment."
                 cd $aosp_source_dir
                 android_envsetup_file=build/envsetup.sh
