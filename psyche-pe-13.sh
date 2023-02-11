@@ -13,7 +13,7 @@ psyche_use_common_deps(){
 	
 	# pull source for device/ vendor/ kernel
 	git clone https://github.com//LineageOS/android_hardware_xiaomi -b lineage-20 hardware/xiaomi
-	git clone https://github.com/stuartore/device_xiaomi_psyche -b thirteen-test device/xiaomi/psyche
+	git clone https://github.com/stuartore/device_xiaomi_psyche -b thirteen device/xiaomi/psyche
 	git clone https://github.com/stuartore/device_xiaomi_sm8250-common -b thirteen device/xiaomi/sm8250-common
 	git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
 	git clone https://gitlab.com/stuartore/vendor_xiaomi_sm8250-common.git -b thirteen vendor/xiaomi/sm8250-common
