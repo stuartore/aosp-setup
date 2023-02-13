@@ -31,7 +31,8 @@ psyche_deps(){
 	git clone https://github.com/stuartore/android_device_xiaomi_psyche -b thirteen device/xiaomi/psyche
 	git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
 	#git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
-	git clone --depth=1 https://github.com/stuartore/kernel_xiaomi_sm8250 -b thirteen kernel/xiaomi/sm8250
+	#git clone --depth=1 https://github.com/stuartore/kernel_xiaomi_sm8250 -b thirteen kernel/xiaomi/sm8250
+	git clone https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13-redline-archived_till_base_finished kernel/xiaomi/void-sm8250
 }
 
 psyche_deps
