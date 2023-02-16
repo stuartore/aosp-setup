@@ -1,5 +1,6 @@
 #!/bin/bash
 # This file is generated for Xiaomi 12X (psyche)
+# Please copy this script to android source root directory before running
 
 # make new mkdir
 mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
