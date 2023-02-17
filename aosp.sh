@@ -173,6 +173,9 @@ patch_when_raw_ram(){
 }
 
 custom_sync(){
+        # source bashrc everytime sync source
+        source $HOME/.bashrc
+        
 	str_to_arr $1 '/'
         declare -i url_all_num
         url_all_num=${#str_to_arr_result[@]}
@@ -199,7 +202,7 @@ custom_sync(){
 	select custom_branch in "${custom_branches[@]}"
 	do
 		cd $aosp_source_dir
-		pwd
+		echo -e "\n\033[1;32m=>\033[0m Enter \033[1;3;34m$(pwd)\033[0m"
 		if [[ ! -d .repo ]];then
 			repo init -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch
 		fi
@@ -263,8 +266,6 @@ git_mirror_reset(){
 }
 
 handle_main(){
-        # source bashrc everytime sync source
-        source $HOME/.bashrc
 
 	# pre tool
 	if [[ ! $(which git) ]] || [[ ! $(which curl) ]];then
@@ -358,13 +359,17 @@ EOF
 		esac
 		break
 	done
-
+	
         # run android source envsetup if sync successfully
         if [[ $? == "0" ]];then
-                echo -e "\033[1;33m=>\033[0m sync source \033[33msuccess\033[0m. Auto setup environment."
                 cd $aosp_source_dir
                 android_envsetup_file=build/envsetup.sh
-                if [[ -f android_envsetup_file ]];then source $android_envsetup_file;fi
+                if [[ -f $android_envsetup_file ]];then
+                	source $android_envsetup_file
+                	echo -e "\033[1;32m=>\033[0m sync source \033[32msuccess\033[0m. Auto setup environment."
+                else
+                	echo -e "\033[1;32m=>\033[0m If you receive \033[33mrepo error\033[0m related to itself . Run it next time"
+                fi       
         fi
 }
 
