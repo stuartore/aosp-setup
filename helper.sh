@@ -15,41 +15,41 @@ git_mirror_reset(){
 	git config --global http.sslVerify false
 }
 
-non_freedom(){
-### handle git-repo
-## Decline handle git-repo because scripts do it
-:<<REPOINS
-mkdir -p ~/bin
-if [[ ! -f $HOME/bin/repo ]];then
-	curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-	sudo chmod a+x ~/bin/repo || chmod a+x ~/bin/repo
-fi
-REPOINS
+repo_check(){
+	### handle git-repo
+	## Decline handle git-repo because scripts do it
 
-touch $HOME/.bashrc
-if [[ ! $(grep '# android sync-helper' $HOME/.bashrc) ]];then
-	cat <<BASHEOF >> $HOME/.bashrc
+	repo_tg_path=/usr/bin/repo
+
+	if [[ ! $(command -v repo) ]];then
+		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path
+		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
+	fi
+
+	touch $HOME/.bashrc
+	if [[ ! $(grep '# android sync-helper' $HOME/.bashrc) ]];then
+		cat <<BASHEOF >> $HOME/.bashrc
 # android sync-helper
 export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 readonly REPO_URL
 BASHEOF
-fi
-echo "==> git-repo url added"
+	fi
+	echo "==> git-repo url added"
 
-### handle repo bin path
-touch $HOME/.profile
-if [[ ! $(grep '# android sync-helper' $HOME/.profile) ]];then
-	cat <<PROFILEEOF >> $HOME/.profile
+	### handle repo bin path
+	touch $HOME/.profile
+	if [[ ! $(grep '# android sync-helper' $HOME/.profile) ]];then
+		cat <<PROFILEEOF >> $HOME/.profile
 # android sync-helper
 if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
 PROFILEEOF
-echo "==> bin path added"
-fi
+	echo "==> bin path added"
+	fi
 
-### handle disconnect ssh issue
-# sudo sed -i 's/^export TMOUT=.*/export TMOUT=0/' /etc/profile && sudo sed -i "/#ClientAliveInterval/a\ClientAliveInterval 60" /etc/ssh/sshd_config && sudo sed -i "/#ClientAliveInterval/d" /etc/ssh/sshd_config && sudo sed -i '/ClientAliveCountMax/ s/^#//' /etc/ssh/sshd_config &&sudo /bin/systemctl restart sshd.service
+	### handle disconnect ssh issue
+	# sudo sed -i 's/^export TMOUT=.*/export TMOUT=0/' /etc/profile && sudo sed -i "/#ClientAliveInterval/a\ClientAliveInterval 60" /etc/ssh/sshd_config && sudo sed -i "/#ClientAliveInterval/d" /etc/ssh/sshd_config && sudo sed -i '/ClientAliveCountMax/ s/^#//' /etc/ssh/sshd_config &&sudo /bin/systemctl restart sshd.service
 }
 
 select_mirror(){
@@ -136,7 +136,7 @@ You may run to start using git:
 EOF
 	fi
 }
-non_freedom
+repo_check
 select_mirror
 other_mirror
 more_end_info
