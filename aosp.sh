@@ -173,9 +173,6 @@ patch_when_raw_ram(){
 }
 
 custom_sync(){
-        # source bashrc everytime sync source
-        source $HOME/.bashrc
-        
 	str_to_arr $1 '/'
         declare -i url_all_num
         url_all_num=${#str_to_arr_result[@]}
@@ -201,11 +198,31 @@ custom_sync(){
 	echo "Which branch you wanna sync ?"
 	select custom_branch in "${custom_branches[@]}"
 	do
+	        # source bashrc everytime sync source
+        	source $HOME/.bashrc
+
 		cd $aosp_source_dir
 		echo -e "\n\033[1;32m=>\033[0m Enter \033[1;3;34m$(pwd)\033[0m"
-		if [[ ! -d .repo ]];then
-			repo init -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch
+
+		if [[ -d .repo/project-objects ]];then
+			repo_init_need=0
+		else
+			if [[ -d .repo ]];then
+				declare -i repo_init_dir_size
+				repo_init_dir_raw=$(du -sm .repo | sed 's/[[:space:]]*.repo//g')
+				repo_init_dir_size=$repo_init_dir_raw
+				if [[ $repo_init_dir_size -lt 4 ]];then
+					rm -rf .repo
+					repo_init_need=1
+				else
+					repo_init_need=0
+				fi
+			else
+				repo_init_need=1
+			fi
 		fi
+		if [[ $repo_init_need -eq 1 ]];then repo init -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
+		
 		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 		break
 	done
@@ -360,13 +377,11 @@ EOF
 		break
 	done
 	
-        # run android source envsetup if sync successfully
+        # sync end info
         if [[ $? == "0" ]];then
-                cd $aosp_source_dir
                 android_envsetup_file=build/envsetup.sh
-                if [[ -f $android_envsetup_file ]];then
-                	source $android_envsetup_file
-                	echo -e "\033[1;32m=>\033[0m sync source \033[32msuccess\033[0m. Auto setup environment."
+                if [[ -f $aosp_source_dir/$android_envsetup_file ]];then
+                	echo -e "\033[1;32m=>\033[0m sync source \033[32msuccess\033[0m."
                 else
                 	echo -e "\033[1;32m=>\033[0m If you receive \033[33mrepo error\033[0m related to itself . Run it next time"
                 fi       
