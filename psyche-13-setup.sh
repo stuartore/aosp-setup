@@ -19,7 +19,7 @@ psyche_use_common_deps(){
 	git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
 	git clone https://gitlab.com/stuartore/vendor_xiaomi_sm8250-common.git -b thirteen vendor/xiaomi/sm8250-common
 	git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
-	git clone --depth=1 https://github.com/stuartore/kernel_xiaomi_sm8250 -b thirteen kernel/xiaomi/sm8250
+	git clone --depth=1 https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13 kernel/xiaomi/void-aosp-sm8250
 	
 	# other
 	echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
@@ -32,8 +32,23 @@ psyche_deps(){
 	git clone https://github.com/stuartore/android_device_xiaomi_psyche -b $1 device/xiaomi/psyche
 	git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
 	#git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
-	#git clone --depth=1 https://github.com/stuartore/kernel_xiaomi_sm8250 -b thirteen kernel/xiaomi/sm8250
-	git clone https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13-redline-archived_till_base_finished kernel/xiaomi/void-sm8250
+	# void: success log commit: 4303d3f7aa90687f315726a183e416cc364d276b
+	git clone --depth=1 https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13 kernel/xiaomi/void-aosp-sm8250
+}
+
+dt_bingup_superior(){
+	# handle aosp_psyche
+	sed -i 's/aosp_psyche/superior_psyche/g' *.mk
+	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' aosp_psyche.mk
+	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' BoardConfig.mk
+	mv aosp_psyche.mk superior_psyche.mk
+	
+	# handle overlay
+	overlay_custom_dir=$(find . -iname "overlay-*" | sed 's/.\///g')
+	mv $overlay_custom_dir overlay-superior
+	sed -i 's/overlay-aosp/overlay-superior/g' *.mk
+	
+	# handle parts
 }
 
 select rom_to_build in "PixelExperience 13" "Superior 13" "RiceDroid 13"
