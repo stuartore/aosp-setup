@@ -16,6 +16,7 @@ bash aosp.sh https://github.com/xxxxx/manifest.git
 + LineageOS
 + ArrowOS
 + Pixel Experience
++ Crdroid
 + Evolution-X
 + Paranoid Android (AOSPA)
 + PixysOS

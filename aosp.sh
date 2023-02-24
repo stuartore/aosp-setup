@@ -354,6 +354,9 @@ EOF
 			"Pixel Experience")
 				custom_sync https://github.com/PixelExperience/manifest.git
 				;;
+			"Crdroid")
+				custom_sync https://github.com/crdroidandroid/android.git
+				;;
 			"Evolution-X")
 				custom_sync https://github.com/Evolution-X/manifest.git
 				;;
