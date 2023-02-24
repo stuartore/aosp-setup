@@ -51,7 +51,7 @@ dt_bingup_superior(){
 	# handle parts
 }
 
-select rom_to_build in "PixelExperience 13" "Superior 13" "RiceDroid 13"
+select rom_to_build in "PixelExperience 13" "Superior 13" "Crdroid 13" "RiceDroid 13"
 do
 	case $rom_to_build in
 		"PixelExperience 13")
@@ -59,6 +59,9 @@ do
 			;;
 		"Superior 13")
 			dt_branch="superior-13"
+			;;
+		"Crdroid 13")
+			dt_branch="crd-13"
 			;;
 		"RiceDroid 13")
 			dt_branch="rice-13"
