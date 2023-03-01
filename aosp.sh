@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source lang.sh
+
 #1 which rom
 #2 branch
 c_dir=$(pwd)
@@ -22,6 +24,32 @@ str_to_arr(){
 }
 
 android_env_setup(){
+	# install android build dependencies
+	if [[ env_run_last_return != 0 ]] && [[ env_run_time -lt 3 ]];then
+		install_build_deps
+		env_run_return=$?
+		env_run_time+=1
+		sed -i '11s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
+		sed -i '12s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
+	fi
+
+	# ssh
+	ssh_enlong_patch
+
+	#ccache fix
+	ccache_fix
+	
+	# low RAM patch less than 25Gb
+	patch_when_low_ram
+	
+	# try: fix git early eof
+	git config --global http.postBuffer 1048576000
+	git config --global core.compression -1
+	git config --global http.lowSpeedLimit 0
+	git config --global http.lowSpeedTime 999999
+}
+
+install_build_deps(){
 	# pre tool
 	if [[ "$(command -v apt)" != "" ]]; then
 		sudo apt update -y && sudo apt-get update -y
@@ -92,35 +120,19 @@ fi' $HOME/.bashrc
 	elif [[ "$(command -v eopkg)" != "" ]]; then
             ./setup/solus.sh
 	fi
-
-	# ssh
-	ssh_enlong_patch
-
-	#ccache fix
-	ccache_fix
-	
-	# low RAM patch less than 25Gb
-	patch_when_raw_ram
-	
-	# try: fix git early eof
-	git config --global http.postBuffer 1048576000
-	git config --global core.compression -1
-	git config --global http.lowSpeedLimit 0
-	git config --global http.lowSpeedTime 999999
-
-        cd $c_dir
+	cd $c_dir
 }
 
-patch_when_raw_ram(){
+patch_when_low_ram(){
 	# a patch that fix build on low ram PC less than 25Gb
 	# at least 25GB recommended
 
-	 get_pc_ram_raw=($(free -m | grep 'Mem:'))
+	 get_pc_ram_raw=($(free -m | grep ${pc_mem_str}))
 	 get_pc_ram=${get_pc_ram_raw[1]}
 	 declare -i pc_ram
 	 pc_ram=$get_pc_ram
 	 
-	 get_pc_swap_ram_raw=($(free -m | grep 'Swap:'))
+	 get_pc_swap_ram_raw=($(free -m | grep ${pc_swap_mem_str}))
 	 get_pc_swap_ram=${get_pc_swap_ram_raw[1]}
 	 declare -i pc_sawp_ram=0
 	 pc_sawp_ram=$get_pc_swap_ram
@@ -129,7 +141,7 @@ patch_when_raw_ram(){
 	declare -i pc_ram_patch
 	pc_ram_patch=0
 	if [[ $pc_ram -lt 25600 ]] && [[ $pc_sawp_ram -lt 30000 ]];then
-	 	echo -e "\n\033[1;32m=>\033[0m Automaticly add RAM (now ${pc_ram}Mb) patch. SWAP RAM: $pc_sawp_ram"
+	 	echo -e "\n\033[1;32m=>\033[0m ${auto_add_ram_str_1} ${pc_ram}${auto_add_ram_str_2} $pc_sawp_ram"
 	 	pc_ram_patch=1
 	else
 		echo -e "\n\033[1;32m=>\033[0m RAM: ${pc_sawp_ram}Mb"
@@ -152,6 +164,7 @@ patch_when_raw_ram(){
 	
 	# more patch for cmd.BuiltTool("metalava"). locate line and add java mem when running.
 	metalava_patch_file=${aosp_source_dir_working}/build/soong/java/droidstubs.go
+	echo -e "\033[1;32m=>\033[0m ${patch_out_of_mem_str} $metalava_patch_file"
 	if [[ -f $metalava_patch_file ]];then
 		declare -i locate_metalava_0
 		declare -i locate_metalava_1
@@ -166,9 +179,9 @@ patch_when_raw_ram(){
 			fi
 			sed -i 's/Flag("-J-Xmx.*/Flag("-J-Xmx6144m")\./' $metalava_patch_file
 		fi
-		echo -e "\033[1;32m=>\033[0m Fixed Ran out of memory error on low ram pc\n"
+		echo -e "\033[1;32m=>\033[0m ${patch_out_of_mem_info_str}\n"
 	else
-		echo -e "\033[1;33m=>\033[0m Try fix memory error next run because not sync completely\n"
+		echo -e "\033[1;33m=>\033[0m ${try_fix_out_of_mem_str}\n"
 	fi
 }
 
@@ -181,7 +194,7 @@ custom_sync(){
         rom_str=${str_to_arr_result[${os_str_num}]}
         manifest_str="$(echo ${str_to_arr_result[${manifest_str_num}]} | sed 's/.git$//g')"
 
-	echo -e "\n\033[1;4;32m---------- INFO ------------\033[0m"
+	echo -e "\n\033[1;4;32m---------- ${rom_info_str} ------------\033[0m"
 	echo -e "\033[1;33mROM\033[0m: $rom_str"
 	echo -e "\033[1;33mmanifest\033[0m: $manifest_str"
 	echo -e "\033[1;4;32m-----------------------------\033[0m\n"
@@ -195,14 +208,14 @@ custom_sync(){
 		curl https://api.github.com/repos/${rom_str}/${manifest_str}/branches -o $custom_json
 	fi
 	custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
-	echo "Which branch you wanna sync ?"
+	echo -e "\n${rom_branch_str}"
 	select custom_branch in "${custom_branches[@]}"
 	do
 	        # source bashrc everytime sync source
         	source $HOME/.bashrc
 
 		cd $aosp_source_dir
-		echo -e "\n\033[1;32m=>\033[0m Enter \033[1;3;34m$(pwd)\033[0m"
+		echo -e "\033[1;32m=>\033[0m ${enter_to_sync_str}\033[1;3;34m$(pwd)\033[0m"
 
 		if [[ -d .repo/project-objects ]];then
 			repo_init_need=0
@@ -221,7 +234,7 @@ custom_sync(){
 				repo_init_need=1
 			fi
 		fi
-		if [[ $repo_init_need -eq 1 ]];then repo init -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
+		if [[ $repo_init_need -eq 1 ]];then repo init -u --depth=1 https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
 		
 		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 		break
@@ -298,7 +311,7 @@ handle_main(){
 	fi
 
 	#for aosp | git mirrors
-	echo "Do you wanna use git & AOSP mirror ?"
+	echo -e "${use_mirror_str}"
 	select use_mirror_sel in "Yes" "No"
 	do
 		case $use_mirror_sel in
@@ -316,13 +329,7 @@ handle_main(){
 	done
 	
 	#android environment setup
-	if [[ env_run_last_return != 0 ]] && [[ env_run_time -lt 3 ]];then
-		android_env_setup
-		env_run_return=$?
-		env_run_time+=1
-		sed -i '11s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
-		sed -i '12s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
-	fi
+	android_env_setup
 
 	# Custom ROM
 	if [[ $1 != "" ]];then
@@ -339,7 +346,7 @@ EOF
 	fi
 	
 	#handle aosp source
-	echo "Which ROM source do you wanna sync ?"
+	echo -e "${sel_rom_source_str}"
 	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
@@ -384,9 +391,9 @@ EOF
         if [[ $? == "0" ]];then
                 android_envsetup_file=build/envsetup.sh
                 if [[ -f $aosp_source_dir/$android_envsetup_file ]];then
-                	echo -e "\033[1;32m=>\033[0m sync source \033[32msuccess\033[0m."
+                	echo -e "\033[1;32m=>\033[0m ${sync_sucess_str}"
                 else
-                	echo -e "\033[1;32m=>\033[0m If you receive \033[33mrepo error\033[0m related to itself . Run it next time"
+                	echo -e "\033[1;32m=>\033[0m ${repo_error_str}"
                 fi       
         fi
 }

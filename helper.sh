@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+source lang.sh
+
 git_mirror_reset(){
 	git_name=$(git config --global user.name)
 	git_email=$(git config --global user.email)
@@ -34,7 +36,7 @@ export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 readonly REPO_URL
 BASHEOF
 	fi
-	echo "==> git-repo url added"
+	echo -e "==> ${repo_added_str}"
 
 	### handle repo bin path
 	touch $HOME/.profile
@@ -66,11 +68,11 @@ select_mirror(){
 		case $task in
 			github)
 				## handle github.com
-				echo -e "\nChoose \033[1;33mgithub\033[0m mirror ?\n"
+				echo -e "\n${choose_git_mirror_str}\n"
 				select gm in "${sel_github_list[@]}"
 				do
 					if [[ $gm != "" ]];then
-						echo -e "\033[1;32m=>\033[0m sel is $gm"
+						echo -e "\033[1;32m=>\033[0m ${sel_is_str} $gm"
 						git config --global url."${gm}".insteadof https://github.com
 					else
 						echo -e "\033[1;32m=>\033[0m don't use github mirror"
@@ -80,7 +82,7 @@ select_mirror(){
 				;;
 			aosp)
 				## handle AOSP
-				echo -e "\nChoose \033[1;33mAndroid source\033[0m mirror ?\n"
+				echo -e "\n${choose_aosp_mirror_str}\n"
 				select aos in "${sel_aosp_list[@]}"
 				do
 					case $aos in
@@ -104,7 +106,7 @@ select_mirror(){
 							aom='https://android.googlesource.com'
 							;;
 					esac
-					echo -e "\033[1;32m=>\033[0m select mirror is $aom"
+					echo -e "\033[1;32m=>\033[0m ${sel_is_str} $aom"
 					git config --global url."${aom}".insteadof https://android.googlesource.com
 					break
 				done
