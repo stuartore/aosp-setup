@@ -5,26 +5,6 @@
 # make new mkdir
 mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
 
-psyche_use_common_deps(){
-	# NOT AVAIABLE 
-
-	# pull source for device/ vendor/ kernel
-	# device specific dir
-	mkdir -p vendor/xiaomi-firmware
-	
-	# pull source for device/ vendor/ kernel
-	git clone https://github.com//LineageOS/android_hardware_xiaomi -b lineage-20 hardware/xiaomi
-	git clone https://github.com/stuartore/device_xiaomi_psyche -b $1 device/xiaomi/psyche
-	git clone https://github.com/stuartore/device_xiaomi_sm8250-common -b thirteen device/xiaomi/sm8250-common
-	git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
-	git clone https://gitlab.com/stuartore/vendor_xiaomi_sm8250-common.git -b thirteen vendor/xiaomi/sm8250-common
-	git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
-	git clone --depth=1 https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13 kernel/xiaomi/void-aosp-sm8250
-	
-	# other
-	echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
-}
-
 psyche_deps(){
 	# pull source for device/ vendor/ kernel
 	# device specific dir
@@ -35,13 +15,20 @@ psyche_deps(){
 	git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
 	git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
 	# void: success log commit: 4303d3f7aa90687f315726a183e416cc364d276b
-	git clone --depth=1 https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13 kernel/xiaomi/void-aosp-sm8250
+	#git clone --depth=1 https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13 kernel/xiaomi/void-aosp-sm8250
+
+	# you can also use xiaomi_sm8250_devs kernel
+	git clone --depth=1 https://hub.nuaa.cf/xiaomi-sm8250-devs/android_kernel_xiaomi_sm8250.git -b lineage-20 kernel/xiaomi/devs-sm8250
+
+	# clang
+	mkdir -p prebuilts/clang/host/linux-x86/
+	git clone https://hub.yzuu.cf/EmanuelCN/zyc_clang-14.git prebuilts/clang/host/linux-x86/ZyC-clang
 
 	# other
 	echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
 }
 
-dt_bingup_superior(){
+dt_bringup_superior(){
 	# handle aosp_psyche
 	sed -i 's/aosp_psyche/superior_psyche/g' *.mk
 	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' aosp_psyche.mk
@@ -55,6 +42,12 @@ dt_bingup_superior(){
 	
 	# handle parts
 }
+
+if [[ ! -d build ]];then
+	if [[ -f BoardConfig.mk ]];then dt_bringup_superior; exit 0 ;fi
+	echo "Please copy this scrpit in Android Source root directory"
+	exit 1
+fi
 
 select rom_to_build in "PixelExperience 13" "Superior 13" "Crdroid 13" "RiceDroid 13"
 do
