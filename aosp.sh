@@ -192,14 +192,16 @@ sepolicy_patch(){
 	# 2. system/sepolicy/priviate  |  system/sepolicy/prebuilts/api/33.0/priviate
 	
 	cd $AOSP_SETUP_ROOT
-	cd ${aosp_source_dir_working}
-	echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
-	
-	if [[ -d system/sepolicy/public ]];then
-		eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
-		eval "$(diff system/sepolicy/private system/sepolicy/prebuilts/api/33.0/private | grep diff | sed 's/diff/cp -f/g')"
+	if [[ ! $aosp_source_dir_working ]];then
+		return
 	else
-		echo "----------- NO SEPOLICY FOUND -----------"
+		cd ${aosp_source_dir_working}
+		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
+		
+		if [[ -d system/sepolicy/public ]];then
+			eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
+			eval "$(diff system/sepolicy/private system/sepolicy/prebuilts/api/33.0/private | grep diff | sed 's/diff/cp -f/g')"
+		fi
 	fi
 	cd $AOSP_SETUP_ROOT
 }
@@ -393,8 +395,7 @@ EOF
 				custom_sync https://github.com/Evolution-X/manifest.git
 				;;
 			"Project-Elixir")
-				#custom_sync https://github.com/Project-Elixir/manifest.git
-				echo "------------- TEST SKIP -------------------"
+				custom_sync https://github.com/Project-Elixir/manifest.git
 				;;
 			"Paranoid Android (AOSPA)")
 				custom_sync https://github.com/AOSPA/manifest.git
