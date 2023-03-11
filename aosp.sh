@@ -196,7 +196,7 @@ sepolicy_patch(){
 		return
 	else
 		cd ${aosp_source_dir_working}
-		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
+		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m"
 		
 		if [[ -d system/sepolicy/public ]];then
 			eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
@@ -218,7 +218,7 @@ custom_sync(){
 	echo -e "\n\033[1;4;32m---------- ${rom_info_str} ------------\033[0m"
 	echo -e "\033[1;33mROM\033[0m: $rom_str"
 	echo -e "\033[1;33mmanifest\033[0m: $manifest_str"
-	echo -e "\033[1;4;32m-----------------------------\033[0m\n"
+	echo -e "\033[1;4;32m-----------------------------\033[0m"
 	
 	aosp_source_dir=android/${rom_str}
 	mkdir -p $aosp_source_dir
@@ -322,8 +322,26 @@ git_and_repo_mirror_reset(){
 	export REPO_URL='https://gerrit.googlesource.com/git-repo'
 }
 
-handle_main(){
+parse_args(){
+	all_args=$@
+	arg_arr=(${all_args})
+	rom_url=
+	keep_mirror_arg=0
+	
+	for i in "${arg_arr[@]}"
+	do
+		case $i in
+			-k | -km | --keep-mirror)
+				keep_mirror_arg=1
+				;;
+			https://*)
+				rom_url=$i
+				;;
+		esac
+	done
+}
 
+handle_main(){
 	# pre tool
 	if [[ ! $(which git) ]] || [[ ! $(which curl) ]];then
 		if [[ "$(command -v apt)" != "" ]]; then
@@ -338,22 +356,26 @@ handle_main(){
 	fi
 
 	#for aosp | git mirrors
-	echo -e "${use_mirror_str}"
-	select use_mirror_sel in "Yes" "No"
-	do
-		case $use_mirror_sel in
-			"Yes")
-				use_git_aosp_and_repo_mirror
-				;;
-			"No")
-				git_and_repo_mirror_reset
-				;;
-			*)
-				echo -e "==> Skip use mirror\n"
-				;;
-		esac
-		break
-	done
+	if [[ $2 -eq 0 ]];then
+		echo -e "${use_mirror_str}"
+		select use_mirror_sel in "Yes" "No"
+		do
+			case $use_mirror_sel in
+				"Yes")
+					use_git_aosp_and_repo_mirror
+					;;
+				"No")
+					git_and_repo_mirror_reset
+					;;
+				*)
+					echo -e "==> Skip use mirror\n"
+					;;
+			esac
+			break
+		done
+	else
+		echo -e "\033[1;32m=>\033[0m ${keep_mirror_str}"
+	fi
 	
 	#android environment setup
 	android_env_setup
@@ -363,12 +385,6 @@ handle_main(){
 		if [[ $1 =~ "manifest" ]] || [[ $1 =~ "android" ]] && [[ ! $1 =~ "device" ]] && [[ ! $1 =~ "vendor" ]] && [[ ! $1 =~ "kernel" ]];then
 			custom_sync $1
 			return 0
-		else
-			cat<<EOF
-Custom choice usage:
-
-		bash aosp.sh {ROM_manifest_url}
-EOF
 		fi
 	fi
 	
@@ -428,4 +444,5 @@ EOF
         fi
 }
 
-handle_main $1
+parse_args $@
+handle_main $rom_url $keep_mirror_arg

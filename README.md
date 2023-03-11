@@ -11,6 +11,13 @@ bash aosp.sh ${ROM_manifest_url}
 
 # example
 bash aosp.sh https://github.com/xxxxx/manifest.git
+
+# keep mirror
+# if you don't wanna select again and again, use -k | --keep-mirror
+# example
+
+bash aosp.sh -k
+bash aosp.sh --keep-mirror
 ```
 
 + LineageOS
@@ -18,6 +25,7 @@ bash aosp.sh https://github.com/xxxxx/manifest.git
 + Pixel Experience
 + Crdroid
 + Evolution-X
++ ProjectExilir
 + Paranoid Android (AOSPA)
 + PixysOS
 + SuperiorOS
