@@ -25,7 +25,7 @@ bash aosp.sh --keep-mirror
 + Pixel Experience
 + Crdroid
 + Evolution-X
-+ ProjectExilir
++ Project-Elixir
 + Paranoid Android (AOSPA)
 + PixysOS
 + SuperiorOS
