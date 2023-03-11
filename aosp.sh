@@ -9,9 +9,9 @@ AOSP_SETUP_ROOT=$(pwd)
 declare -i env_run_last_return
 declare -i env_run_time
 
-# generated & record to avoid run android envsetup repeatly
+# generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=0
+env_run_time=
 aosp_source_dir_working=
 
 str_to_arr(){
@@ -196,7 +196,7 @@ sepolicy_patch(){
 		return
 	else
 		cd ${aosp_source_dir_working}
-		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m"
+		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
 		
 		if [[ -d system/sepolicy/public ]];then
 			eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
@@ -356,7 +356,7 @@ handle_main(){
 	fi
 
 	#for aosp | git mirrors
-	if [[ $2 -eq 0 ]];then
+	if [[ $keep_mirror_arg -eq 0 ]];then
 		echo -e "${use_mirror_str}"
 		select use_mirror_sel in "Yes" "No"
 		do
@@ -381,9 +381,9 @@ handle_main(){
 	android_env_setup
 
 	# Custom ROM
-	if [[ $1 != "" ]];then
-		if [[ $1 =~ "manifest" ]] || [[ $1 =~ "android" ]] && [[ ! $1 =~ "device" ]] && [[ ! $1 =~ "vendor" ]] && [[ ! $1 =~ "kernel" ]];then
-			custom_sync $1
+	if [[ $rom_url != "" ]];then
+		if [[ $rom_url =~ "manifest" ]] || [[ $rom_url =~ "android" ]] && [[ ! $rom_url =~ "device" ]] && [[ ! $rom_url =~ "vendor" ]] && [[ ! $rom_url =~ "kernel" ]];then
+			custom_sync $rom_url
 			return 0
 		fi
 	fi
@@ -445,4 +445,4 @@ handle_main(){
 }
 
 parse_args $@
-handle_main $rom_url $keep_mirror_arg
+handle_main
