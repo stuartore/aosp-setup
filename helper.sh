@@ -115,15 +115,6 @@ select_mirror(){
 	done
 }
 
-other_mirror(){
-	# repo use REPO_URL in $HOME/.bashrc if use mirror. defualt: tuna
-	repo_modi_tg=${HOME}/scripts/setup/*.sh
-	if [[ $aom != 'https://android.googlesource.com' ]];then
-		sed -i 's/https:\/\/storage.googleapis.com\/git-repo-downloads\/repo/$REPO_URL/g' $repo_modi_tg
-		sed -i 's/raw.githubusercontent.com/raw.kgithub.com/g' $repo_modi_tg
-	fi
-}
-
 more_end_info(){
 	source $HOME/.bashrc
 	source $HOME/.profile
@@ -140,5 +131,4 @@ EOF
 }
 repo_check
 select_mirror
-other_mirror
 more_end_info

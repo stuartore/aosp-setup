@@ -201,7 +201,7 @@ custom_sync(){
 	
 	aosp_source_dir=android/${rom_str}
 	mkdir -p $aosp_source_dir
-	sed -i '13s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
+	sed -i '15s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
 	
 	custom_json="$(dirname $0)/${rom_str}.json"
 	if [[ ! -f $custom_json ]];then
@@ -234,7 +234,7 @@ custom_sync(){
 				repo_init_need=1
 			fi
 		fi
-		if [[ $repo_init_need -eq 1 ]];then repo init -u --depth=1 https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
+		if [[ $repo_init_need -eq 1 ]];then repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
 		
 		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 		break
@@ -242,7 +242,7 @@ custom_sync(){
 	cd $c_dir
 }
 
-use_git_aosp_mirror(){
+use_git_aosp_and_repo_mirror(){
 	if [[ -f aosp-setup/helper.sh ]];then
 		helper_tg=aosp-setup/helper.sh
 	elif [[ -f helper.sh ]];then
@@ -251,6 +251,9 @@ use_git_aosp_mirror(){
 		helper_tg=''
 	fi
 	source $helper_tg
+
+	# REPO URL
+	export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 }
 
 ssh_enlong_patch(){
@@ -287,12 +290,15 @@ other_fix(){
         disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
 }
 
-git_mirror_reset(){
+git_and_repo_mirror_reset(){
 	git_name=$(git config --global user.name)
 	git_email=$(git config --global user.email)
 	rm -f $HOME/.gitconfig
 	git config --global user.name "${git_name}"
 	git config --global user.email "${git_email}"
+
+	# REPO URL
+	export REPO_URL='https://gerrit.googlesource.com/git-repo'
 }
 
 handle_main(){
@@ -316,10 +322,10 @@ handle_main(){
 	do
 		case $use_mirror_sel in
 			"Yes")
-				use_git_aosp_mirror
+				use_git_aosp_and_repo_mirror
 				;;
 			"No")
-				git_mirror_reset
+				git_and_repo_mirror_reset
 				;;
 			*)
 				echo -e "==> Skip use mirror\n"
