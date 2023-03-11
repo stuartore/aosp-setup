@@ -25,6 +25,9 @@ lang_en(){
 	patch_out_of_mem_info_str='Fixed Ran out of memory error on low ram pc'
 	try_fix_out_of_mem_str='Try fix memory error next run because not sync completely'
 	sync_sucess_str='sync source \033[32msuccess\033[0m.'
+	
+	# fix sepolicy str
+	fix_sepolicy_str='fixed last used prebuilt sepolicy error'
 }
 
 lang_zh(){
@@ -52,6 +55,9 @@ lang_zh(){
 	patch_out_of_mem_info_str='修补了在低内存设备上编译时内存不足的错误'
 	try_fix_out_of_mem_str='下次运行修复内存不足错误，因为源码没有同步完全'
 	sync_sucess_str='源码已同步\033[32m成功\033[0m.'
+
+	# fix sepolicy str
+	fix_sepolicy_str='修复了最近使用的预编译sepolicy错误'
 }
 
 

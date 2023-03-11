@@ -4,7 +4,7 @@ source lang.sh
 
 #1 which rom
 #2 branch
-c_dir=$(pwd)
+AOSP_SETUP_ROOT=$(pwd)
 
 declare -i env_run_last_return
 declare -i env_run_time
@@ -41,6 +41,9 @@ android_env_setup(){
 	
 	# low RAM patch less than 25Gb
 	patch_when_low_ram
+	
+	# fix sepolicy error
+	sepolicy_patch
 	
 	# try: fix git early eof
 	git config --global http.postBuffer 1048576000
@@ -106,11 +109,10 @@ fi' $HOME/.bashrc
 	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
 	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
 
-	cd ~/
 	if [[ ! -f scripts/setup/android_build_env.sh ]];then
-		git clone https://github.com/akhilnarang/scripts
+		git clone https://github.com/akhilnarang/scripts ~/
 	fi
-	cd scripts
+	cd ~/scripts
 	if [[ "$(command -v apt)" != "" ]]; then
      		./setup/android_build_env.sh
 	elif [[ "$(command -v pacman)" != "" ]]; then
@@ -120,7 +122,7 @@ fi' $HOME/.bashrc
 	elif [[ "$(command -v eopkg)" != "" ]]; then
             ./setup/solus.sh
 	fi
-	cd $c_dir
+	cd $AOSP_SETUP_ROOT
 }
 
 patch_when_low_ram(){
@@ -149,12 +151,11 @@ patch_when_low_ram(){
 
 	if [[ $pc_ram_patch == 1 ]];then
 		# zram swap patch
-		cd ~/
-		if [[ ! -d zram-swap ]];then
-			git clone https://github.com/foundObjects/zram-swap.git
+		if [[ ! -d ~/zram-swap ]];then
+			git clone https://github.com/foundObjects/zram-swap.git ~/zram-swap
 		fi
-		cd zram-swap && sudo ./install.sh
-		cd $c_dir
+		cd ~/zram-swap && sudo ./install.sh
+		cd $AOSP_SETUP_ROOT
 		sudo /usr/local/sbin/zram-swap.sh stop
 		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="64G"/g' /etc/default/zram-swap
 		sudo /usr/local/sbin/zram-swap.sh start
@@ -183,6 +184,24 @@ patch_when_low_ram(){
 	else
 		echo -e "\033[1;33m=>\033[0m ${try_fix_out_of_mem_str}\n"
 	fi
+}
+
+sepolicy_patch(){
+	# This is a patch for diffrences between
+	# 1. system/sepolicy/public |  system/sepolicy/prebuilts/api/33.0/public
+	# 2. system/sepolicy/priviate  |  system/sepolicy/prebuilts/api/33.0/priviate
+	
+	cd $AOSP_SETUP_ROOT
+	cd ${aosp_source_dir_working}
+	echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
+	
+	if [[ -d system/sepolicy/public ]];then
+		eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
+		eval "$(diff system/sepolicy/private system/sepolicy/prebuilts/api/33.0/private | grep diff | sed 's/diff/cp -f/g')"
+	else
+		echo "----------- NO SEPOLICY FOUND -----------"
+	fi
+	cd $AOSP_SETUP_ROOT
 }
 
 custom_sync(){
@@ -239,7 +258,7 @@ custom_sync(){
 		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 		break
 	done
-	cd $c_dir
+	cd $AOSP_SETUP_ROOT
 }
 
 use_git_aosp_and_repo_mirror(){
@@ -353,7 +372,7 @@ EOF
 	
 	#handle aosp source
 	echo -e "${sel_rom_source_str}"
-	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
+	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
 		
@@ -372,6 +391,10 @@ EOF
 				;;
 			"Evolution-X")
 				custom_sync https://github.com/Evolution-X/manifest.git
+				;;
+			"Project-Elixir")
+				#custom_sync https://github.com/Project-Elixir/manifest.git
+				echo "------------- TEST SKIP -------------------"
 				;;
 			"Paranoid Android (AOSPA)")
 				custom_sync https://github.com/AOSPA/manifest.git
