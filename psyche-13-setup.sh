@@ -56,9 +56,6 @@ psyche_deps(){
 }
 
 psyche_kernel_patch(){
-	# tmp: remove old devs kernel
-	if [[ -d kernel/xiaomi/devs-sm8250 ]];then rm -rf kernel/xiaomi/devs-sm8250;fi
-
 	# need remove 2 techpack Android.mk
 	psyche_kernel_path=$(grep TARGET_KERNEL_SOURCE device/xiaomi/psyche/BoardConfig.mk | grep -v '#' | sed 's/TARGET_KERNEL_SOURCE//g' | sed 's/:=//g' | sed 's/[[:space:]]//g')
 
