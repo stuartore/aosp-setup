@@ -12,6 +12,18 @@ else
 	script_mode='SKIP_EXIT'
 fi
 
+psyche_more_end_info(){
+	sleep 1.2
+	clear
+	cat<<EOF
+
+here you're on the way, eg:
+
+	source build/envsetup.sh
+	lunch aosp_psyche-userdebug && mka bacon
+EOF
+}
+
 psyche_deps(){
 	# make new mkdir
 	mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
@@ -36,6 +48,9 @@ psyche_deps(){
 
 	# other
 	echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
+	
+	# type info when exit
+	psyche_more_end_info
 }
 
 psyche_kernel_patch(){
