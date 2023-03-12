@@ -6,6 +6,8 @@ if [[ -d build ]];then
 	script_mode='ANDROID_SETUP'
 elif [[ -f BoardConfig.mk ]];then
 	script_mode='DT_BRINGUP'
+else
+	script_mode='SKIP_EXIT'
 fi
 
 case $script_mode in
@@ -14,7 +16,7 @@ case $script_mode in
 		exit 0
 		;;
 	"ANDROID_SETUP")
-		echo
+		echo 
 		;;
 	*)
 		echo "Please copy this scrpit in Android Source root directory"
@@ -63,7 +65,10 @@ dt_bringup_superior(){
 	# handle parts
 }
 
-kernel_patch(){
+psyche_kernel_patch(){
+	# tmp: remove old devs kernel
+	if [[ -d kernel/xiaomi/devs-sm8250 ]];then rm -rf kernel/xiaomi/devs-sm8250;fi
+
 	# need remove 2 techpack Android.mk
 	psyche_kernel_path=$(grep TARGET_KERNEL_SOURCE device/xiaomi/psyche/BoardConfig.mk | grep -v '#' | sed 's/TARGET_KERNEL_SOURCE//g' | sed 's/:=//g' | sed 's/[[:space:]]//g')
 
@@ -95,5 +100,5 @@ do
 	break
 done 
 
-kernel_patch
-#psyche_deps ${dt_branch}
+psyche_deps ${dt_branch}
+psyche_kernel_patch
