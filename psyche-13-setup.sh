@@ -10,6 +10,21 @@ else
 	script_mode='SKIP_EXIT'
 fi
 
+dt_bringup_superior(){
+	# handle aosp_psyche
+	sed -i 's/aosp_psyche/superior_psyche/g' *.mk
+	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' aosp_psyche.mk
+	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' BoardConfig.mk
+	mv aosp_psyche.mk superior_psyche.mk
+	
+	# handle overlay
+	overlay_custom_dir=$(find . -iname "overlay-*" | sed 's/.\///g')
+	mv $overlay_custom_dir overlay-superior
+	sed -i 's/overlay-aosp/overlay-superior/g' *.mk
+	
+	# handle parts
+}
+
 case $script_mode in
 	"DT_BRINGUP")
 		dt_bringup_superior
@@ -48,21 +63,6 @@ psyche_deps(){
 
 	# other
 	echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
-}
-
-dt_bringup_superior(){
-	# handle aosp_psyche
-	sed -i 's/aosp_psyche/superior_psyche/g' *.mk
-	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' aosp_psyche.mk
-	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' BoardConfig.mk
-	mv aosp_psyche.mk superior_psyche.mk
-	
-	# handle overlay
-	overlay_custom_dir=$(find . -iname "overlay-*" | sed 's/.\///g')
-	mv $overlay_custom_dir overlay-superior
-	sed -i 's/overlay-aosp/overlay-superior/g' *.mk
-	
-	# handle parts
 }
 
 psyche_kernel_patch(){
