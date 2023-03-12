@@ -33,9 +33,9 @@ psyche_deps(){
 	mkdir -p vendor/xiaomi-firmware
 
 	git clone https://github.com//LineageOS/android_hardware_xiaomi -b lineage-20 hardware/xiaomi
-	git clone https://github.com/stuartore/android_device_xiaomi_psyche -b $1 device/xiaomi/psyche
-	git clone https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
-	git clone https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
+	git clone --depth=1 https://github.com/stuartore/android_device_xiaomi_psyche -b $1 device/xiaomi/psyche
+	git clone --depth=1 https://gitlab.com/stuartore/android_vendor_xiaomi_psyche -b thirteen vendor/xiaomi/psyche
+	git clone --depth=1 https://gitlab.com/stuartore/vendor_xiaomi_psyche-firmware -b thirteen vendor/xiaomi-firmware/psyche
 	# void: success log commit: 4303d3f7aa90687f315726a183e416cc364d276b
 	git clone --depth=1 https://github.com/VoidUI-Devices/kernel_xiaomi_sm8250.git --depth=1 -b aosp-13 kernel/xiaomi/void-aosp-sm8250
 
@@ -50,7 +50,9 @@ psyche_deps(){
 	echo 'include $(call all-subdir-makefiles)' > vendor/xiaomi-firmware/Android.mk
 	
 	# type info when exit
-	psyche_more_end_info
+	if [[ -d hardware/xiaomi ]] && [[ -d device/xiaomi/psyche ]] && [[ -d vendor/xiaomi/psyche ]] && [[ kernel/xiaomi/void-aosp-sm8250 ]] && [[ -d vendor/xiaomi-firmware/psyche ]];then
+		psyche_more_end_info
+	fi
 }
 
 psyche_kernel_patch(){
