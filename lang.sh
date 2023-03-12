@@ -14,6 +14,7 @@ lang_en(){
 	choose_aosp_mirror_str='Choose \033[1;33mAndroid source\033[0m mirror ?'
 	sel_is_str='select mirror is '
 	keep_mirror_str='keep mirror configuration'
+	skip_mirror_str='Skip use mirror'
 	
 	# source synchonize str
 	sel_rom_source_str='Which \033[1;33mROM source\033[0m do you wanna sync ?'
@@ -36,7 +37,7 @@ lang_zh(){
 	pc_swap_mem_str='交换'
 
 	# repo added
-	repo_added_str='已添加git-repo'
+	repo_added_str='已添加git-repo\n'
 	repo_error_str='如果你遇到\033[33mrepo\033[0m相关错误，请在下一次运行本程序'
 	
 	# mirror str
@@ -45,6 +46,7 @@ lang_zh(){
 	choose_aosp_mirror_str='请选择\033[1;33m安卓源码\033[0m镜像？'
 	sel_is_str='选择了'
 	keep_mirror_str='保留原有镜像配置'
+	skip_mirror_str='选择了跳过使用镜像'
 	
 	# source synchonize str
 	sel_rom_source_str='请问你想同步哪一个\033[1;33mROM\033[0m源码？'

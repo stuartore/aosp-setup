@@ -11,7 +11,7 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=
+env_run_time=0
 aosp_source_dir_working=
 
 str_to_arr(){
@@ -21,6 +21,41 @@ str_to_arr(){
 	IFS="$2"
 	str_to_arr_result=($1)
 	IFS="$OLD_IFS"
+}
+
+repo_check(){
+	### handle git-repo
+	## Decline handle git-repo because scripts do it
+
+	if [[ "$(command -v repo)" == "" ]];then
+		repo_tg_path=/usr/bin/repo
+		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path --silent
+		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
+		echo -e "\033[1;32m=>\033[0m ${repo_added_str}"
+	fi
+
+	touch $HOME/.bashrc
+	if [[ ! $(grep '# android sync-helper' $HOME/.bashrc) ]];then
+		cat <<BASHEOF >> $HOME/.bashrc
+# android sync-helper
+export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
+readonly REPO_URL
+BASHEOF
+	fi
+
+	### handle repo bin path
+	touch $HOME/.profile
+	if [[ ! $(grep '# android sync-helper' $HOME/.profile) ]];then
+		cat <<PROFILEEOF >> $HOME/.profile
+# android sync-helper
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+PROFILEEOF
+	fi
+
+	### handle disconnect ssh issue
+	# sudo sed -i 's/^export TMOUT=.*/export TMOUT=0/' /etc/profile && sudo sed -i "/#ClientAliveInterval/a\ClientAliveInterval 60" /etc/ssh/sshd_config && sudo sed -i "/#ClientAliveInterval/d" /etc/ssh/sshd_config && sudo sed -i '/ClientAliveCountMax/ s/^#//' /etc/ssh/sshd_config &&sudo /bin/systemctl restart sshd.service
 }
 
 android_env_setup(){
@@ -342,6 +377,9 @@ parse_args(){
 }
 
 handle_main(){
+	# check repo
+	repo_check
+
 	# pre tool
 	if [[ ! $(which git) ]] || [[ ! $(which curl) ]];then
 		if [[ "$(command -v apt)" != "" ]]; then
@@ -354,6 +392,7 @@ handle_main(){
 		    sudo eopkg it curl git
         	fi
 	fi
+
 
 	#for aosp | git mirrors
 	if [[ $keep_mirror_arg -eq 0 ]];then
@@ -368,7 +407,7 @@ handle_main(){
 					git_and_repo_mirror_reset
 					;;
 				*)
-					echo -e "==> Skip use mirror\n"
+					echo -e "\033[1;36m=>\033[0m ${skip_mirror_str}"
 					;;
 			esac
 			break
@@ -376,7 +415,7 @@ handle_main(){
 	else
 		echo -e "\033[1;32m=>\033[0m ${keep_mirror_str}"
 	fi
-	
+
 	#android environment setup
 	android_env_setup
 

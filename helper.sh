@@ -17,43 +17,6 @@ git_mirror_reset(){
 	git config --global http.sslVerify false
 }
 
-repo_check(){
-	### handle git-repo
-	## Decline handle git-repo because scripts do it
-
-	repo_tg_path=/usr/bin/repo
-
-	if [[ ! $(command -v repo) ]];then
-		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path
-		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
-	fi
-
-	touch $HOME/.bashrc
-	if [[ ! $(grep '# android sync-helper' $HOME/.bashrc) ]];then
-		cat <<BASHEOF >> $HOME/.bashrc
-# android sync-helper
-export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
-readonly REPO_URL
-BASHEOF
-	fi
-	echo -e "==> ${repo_added_str}"
-
-	### handle repo bin path
-	touch $HOME/.profile
-	if [[ ! $(grep '# android sync-helper' $HOME/.profile) ]];then
-		cat <<PROFILEEOF >> $HOME/.profile
-# android sync-helper
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
-fi
-PROFILEEOF
-	echo "==> bin path added"
-	fi
-
-	### handle disconnect ssh issue
-	# sudo sed -i 's/^export TMOUT=.*/export TMOUT=0/' /etc/profile && sudo sed -i "/#ClientAliveInterval/a\ClientAliveInterval 60" /etc/ssh/sshd_config && sudo sed -i "/#ClientAliveInterval/d" /etc/ssh/sshd_config && sudo sed -i '/ClientAliveCountMax/ s/^#//' /etc/ssh/sshd_config &&sudo /bin/systemctl restart sshd.service
-}
-
 select_mirror(){
 	if [[ $(which git) == "" ]];then echo -e '\nPlease install git';exit 1;fi
 	sel_github_list=('https://ghproxy.com/https://github.com' 'https://kgithub.com' 'https://hub.njuu.cf' 'https://hub.yzuu.cf' 'https://hub.nuaa.cf' 'https://gh.con.sh/https://github.com' 'https://ghps.cc/https://github.com' 'https://github.moeyy.xyz/https://github.com')
@@ -129,6 +92,5 @@ You may run to start using git:
 EOF
 	fi
 }
-repo_check
 select_mirror
 more_end_info
