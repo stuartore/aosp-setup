@@ -2,6 +2,8 @@
 # This file is generated for Xiaomi 12X (psyche)
 # Please copy this script to android source root directory before running
 
+c_dir=$(pwd)
+
 if [[ -d build ]];then
 	script_mode='ANDROID_SETUP'
 elif [[ -f BoardConfig.mk ]];then
@@ -46,6 +48,8 @@ psyche_kernel_patch(){
 	cd $psyche_kernel_path
 	rm -f techpack/data/drivers/rmnet/perf/Android.mk
 	rm -f techpack/data/drivers/rmnet/shs/Android.mk	
+
+	cd $c_dir
 }
 
 dt_bringup_superior(){
