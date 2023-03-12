@@ -10,39 +10,10 @@ else
 	script_mode='SKIP_EXIT'
 fi
 
-dt_bringup_superior(){
-	# handle aosp_psyche
-	sed -i 's/aosp_psyche/superior_psyche/g' *.mk
-	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' aosp_psyche.mk
-	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' BoardConfig.mk
-	mv aosp_psyche.mk superior_psyche.mk
-	
-	# handle overlay
-	overlay_custom_dir=$(find . -iname "overlay-*" | sed 's/.\///g')
-	mv $overlay_custom_dir overlay-superior
-	sed -i 's/overlay-aosp/overlay-superior/g' *.mk
-	
-	# handle parts
-}
-
-case $script_mode in
-	"DT_BRINGUP")
-		dt_bringup_superior
-		exit 0
-		;;
-	"ANDROID_SETUP")
-		echo 
-		;;
-	*)
-		echo "Please copy this scrpit in Android Source root directory"
-		exit 1
-		;;
-esac
-
-# make new mkdir
-mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
-
 psyche_deps(){
+	# make new mkdir
+	mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
+
 	# pull source for device/ vendor/ kernel
 	# device specific dir
 	mkdir -p vendor/xiaomi-firmware
@@ -76,6 +47,35 @@ psyche_kernel_patch(){
 	rm -f techpack/data/drivers/rmnet/perf/Android.mk
 	rm -f techpack/data/drivers/rmnet/shs/Android.mk	
 }
+
+dt_bringup_superior(){
+	# handle aosp_psyche
+	sed -i 's/aosp_psyche/superior_psyche/g' *.mk
+	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' aosp_psyche.mk
+	sed -i 's/vendor\/aosp\/config/vendor\/superior\/config/g' BoardConfig.mk
+	mv aosp_psyche.mk superior_psyche.mk
+	
+	# handle overlay
+	overlay_custom_dir=$(find . -iname "overlay-*" | sed 's/.\///g')
+	mv $overlay_custom_dir overlay-superior
+	sed -i 's/overlay-aosp/overlay-superior/g' *.mk
+	
+	# handle parts
+}
+
+case $script_mode in
+	"DT_BRINGUP")
+		dt_bringup_superior
+		exit 0
+		;;
+	"ANDROID_SETUP")
+		echo 
+		;;
+	*)
+		echo "Please copy this scrpit in Android Source root directory"
+		exit 1
+		;;
+esac
 
 select rom_to_build in "PixelExperience 13" "Superior 13" "Crdroid 13" "RiceDroid 13"
 do
