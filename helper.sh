@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-source lang.sh
+source $(dirname $0)/lang.sh
 
 git_mirror_reset(){
 	git_name=$(git config --global user.name)
@@ -25,13 +25,15 @@ select_mirror(){
 	# reset before use mirror
 	git_mirror_reset
 
+	if [[ "$(command -v repo)" == "" ]];then echo;fi
+
 	tasks=('github' 'aosp')
 	for task in "${tasks[@]}"
 	do
 		case $task in
 			github)
 				## handle github.com
-				echo -e "\n${choose_git_mirror_str}\n"
+				echo -e "${choose_git_mirror_str}\n"
 				select gm in "${sel_github_list[@]}"
 				do
 					if [[ $gm != "" ]];then

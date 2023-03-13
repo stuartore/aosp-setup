@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source lang.sh
+source $(dirname $0)/lang.sh
 
 #1 which rom
 #2 branch
@@ -11,7 +11,7 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=0
+env_run_time=3
 aosp_source_dir_working=
 
 str_to_arr(){
