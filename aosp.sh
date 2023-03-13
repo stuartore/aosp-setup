@@ -11,7 +11,7 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=3
+env_run_time=0
 aosp_source_dir_working=
 
 str_to_arr(){
@@ -227,7 +227,7 @@ sepolicy_patch(){
 	# 2. system/sepolicy/priviate  |  system/sepolicy/prebuilts/api/33.0/priviate
 	
 	cd $AOSP_SETUP_ROOT
-	if [[ ! $aosp_source_dir_working ]];then
+	if [[ ! -d $aosp_source_dir_working ]];then
 		return
 	else
 		cd ${aosp_source_dir_working}
