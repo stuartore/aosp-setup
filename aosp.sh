@@ -64,8 +64,8 @@ android_env_setup(){
 		install_build_deps
 		env_run_return=$?
 		env_run_time+=1
-		sed -i '11s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
-		sed -i '12s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
+		sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
+		sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
 	fi
 
 	# ssh
@@ -145,10 +145,15 @@ fi' $HOME/.bashrc
 	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
 
 	if [[ ! -f scripts/setup/android_build_env.sh ]];then
-		git clone https://github.com/akhilnarang/scripts ~/
+		git clone https://github.com/akhilnarang/scripts ~/scripts
 	fi
 	cd ~/scripts
 	if [[ "$(command -v apt)" != "" ]]; then
+		# delete gh lines that not needed
+		first_gh_line=`grep 'Installing GitHub CLI' -ns ./setup/android_build_env.sh | awk -F ':' '{print $1}'`
+		second_gh_line=`grep 'sudo apt install -y gh' -ns ./setup/android_build_env.sh | awk -F ':' '{print $1}'`
+		sed -i ''"${first_gh_line}"','"${second_gh_line}"' d' ./setup/android_build_env.sh
+
      		./setup/android_build_env.sh
 	elif [[ "$(command -v pacman)" != "" ]]; then
      		./setup/arch-manjaro.sh
