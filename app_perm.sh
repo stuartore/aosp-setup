@@ -6,6 +6,8 @@ app_list=(
 )
 
 file=priv.xml
+tg_file=app-permision.xml
+
 echo '<?xml version="1.0" encoding="utf-8"?>' > $file
 echo '<permissions>' >> $file
 
@@ -13,13 +15,16 @@ for app in "${app_list[@]}"
 do
 	app_pkg_name="$(aapt d permissions $app | grep 'package:' | sed 's|package: ||g')"
 	app_perm_list=($(aapt d permissions ./bin/system/product/priv-app/HMSCore/HMSCore.apk | grep "'android.permission." | sed 's|uses-permission: name=||g' | sed "s/'//g"))
-	echo "<privapp-permissions package=\"$app_pkg_name\">" >> $file
+	echo "   <privapp-permissions package=\"$app_pkg_name\">" >> $file
 	for app_perm in "${app_perm_list[@]}"
 	do
 		echo "    <permission name=\"$app_perm\" />" >> $file
 	done
-	echo '</privapp-permissions>' >> $file
+	echo '   </privapp-permissions>' >> $file
 	echo >> $file
 done
 
 echo '</permissions>' >> $file
+
+cat $file | grep -v 'SdkVersion' > $tg_file
+rm -f $file
