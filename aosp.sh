@@ -296,8 +296,7 @@ custom_sync(){
 			fi
 		fi
 		if [[ $repo_init_need -eq 1 ]];then repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
-		
-		repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+		repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all)
 		break
 	done
 	cd $AOSP_SETUP_ROOT
