@@ -57,11 +57,7 @@ ubuntu_deps(){
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
 	    libxml-simple-perl libswitch-perl apt-utils
 
-	# setting adb
-	#sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
-	#sudo chmod 644 /etc/udev/rules.d/51-android.rules
-	#sudo chown root /etc/udev/rules.d/51-android.rules
-	#sudo systemctl restart udev
+	sudo systemctl restart udev
 }
 
 arch_deps(){
@@ -70,7 +66,7 @@ arch_deps(){
 	packages="ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel"
 	sudo pacman -S yay -y
 	yay -S "${packages}"
-	sudo pacman -S --noconfirm --needed android-tools android-udev
+	sudo pacman -S --noconfirm --needed android-tools # android-udev
 }
 
 fedora_deps(){
@@ -82,16 +78,21 @@ fedora_deps(){
 	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libtinfo.so.5
 	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
 	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libtinfo.so.5
+
+	sudo udevadm control --reload-rules
 }
 
 solus_deps(){
 	sudo eopkg it -c system.devel
 	sudo eopkg it openjdk-8-devel curl-devel git gnupg gperf libgcc-32bit libxslt-devel lzop ncurses-32bit-devel ncurses-devel readline-32bit-devel rsync schedtool sdl1-devel squashfs-tools unzip wxwidgets-devel zip zlib-32bit-devel lzip
 
+	sudo usysconf run -f
+}
+
+adb_rules__setup(){
 	sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
 	sudo chmod 644 /etc/udev/rules.d/51-android.rules
 	sudo chown root /etc/udev/rules.d/51-android.rules
-	sudo usysconf run -f
 }
 
 repo_check(){
@@ -144,13 +145,13 @@ android_env_setup(){
 
 	#ccache fix
 	ccache_fix
-	
+
 	# low RAM patch less than 25Gb
 	patch_when_low_ram
-	
+
 	# fix sepolicy error
 	sepolicy_patch
-	
+
 	# try: fix git early eof
 	git config --global http.postBuffer 1048576000
 	git config --global core.compression -1
@@ -169,7 +170,7 @@ install_build_deps(){
 	elif [[ "$(command -v eopkg)" != "" ]]; then
         	sudo eopkg it ccache
 	fi
-	
+
 	#git config
 	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
 		echo -e "\n==> Config git "
@@ -184,7 +185,7 @@ install_build_deps(){
 		git config --global user.email "${git_email}"
 	fi
 
-	#repo & adb path
+	#adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
 		sed -i '$a \
 # add Android SDK platform tools to path \
@@ -193,45 +194,23 @@ if [ -d "$HOME/platform-tools" ] ; then \
 fi' $HOME/.bashrc
 	fi
 
-	if [[ $(grep 'set PATH so it includes user' -ns $HOME/.bashrc) == "" ]];then
-		sed -i '$a \
-# set PATH so it includes user private bin if it exists \
-if [ -d "$HOME/bin" ] ; then \
-    PATH="$HOME/bin:$PATH" \
-fi' $HOME/.bashrc
-        fi
-
-	#repo setup
-	mkdir -p $HOME/bin
-	if [[ ! -f $HOME/bin/repo ]];then
-		curl https://mirrors.tuna.tsinghua.edu.cn/git/git-repo -o $HOME/bin/repo
-	fi
-	sudo chmod a+x ~/bin/repo
-	chmod a+x ~/bin/repo
-
-	# android env from pixelexperience wiki
-
 	# lineageos:  bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
 	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
 	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
 
-	if [[ ! -f scripts/setup/android_build_env.sh ]];then
-		git clone https://github.com/akhilnarang/scripts ~/scripts
-	fi
-	cd ~/scripts
 	if [[ "$(command -v apt)" != "" ]]; then
-		# delete gh lines that not needed
-		first_gh_line=`grep 'Installing GitHub CLI' -ns ./setup/android_build_env.sh | awk -F ':' '{print $1}'`
-		second_gh_line=`grep 'sudo apt install -y gh' -ns ./setup/android_build_env.sh | awk -F ':' '{print $1}'`
-		sed -i ''"${first_gh_line}"','"${second_gh_line}"' d' ./setup/android_build_env.sh
-
-     		./setup/android_build_env.sh
+		ubuntu_deps
 	elif [[ "$(command -v pacman)" != "" ]]; then
-     		./setup/arch-manjaro.sh
+     		arch_deps
  	elif [[ "$(command -v yum)" != "" ]]; then
-     		./setup/fedora.sh
+     		fedora_deps
 	elif [[ "$(command -v eopkg)" != "" ]]; then
-            ./setup/solus.sh
+            	solus_deps
+	fi
+
+	# android adb udev rules
+	if [[ ! $HOSTNAME =~ 'VM' ]];then
+		adb_rules_setup
 	fi
 	cd $AOSP_SETUP_ROOT
 }
@@ -244,7 +223,7 @@ patch_when_low_ram(){
 	 get_pc_ram=${get_pc_ram_raw[1]}
 	 declare -i pc_ram
 	 pc_ram=$get_pc_ram
-	 
+
 	 get_pc_swap_ram_raw=($(free -m | grep ${pc_swap_mem_str}))
 	 get_pc_swap_ram=${get_pc_swap_ram_raw[1]}
 	 declare -i pc_sawp_ram=0
@@ -273,7 +252,7 @@ patch_when_low_ram(){
 		# remove directory because do not need patch another time
 		sudo rm -rf ~/zram-swap
 	fi
-	
+
 	# more patch for cmd.BuiltTool("metalava"). locate line and add java mem when running.
 	metalava_patch_file=${aosp_source_dir_working}/build/soong/java/droidstubs.go
 	echo -e "\033[1;32m=>\033[0m ${patch_out_of_mem_str} $metalava_patch_file"
@@ -301,14 +280,14 @@ sepolicy_patch(){
 	# This is a patch for diffrences between
 	# 1. system/sepolicy/public |  system/sepolicy/prebuilts/api/33.0/public
 	# 2. system/sepolicy/priviate  |  system/sepolicy/prebuilts/api/33.0/priviate
-	
+
 	cd $AOSP_SETUP_ROOT
 	if [[ ! -d $aosp_source_dir_working ]];then
 		return
 	else
 		cd ${aosp_source_dir_working}
 		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
-		
+
 		if [[ -d system/sepolicy/public ]];then
 			eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
 			eval "$(diff system/sepolicy/private system/sepolicy/prebuilts/api/33.0/private | grep diff | sed 's/diff/cp -f/g')"
@@ -330,11 +309,11 @@ custom_sync(){
 	echo -e "\033[1;33mROM\033[0m: $rom_str"
 	echo -e "\033[1;33mmanifest\033[0m: $manifest_str"
 	echo -e "\033[1;4;32m-----------------------------\033[0m"
-	
+
 	aosp_source_dir=android/${rom_str}
 	mkdir -p $aosp_source_dir
 	sed -i '15s|aosp_source_dir_working=.*|aosp_source_dir_working='"${aosp_source_dir}"'|g' $(dirname $0)/${BASH_SOURCE}
-	
+
 	custom_json="$(dirname $0)/${rom_str}.json"
 	if [[ ! -f $custom_json ]];then
 		curl https://api.github.com/repos/${rom_str}/${manifest_str}/branches -o $custom_json
@@ -437,7 +416,7 @@ parse_args(){
 	arg_arr=(${all_args})
 	rom_url=
 	keep_mirror_arg=0
-	
+
 	for i in "${arg_arr[@]}"
 	do
 		case $i in
@@ -501,13 +480,12 @@ handle_main(){
 			return 0
 		fi
 	fi
-	
+
 	#handle aosp source
 	echo -e "${sel_rom_source_str}"
 	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
-		
 		case $aosp_source in
 			"LineageOS")
 				custom_sync https://github.com/LineageOS/android.git
@@ -546,7 +524,7 @@ handle_main(){
 		esac
 		break
 	done
-	
+
         # sync end info
         if [[ $? == "0" ]];then
                 android_envsetup_file=build/envsetup.sh
@@ -554,7 +532,7 @@ handle_main(){
                 	echo -e "\033[1;32m=>\033[0m ${sync_sucess_str}"
                 else
                 	echo -e "\033[1;32m=>\033[0m ${repo_error_str}"
-                fi       
+                fi
         fi
 }
 
