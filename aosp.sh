@@ -55,7 +55,7 @@ ubuntu_deps(){
 	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
 	    pngquant python2.7 python-all-dev re2c schedtool squashfs-tools subversion \
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
-	    libxml-simple-perl libswitch-perl apt-utils
+	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
 
 	sudo systemctl restart udev
 }
