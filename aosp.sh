@@ -30,13 +30,13 @@ ubuntu_deps(){
 	lsb_release="$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')"
 
 	case $lsb_release in
-		"Mint 18*" || "Ubuntu 16*")
+		"Mint 18"* || "Ubuntu 16"*)
 			other_pkgs="libesd0-dev"
 			;;
-		"Ubuntu 2*" || "Pop!_OS 2*")
+		"Ubuntu 2"* || "Pop!_OS 2"*)
 			other_pkgs="libncurses5 curl python-is-python3"
 			;;
-		"Debian GNU/Linux 10*" || "Debian GNU/Linux 11*")
+		"Debian GNU/Linux 10"* || "Debian GNU/Linux 11"*)
 			other_pkgs="libncurses5"
 			;;
 		*)
