@@ -64,6 +64,36 @@ ubuntu_deps(){
 	#sudo systemctl restart udev
 }
 
+arch_deps(){
+	sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid
+	packages="ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel"
+	sudo pacman -S yay -y
+	yay -S "${packages}"
+	sudo pacman -S --noconfirm --needed android-tools android-udev
+}
+
+fedora_deps(){
+	sudo dnf install -y \
+		android-tools autoconf213 bison bzip2 ccache clang curl flex gawk gcc-c++ git git-lfs glibc-devel glibc-static libstdc++-static libX11-devel make mesa-libGL-devel ncurses-devel openssl patch zlib-devel ncurses-devel.i686 readline-devel.i686 zlib-devel.i686 libX11-devel.i686 mesa-libGL-devel.i686 glibc-devel.i686 libstdc++.i686 libXrandr.i686 zip perl-Digest-SHA python2 wget lzop openssl-devel java-1.8.0-openjdk-devel ImageMagick schedtool lzip vboot-utils vim
+
+	# The package libncurses5 is not available, so we need to hack our way by symlinking the required library.
+	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libncurses.so.5
+	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libtinfo.so.5
+	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
+	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libtinfo.so.5
+}
+
+solus_deps(){
+	sudo eopkg it -c system.devel
+	sudo eopkg it openjdk-8-devel curl-devel git gnupg gperf libgcc-32bit libxslt-devel lzop ncurses-32bit-devel ncurses-devel readline-32bit-devel rsync schedtool sdl1-devel squashfs-tools unzip wxwidgets-devel zip zlib-32bit-devel lzip
+
+	sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
+	sudo chmod 644 /etc/udev/rules.d/51-android.rules
+	sudo chown root /etc/udev/rules.d/51-android.rules
+	sudo usysconf run -f
+}
+
 repo_check(){
 	### handle git-repo
 	## Decline handle git-repo because scripts do it
