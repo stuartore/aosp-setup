@@ -16,11 +16,52 @@ aosp_source_dir_working=
 
 str_to_arr(){
 	# arg 1: string
-	# arg 2: split symbol 
+	# arg 2: split symbol
 	OLD_IFS="$IFS"
 	IFS="$2"
 	str_to_arr_result=($1)
 	IFS="$OLD_IFS"
+}
+
+ubuntu_deps(){
+	sudo apt update -y
+	sudo apt install software-properties-common lsb-core -y
+
+	lsb_release="$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')"
+
+	case $lsb_release in
+		"Mint 18*" || "Ubuntu 16*")
+			other_pkgs="libesd0-dev"
+			;;
+		"Ubuntu 2*" || "Pop!_OS 2*")
+			other_pkgs="libncurses5 curl python-is-python3"
+			;;
+		"Debian GNU/Linux 10*" || "Debian GNU/Linux 11*")
+			other_pkgs="libncurses5"
+			;;
+		*)
+			other_pkgs="libncurses5"
+			;;
+	esac
+
+	LATEST_MAKE_VERSION="4.3"
+
+	sudo apt install -y adb autoconf automake axel bc bison build-essential \
+	    ccache clang cmake curl expat fastboot flex g++ \
+	    g++-multilib gawk gcc gcc-multilib git git-lfs gnupg gperf \
+ 	    htop imagemagick lib32ncurses5-dev lib32z1-dev libtinfo5 libc6-dev libcap-dev \
+	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
+	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
+	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
+	    pngquant python2.7 python-all-dev re2c schedtool squashfs-tools subversion \
+	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
+	    libxml-simple-perl libswitch-perl apt-utils
+
+	# setting adb
+	#sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
+	#sudo chmod 644 /etc/udev/rules.d/51-android.rules
+	#sudo chown root /etc/udev/rules.d/51-android.rules
+	#sudo systemctl restart udev
 }
 
 repo_check(){
