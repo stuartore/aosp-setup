@@ -89,7 +89,7 @@ solus_deps(){
 	sudo usysconf run -f
 }
 
-adb_rules__setup(){
+adb_rules_setup(){
 	sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
 	sudo chmod 644 /etc/udev/rules.d/51-android.rules
 	sudo chown root /etc/udev/rules.d/51-android.rules
