@@ -30,13 +30,13 @@ ubuntu_deps(){
 	lsb_release="$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')"
 
 	case $lsb_release in
-		"Mint 18"* || "Ubuntu 16"*)
+		"Mint 18"* | "Ubuntu 16"*)
 			other_pkgs="libesd0-dev"
 			;;
-		"Ubuntu 2"* || "Pop!_OS 2"*)
+		"Ubuntu 2"* | "Pop!_OS 2"*)
 			other_pkgs="libncurses5 curl python-is-python3"
 			;;
-		"Debian GNU/Linux 10"* || "Debian GNU/Linux 11"*)
+		"Debian GNU/Linux 10"* | "Debian GNU/Linux 11"*)
 			other_pkgs="libncurses5"
 			;;
 		*)
@@ -62,10 +62,23 @@ ubuntu_deps(){
 
 arch_deps(){
 	sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
-	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid
-	packages="ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel"
-	sudo pacman -S yay -y
-	yay -S "${packages}"
+
+	if [[ ! $(grep '# aosp-setup add ustc archlinuxcn' /etc/pacman.conf) ]];then
+		 sudo sed -i '$a \
+\
+# aosp-setup add ustc archlinuxcn \
+[archlinuxcn] \
+SigLevel = Optional TrustAll \
+Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
+' /etc/pacman.conf
+        fi
+
+	if [[ $env_run_time -le 2 ]];then
+		sudo pacman -Sy --noconfirm archlinuxcn-keyring
+	fi
+	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache
+	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel)
+	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
 	sudo pacman -S --noconfirm --needed android-tools # android-udev
 }
 
@@ -90,7 +103,9 @@ solus_deps(){
 }
 
 adb_rules_setup(){
-	sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
+	if [[ ! -f /etc/udev/rules.d/51-android.rules ]];then
+		sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/main/51-android.rules
+	fi
 	sudo chmod 644 /etc/udev/rules.d/51-android.rules
 	sudo chown root /etc/udev/rules.d/51-android.rules
 }
@@ -483,7 +498,7 @@ handle_main(){
 
 	#handle aosp source
 	echo -e "${sel_rom_source_str}"
-	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
+	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
 		case $aosp_source in
@@ -498,6 +513,9 @@ handle_main(){
 				;;
 			"Crdroid")
 				custom_sync https://github.com/crdroidandroid/android.git
+				;;
+			"AlphaDroid")
+				custom_sync https://github.com/AlphaDroid-Project/manifest.git
 				;;
 			"Evolution-X")
 				custom_sync https://github.com/Evolution-X/manifest.git

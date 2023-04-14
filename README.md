@@ -24,6 +24,7 @@ bash aosp.sh --keep-mirror
 + ArrowOS
 + Pixel Experience
 + Crdroid
++ AlphaDroid
 + Evolution-X
 + Project-Elixir
 + Paranoid Android (AOSPA)

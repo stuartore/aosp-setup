@@ -39,6 +39,23 @@ select_mirror(){
 					if [[ $gm != "" ]];then
 						echo -e "\033[1;32m=>\033[0m ${sel_is_str} $gm"
 						git config --global url."${gm}".insteadof https://github.com
+						case $gm in
+							'https://kgithub.com')
+								git config --global url.https://raw.kgithub.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://hub.njuu.cf')
+								git config --global url.https://raw.njuu.cf.insteadof https://raw.githubusercontent.com
+								;;
+							'https://hub.yzuu.cf')
+								git config --global url.https://raw.yzuu.cf.insteadof https://raw.githubusercontent.com
+								;;
+							'https://hub.nuaa.cf')
+								git config --global url.https://raw.nuaa.cf.insteadof https://raw.githubusercontent.com
+								;;
+							*)
+								git config --global url."https://gh.con.sh/https://raw.githubusercontent.com".insteadof https://raw.githubusercontent.com
+								;;
+						esac
 					else
 						echo -e "\033[1;32m=>\033[0m don't use github mirror"
 					fi
