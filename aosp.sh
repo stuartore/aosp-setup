@@ -382,9 +382,12 @@ use_git_aosp_and_repo_mirror(){
 }
 
 ssh_enlong_patch(){
+        if [[ $HOSTNAME =~ 'VM' ]];then
+		
 	sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
 	sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
 	sudo systemctl restart sshd
+	fi
 }
 
 ccache_fix(){
