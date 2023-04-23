@@ -98,8 +98,6 @@ select_mirror(){
 }
 
 more_end_info(){
-	source $HOME/.bashrc
-	source $HOME/.profile
 	if [[ $(git config --get user.name) == "" ]];then
 	cat<<EOF
 

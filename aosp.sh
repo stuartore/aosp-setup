@@ -14,6 +14,8 @@ env_run_last_return=0
 env_run_time=0
 aosp_source_dir_working=
 
+aosp_config=config.sh
+
 str_to_arr(){
 	# arg 1: string
 	# arg 2: split symbol
@@ -53,7 +55,7 @@ ubuntu_deps(){
 	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
 	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
 	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
-	    pngquant python2.7 android-platform-tools-base python-all-dev re2c schedtool squashfs-tools subversion \
+	    pngquant python2.7 python3 android-platform-tools-base python-all-dev re2c schedtool squashfs-tools subversion \
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
 	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
 
@@ -115,6 +117,7 @@ repo_check(){
 	## Decline handle git-repo because scripts do it
 
 	if [[ "$(command -v repo)" == "" ]];then
+		echo '###############$'
 		repo_tg_path=/usr/bin/repo
 		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path --silent
 		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
@@ -178,31 +181,6 @@ android_env_setup(){
 }
 
 install_build_deps(){
-	# pre tool
-	if [[ "$(command -v apt)" != "" ]]; then
-		sudo apt update -y && sudo apt-get update -y
-		sudo apt install curl git python3 -y
-	elif [[ "$(command -v pacman)" != "" ]]; then
-		sudo pacman -Syy
-		sudo pacman -Sy curl git
-	elif [[ "$(command -v eopkg)" != "" ]]; then
-        	sudo eopkg it curl git ccache
-	fi
-
-	# git config
-	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
-		echo -e "\n==> Config git "
-	fi
-	if [[ $(git config user.name) == "" ]];then
-		read -p 'Your name: ' git_name
-		git config --global user.name "${git_name}"
-	fi
-
-	if [[ $(git config user.email) == "" ]];then
-		read -p 'Your email: ' git_email
-		git config --global user.email "${git_email}"
-	fi
-
 	#adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
 		sed -i '$a \
@@ -378,10 +356,11 @@ use_git_aosp_and_repo_mirror(){
 	else
 		helper_tg=''
 	fi
-	source $helper_tg
 
 	# REPO URL
 	export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
+
+	source $helper_tg
 }
 
 ssh_enlong_patch(){
@@ -444,13 +423,30 @@ parse_args(){
 				keep_mirror_arg=1
 				;;
 			https://*)
-				rom_url=$i
+				rom_url=${i}
 				;;
 		esac
 	done
 }
 
-handle_main(){
+setup_config(){
+	# Install deps for setup configuration
+	if [[ "$(command -v apt)" != "" ]]; then
+		if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+			sudo apt-get update -yq
+			sudo apt-get install curl git -yq
+		fi
+	elif [[ "$(command -v pacman)" != "" ]]; then
+		sudo pacman -Syy
+		sudo pacman -Sy curl git
+	elif [[ "$(command -v eopkg)" != "" ]]; then
+        	sudo eopkg it curl git ccache
+	fi
+	clear
+
+	####### start setup configuration ########
+	#
+
 	# for aosp | git mirrors
 	if [[ $keep_mirror_arg -eq 0 ]];then
 		echo -e "${use_mirror_str}"
@@ -458,10 +454,12 @@ handle_main(){
 		do
 			case $use_mirror_sel in
 				"Yes")
-					declare -i sel_use_git_aosp_mirror=1
+					declare -i USE_GIT_AOSP_MIRROR=1
+					use_git_aosp_and_repo_mirror
 					;;
-				*)
-					declare -i sel_use_git_aosp_mirror=0
+				"No" | *)
+					declare -i USE_GIT_AOSP_MIRROR=0
+					git_and_repo_mirror_reset
 					echo -e "\033[1;36m=>\033[0m ${skip_mirror_str}"
 					;;
 			esac
@@ -471,62 +469,65 @@ handle_main(){
 		echo -e "\033[1;32m=>\033[0m ${keep_mirror_str}"
 	fi
 
-	#android environment setup
-	android_env_setup
-
-	# handle git | aosp mirror according to config
-	if [[ $sel_use_git_aosp_mirror -eq 1 ]];then
-		use_git_aosp_and_repo_mirror
-	else
-		git_and_repo_mirror_reset
+	# git config
+	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
+		echo -e "\n==> Config git "
+	fi
+	if [[ $(git config user.name) == "" ]];then
+		read -p 'Your name: ' git_name
+		git config --global user.name "${git_name}"
 	fi
 
-	# Custom ROM
+	if [[ $(git config user.email) == "" ]];then
+		read -p 'Your email: ' git_email
+		git config --global user.email "${git_email}"
+	fi
+
+	# custom arg for ROM manifest
 	if [[ $rom_url != "" ]];then
 		if [[ $rom_url =~ "manifest" ]] || [[ $rom_url =~ "android" ]] && [[ ! $rom_url =~ "device" ]] && [[ ! $rom_url =~ "vendor" ]] && [[ ! $rom_url =~ "kernel" ]];then
-			custom_sync $rom_url
+			ROM_MANIFEST=${rom_url}
 			return 0
 		fi
 	fi
 
-	#handle aosp source
-	echo -e "${sel_rom_source_str}"
+	echo -e "\n${sel_rom_source_str}"
 	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 	select aosp_source in "${rom_sources[@]}"
 	do
 		case $aosp_source in
 			"LineageOS")
-				custom_sync https://github.com/LineageOS/android.git
+				ROM_MANIFEST='https://github.com/LineageOS/android.git'
 				;;
 			"ArrowOS")
-				custom_sync https://github.com/ArrowOS/android_manifest.git
+				ROM_MANIFEST='https://github.com/ArrowOS/android_manifest.git'
 				;;
 			"Pixel Experience")
-				custom_sync https://github.com/PixelExperience/manifest.git
+				ROM_MANIFEST='https://github.com/PixelExperience/manifest.git'
 				;;
 			"Crdroid")
-				custom_sync https://github.com/crdroidandroid/android.git
+				ROM_MANIFEST='https://github.com/crdroidandroid/android.git'
 				;;
 			"AlphaDroid")
-				custom_sync https://github.com/AlphaDroid-Project/manifest.git
+				ROM_MANIFEST='https://github.com/AlphaDroid-Project/manifest.git'
 				;;
 			"Evolution-X")
-				custom_sync https://github.com/Evolution-X/manifest.git
+				ROM_MANIFEST='https://github.com/Evolution-X/manifest.git'
 				;;
 			"Project-Elixir")
-				custom_sync https://github.com/Project-Elixir/manifest.git
+				ROM_MANIFEST='https://github.com/Project-Elixir/manifest.git'
 				;;
 			"Paranoid Android (AOSPA)")
-				custom_sync https://github.com/AOSPA/manifest.git
+				ROM_MANIFEST='https://github.com/AOSPA/manifest.git'
 				;;
 			"PixysOS")
-				custom_sync https://github.com/PixysOS/manifest.git
+				ROM_MANIFEST='https://github.com/PixysOS/manifest.git'
 				;;
 			"SuperiorOS")
-				custom_sync https://github.com/SuperiorOS/manifest.git
+				ROM_MANIFEST='https://github.com/SuperiorOS/manifest.git'
 				;;
 			"PixelPlusUI")
-				custom_sync https://github.com/PixelPlusUI/manifest.git
+				ROM_MANIFEST='https://github.com/PixelPlusUI/manifest.git'
 				;;
 			*)
 				echo 'ROM source not added crrently. Plese use: bash aosp.sh ${ROM_manifest_url}'
@@ -535,6 +536,17 @@ handle_main(){
 		esac
 		break
 	done
+}
+
+handle_main(){
+	# setup configuration
+	setup_config
+
+	#android environment setup
+	android_env_setup
+
+	#handle aosp source
+	custom_sync ${ROM_MANIFEST}
 
         # sync end info
         if [[ $? == "0" ]];then
