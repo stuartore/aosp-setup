@@ -53,7 +53,7 @@ ubuntu_deps(){
 	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
 	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
 	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
-	    pngquant python2.7 python-all-dev re2c schedtool squashfs-tools subversion \
+	    pngquant python2.7 android-platform-tools-base python-all-dev re2c schedtool squashfs-tools subversion \
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
 	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
 
@@ -76,7 +76,7 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 	if [[ $env_run_time -le 2 ]];then
 		sudo pacman -Sy --noconfirm archlinuxcn-keyring
 	fi
-	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache
+	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
 	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel)
 	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
 	sudo pacman -S --noconfirm --needed android-tools # android-udev
@@ -155,6 +155,9 @@ android_env_setup(){
 		sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
 	fi
 
+	# check repo
+	repo_check
+
 	# ssh
 	ssh_enlong_patch
 
@@ -178,15 +181,15 @@ install_build_deps(){
 	# pre tool
 	if [[ "$(command -v apt)" != "" ]]; then
 		sudo apt update -y && sudo apt-get update -y
-		sudo apt install android-platform-tools-base python3 -y
+		sudo apt install curl git python3 -y
 	elif [[ "$(command -v pacman)" != "" ]]; then
 		sudo pacman -Syy
-		sudo pacman -Sy make yay patch pkg-config maven gradle
+		sudo pacman -Sy curl git
 	elif [[ "$(command -v eopkg)" != "" ]]; then
-        	sudo eopkg it ccache
+        	sudo eopkg it curl git ccache
 	fi
 
-	#git config
+	# git config
 	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
 		echo -e "\n==> Config git "
 	fi
@@ -383,10 +386,9 @@ use_git_aosp_and_repo_mirror(){
 
 ssh_enlong_patch(){
         if [[ $HOSTNAME =~ 'VM' ]];then
-		
-	sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
-	sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
-	sudo systemctl restart sshd
+		sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
+		sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
+		sudo systemctl restart sshd
 	fi
 }
 
@@ -449,36 +451,17 @@ parse_args(){
 }
 
 handle_main(){
-	# check repo
-	repo_check
-
-	# pre tool
-	if [[ ! $(which git) ]] || [[ ! $(which curl) ]];then
-		if [[ "$(command -v apt)" != "" ]]; then
-			sudo apt install curl git -y
-		elif [[ "$(command -v pacman)" != "" ]]; then
-			sudo pacman -Sy curl git
-		elif [[ "$(command -v yum)" != "" ]]; then
-			sudo yum install -y curl git
-		elif [[ "$(command -v eopkg)" != "" ]]; then
-		    sudo eopkg it curl git
-        	fi
-	fi
-
-
-	#for aosp | git mirrors
+	# for aosp | git mirrors
 	if [[ $keep_mirror_arg -eq 0 ]];then
 		echo -e "${use_mirror_str}"
 		select use_mirror_sel in "Yes" "No"
 		do
 			case $use_mirror_sel in
 				"Yes")
-					use_git_aosp_and_repo_mirror
-					;;
-				"No")
-					git_and_repo_mirror_reset
+					declare -i sel_use_git_aosp_mirror=1
 					;;
 				*)
+					declare -i sel_use_git_aosp_mirror=0
 					echo -e "\033[1;36m=>\033[0m ${skip_mirror_str}"
 					;;
 			esac
@@ -490,6 +473,13 @@ handle_main(){
 
 	#android environment setup
 	android_env_setup
+
+	# handle git | aosp mirror according to config
+	if [[ $sel_use_git_aosp_mirror -eq 1 ]];then
+		use_git_aosp_and_repo_mirror
+	else
+		git_and_repo_mirror_reset
+	fi
 
 	# Custom ROM
 	if [[ $rom_url != "" ]];then
