@@ -14,8 +14,6 @@ env_run_last_return=0
 env_run_time=0
 aosp_source_dir_working=
 
-aosp_config=config.sh
-
 str_to_arr(){
 	# arg 1: string
 	# arg 2: split symbol
@@ -117,7 +115,6 @@ repo_check(){
 	## Decline handle git-repo because scripts do it
 
 	if [[ "$(command -v repo)" == "" ]];then
-		echo '###############$'
 		repo_tg_path=/usr/bin/repo
 		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path --silent
 		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
@@ -149,17 +146,11 @@ PROFILEEOF
 }
 
 android_env_setup(){
-	# install android build dependencies
-	if [[ env_run_last_return != 0 ]] && [[ env_run_time -lt 3 ]];then
-		install_build_deps
-		env_run_return=$?
-		env_run_time+=1
-		sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
-		sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
-	fi
-
 	# check repo
 	repo_check
+
+	# setup(install) build deps
+	if [[ $1 -eq 1 ]];then setup_build_deps;fi
 
 	# ssh
 	ssh_enlong_patch
@@ -180,7 +171,8 @@ android_env_setup(){
 	git config --global http.lowSpeedTime 999999
 }
 
-install_build_deps(){
+
+setup_build_deps(){
 	#adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
 		sed -i '$a \
@@ -429,7 +421,7 @@ parse_args(){
 	done
 }
 
-setup_config(){
+############## Setup Global Configuration ###############
 	# Install deps for setup configuration
 	if [[ "$(command -v apt)" != "" ]]; then
 		if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
@@ -481,6 +473,17 @@ setup_config(){
 	if [[ $(git config user.email) == "" ]];then
 		read -p 'Your email: ' git_email
 		git config --global user.email "${git_email}"
+	fi
+
+	# config install android build dependencies
+	if [[ env_run_time -lt 3 ]];then
+		declare -i INSTALL_BUILD_DEPS=1
+		env_run_return=$?
+		env_run_time+=1
+		sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
+		sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
+	else
+		declare -i INSTALL_BUILD_DEPS=0
 	fi
 
 	# custom arg for ROM manifest
@@ -536,14 +539,13 @@ setup_config(){
 		esac
 		break
 	done
-}
+
+################## Setup Global Configuration End ##################
+
 
 handle_main(){
-	# setup configuration
-	setup_config
-
 	#android environment setup
-	android_env_setup
+	android_env_setup $INSTALL_BUILD_DEPS
 
 	#handle aosp source
 	custom_sync ${ROM_MANIFEST}
