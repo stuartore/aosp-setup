@@ -419,7 +419,9 @@ parse_args(){
 				;;
 			--psyche)
 				if [[ ${aosp_source_dir_working} != "" ]];then
-					mkdir -p ${aosp_source_dir_working}/device/xiaomi
+					cd ${aosp_source_dir_working}
+					mkdir -p device/xiaomi
+					sh -c "$(curl -fSsL https://raw.githubusercontent.com/stuartore/android_device_xiaomi_psyche/rice-13-unstable/vendorsetup.sh)"
 				fi
 				;;
 		esac
