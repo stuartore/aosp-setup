@@ -417,6 +417,11 @@ parse_args(){
 			https://*)
 				rom_url=${i}
 				;;
+			--psyche)
+				if [[ ${aosp_source_dir_working} != "" ]];then
+					mkdir -p ${aosp_source_dir_working}/device/xiaomi
+				fi
+				;;
 		esac
 	done
 }
