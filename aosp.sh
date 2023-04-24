@@ -428,6 +428,7 @@ git_and_repo_mirror_reset(){
 					cd ${aosp_source_dir_working}
 					mkdir -p device/xiaomi
 					sh -c "$(curl -fSsL https://raw.githubusercontent.com/stuartore/android_device_xiaomi_psyche/rice-13-unstable/vendorsetup.sh)"
+					cd $AOSP_SETUP_ROOT
 				fi
 				;;
 		esac
