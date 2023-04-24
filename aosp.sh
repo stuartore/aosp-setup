@@ -258,9 +258,9 @@ patch_when_low_ram(){
 			fi
 			sed -i 's/Flag("-J-Xmx.*/Flag("-J-Xmx6144m")\./' $metalava_patch_file
 		fi
-		echo -e "\033[1;32m=>\033[0m ${patch_out_of_mem_info_str}\n"
+		echo -e "\n\033[1;32m=>\033[0m ${patch_out_of_mem_info_str}\n"
 	else
-		echo -e "\033[1;33m=>\033[0m ${try_fix_out_of_mem_str}\n"
+		echo -e "\n\033[1;33m=>\033[0m ${try_fix_out_of_mem_str}\n"
 	fi
 }
 
@@ -284,7 +284,7 @@ sepolicy_patch(){
 	cd $AOSP_SETUP_ROOT
 }
 
-custom_sync(){
+sync_setup(){
 	str_to_arr $1 '/'
         declare -i url_all_num
         url_all_num=${#str_to_arr_result[@]}
@@ -314,7 +314,7 @@ custom_sync(){
         	source $HOME/.bashrc
 
 		cd $aosp_source_dir
-		echo -e "\033[1;32m=>\033[0m ${enter_to_sync_str}\033[1;3;34m$(pwd)\033[0m"
+		echo -e "\n\033[1;32m=>\033[0m ${enter_to_sync_str}\033[1;3;34m$(pwd)\033[0m"
 
 		if [[ -d .repo/project-objects ]];then
 			repo_init_need=0
@@ -325,18 +325,23 @@ custom_sync(){
 				repo_init_dir_size=$repo_init_dir_raw
 				if [[ $repo_init_dir_size -lt 4 ]];then
 					rm -rf .repo
-					repo_init_need=1
+					export REPO_INIT_NEED=1
 				else
-					repo_init_need=0
+					export REPO_INIT_NEED=0
 				fi
 			else
-				repo_init_need=1
+				export REPO_INIT_NEED=1
 			fi
 		fi
-		if [[ $repo_init_need -eq 1 ]];then repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
-		repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all)
 		break
 	done
+	cd $AOSP_SETUP_ROOT
+}
+
+custom_sync(){
+	cd $aosp_source_dir
+	if [[ $REPO_INIT_NEED -eq 1 ]];then repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
+	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all)
 	cd $AOSP_SETUP_ROOT
 }
 
@@ -402,7 +407,8 @@ git_and_repo_mirror_reset(){
 	export REPO_URL='https://gerrit.googlesource.com/git-repo'
 }
 
-parse_args(){
+################# parse args #####################
+
 	all_args=$@
 	arg_arr=(${all_args})
 	rom_url=
@@ -426,7 +432,6 @@ parse_args(){
 				;;
 		esac
 	done
-}
 
 ############## Setup Global Configuration ###############
 	# Install deps for setup configuration
@@ -497,9 +502,8 @@ parse_args(){
 	if [[ $rom_url != "" ]];then
 		if [[ $rom_url =~ "manifest" ]] || [[ $rom_url =~ "android" ]] && [[ ! $rom_url =~ "device" ]] && [[ ! $rom_url =~ "vendor" ]] && [[ ! $rom_url =~ "kernel" ]];then
 			ROM_MANIFEST=${rom_url}
-			return 0
 		fi
-	fi
+	else
 
 	echo -e "\n${sel_rom_source_str}"
 	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
@@ -546,16 +550,19 @@ parse_args(){
 		esac
 		break
 	done
+	fi
+
+	sync_setup ${ROM_MANIFEST}
 
 ################## Setup Global Configuration End ##################
 
 
-handle_main(){
+main(){
 	#android environment setup
 	android_env_setup $INSTALL_BUILD_DEPS
 
 	#handle aosp source
-	custom_sync ${ROM_MANIFEST}
+	custom_sync
 
         # sync end info
         if [[ $? == "0" ]];then
@@ -568,5 +575,4 @@ handle_main(){
         fi
 }
 
-parse_args $@
-handle_main
+main

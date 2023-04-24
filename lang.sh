@@ -65,12 +65,16 @@ lang_zh(){
 }
 
 
-
-case $LANG in
-	"zh_CN.UTF-8")
+case $(cat /etc/timezone) in
+	"Asia/Shanghai")
 		lang_zh
 		;;
 	*)
-		lang_en
+		if [[ $LANG =~ "zh_CN" ]];then
+			lang_zh
+		else
+			lang_en
+
+		fi
 		;;
 esac
