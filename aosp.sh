@@ -426,10 +426,13 @@ git_and_repo_mirror_reset(){
 			--psyche)
 				if [[ ${aosp_source_dir_working} != "" ]];then
 					cd ${aosp_source_dir_working}
-					mkdir -p device/xiaomi
-					sh -c "$(curl -fSsL https://raw.githubusercontent.com/stuartore/android_device_xiaomi_psyche/rice-13-unstable/vendorsetup.sh)"
+					mkdir -p device/xiaomi/psyche_aosp-setup
+					curl -fSsL https://raw.githubusercontent.com/stuartore/android_device_xiaomi_psyche/rice-13-unstable/vendorsetup.sh -o device/xiaomi/psyche_aosp-setup/vendorsetup.sh
+					source build/envsetup.sh
+					rm -rf device/xiaomi/psyche_aosp-setup
 					cd $AOSP_SETUP_ROOT
 				fi
+				exit 0
 				;;
 		esac
 	done
@@ -447,7 +450,7 @@ git_and_repo_mirror_reset(){
 	elif [[ "$(command -v eopkg)" != "" ]]; then
         	sudo eopkg it curl git ccache
 	fi
-	clear
+	#clear
 
 	####### start setup configuration ########
 	#
