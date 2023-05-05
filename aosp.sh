@@ -368,6 +368,21 @@ ssh_enlong_patch(){
 	fi
 }
 
+git_fix_openssl(){
+	# now ubuntu
+	sudo apt-get update
+	sudo apt-get install build-essential fakeroot dpkg-dev libcurl4-openssl-dev
+	sudo apt-get build-dep git
+
+	mkdir ~/git-openssl
+	cd ~/git-openssl
+	apt-get source git
+	cd git-*
+	sed -i 's/libcurl4-gnutls-dev/libcurl4-openssl-dev/g' debian/control
+	sed -i /TEST =test/ d' debian/rules
+	sudo dpkg-buildpackage -rfakeroot -b
+}
+
 ccache_fix(){
 	# Custom Ccache
 	custom_ccache_dir=
