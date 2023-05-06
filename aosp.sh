@@ -11,7 +11,7 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=0
+env_run_time=3
 aosp_source_dir_working=
 
 str_to_arr(){
@@ -23,186 +23,7 @@ str_to_arr(){
 	IFS="$OLD_IFS"
 }
 
-ubuntu_deps(){
-	sudo apt update -y
-	sudo apt install software-properties-common lsb-core -y
-
-	lsb_release="$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')"
-
-	case $lsb_release in
-		"Mint 18"* | "Ubuntu 16"*)
-			other_pkgs="libesd0-dev"
-			;;
-		"Ubuntu 2"* | "Pop!_OS 2"*)
-			other_pkgs="libncurses5 curl python-is-python3"
-			;;
-		"Debian GNU/Linux 10"* | "Debian GNU/Linux 11"*)
-			other_pkgs="libncurses5"
-			;;
-		*)
-			other_pkgs="libncurses5"
-			;;
-	esac
-
-	LATEST_MAKE_VERSION="4.3"
-
-	sudo apt install -y adb autoconf automake axel bc bison build-essential \
-	    ccache clang cmake curl expat fastboot flex g++ \
-	    g++-multilib gawk gcc gcc-multilib git git-lfs gnupg gperf \
- 	    htop imagemagick lib32ncurses5-dev lib32z1-dev libtinfo5 libc6-dev libcap-dev \
-	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
-	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
-	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
-	    pngquant python2.7 python3 android-platform-tools-base python-all-dev re2c schedtool squashfs-tools subversion \
-	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
-	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
-
-	sudo systemctl restart udev
-}
-
-arch_deps(){
-	sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
-
-	if [[ ! $(grep '# aosp-setup add ustc archlinuxcn' /etc/pacman.conf) ]];then
-		 sudo sed -i '$a \
-\
-# aosp-setup add ustc archlinuxcn \
-[archlinuxcn] \
-SigLevel = Optional TrustAll \
-Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
-' /etc/pacman.conf
-        fi
-
-	if [[ $env_run_time -le 2 ]];then
-		sudo pacman -Sy --noconfirm archlinuxcn-keyring
-	fi
-	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
-	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel)
-	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
-	sudo pacman -S --noconfirm --needed android-tools # android-udev
-}
-
-fedora_deps(){
-	sudo dnf install -y \
-		android-tools autoconf213 bison bzip2 ccache clang curl flex gawk gcc-c++ git git-lfs glibc-devel glibc-static libstdc++-static libX11-devel make mesa-libGL-devel ncurses-devel openssl patch zlib-devel ncurses-devel.i686 readline-devel.i686 zlib-devel.i686 libX11-devel.i686 mesa-libGL-devel.i686 glibc-devel.i686 libstdc++.i686 libXrandr.i686 zip perl-Digest-SHA python2 wget lzop openssl-devel java-1.8.0-openjdk-devel ImageMagick schedtool lzip vboot-utils vim
-
-	# The package libncurses5 is not available, so we need to hack our way by symlinking the required library.
-	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libncurses.so.5
-	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libtinfo.so.5
-	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
-	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libtinfo.so.5
-
-	sudo udevadm control --reload-rules
-}
-
-solus_deps(){
-	sudo eopkg it -c system.devel
-	sudo eopkg it openjdk-8-devel curl-devel git gnupg gperf libgcc-32bit libxslt-devel lzop ncurses-32bit-devel ncurses-devel readline-32bit-devel rsync schedtool sdl1-devel squashfs-tools unzip wxwidgets-devel zip zlib-32bit-devel lzip
-
-	sudo usysconf run -f
-}
-
-adb_rules_setup(){
-	if [[ ! -f /etc/udev/rules.d/51-android.rules ]];then
-		sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/main/51-android.rules
-	fi
-	sudo chmod 644 /etc/udev/rules.d/51-android.rules
-	sudo chown root /etc/udev/rules.d/51-android.rules
-}
-
-repo_check(){
-	### handle git-repo
-	## Decline handle git-repo because scripts do it
-
-	if [[ "$(command -v repo)" == "" ]];then
-		repo_tg_path=/usr/bin/repo
-		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path --silent
-		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
-		echo -e "\033[1;32m=>\033[0m ${repo_added_str}"
-	fi
-
-	touch $HOME/.bashrc
-	if [[ ! $(grep '# android sync-helper' $HOME/.bashrc) ]];then
-		cat <<BASHEOF >> $HOME/.bashrc
-# android sync-helper
-export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
-readonly REPO_URL
-BASHEOF
-	fi
-
-	### handle repo bin path
-	touch $HOME/.profile
-	if [[ ! $(grep '# android sync-helper' $HOME/.profile) ]];then
-		cat <<PROFILEEOF >> $HOME/.profile
-# android sync-helper
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
-fi
-PROFILEEOF
-	fi
-
-	### handle disconnect ssh issue
-	# sudo sed -i 's/^export TMOUT=.*/export TMOUT=0/' /etc/profile && sudo sed -i "/#ClientAliveInterval/a\ClientAliveInterval 60" /etc/ssh/sshd_config && sudo sed -i "/#ClientAliveInterval/d" /etc/ssh/sshd_config && sudo sed -i '/ClientAliveCountMax/ s/^#//' /etc/ssh/sshd_config &&sudo /bin/systemctl restart sshd.service
-}
-
-android_env_setup(){
-	# check repo
-	repo_check
-
-	# setup(install) build deps
-	if [[ $1 -eq 1 ]];then setup_build_deps;fi
-
-	# ssh
-	ssh_enlong_patch
-
-	#ccache fix
-	ccache_fix
-
-	# low RAM patch less than 25Gb
-	patch_when_low_ram
-
-	# fix sepolicy error
-	sepolicy_patch
-
-	# try: fix git early eof
-	git config --global http.postBuffer 1048576000
-	git config --global core.compression -1
-	git config --global http.lowSpeedLimit 0
-	git config --global http.lowSpeedTime 999999
-}
-
-
-setup_build_deps(){
-	#adb path
-	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
-		sed -i '$a \
-# add Android SDK platform tools to path \
-if [ -d "$HOME/platform-tools" ] ; then \
- PATH="$HOME/platform-tools:$PATH" \
-fi' $HOME/.bashrc
-	fi
-
-	# lineageos:  bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
-	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
-	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
-
-	if [[ "$(command -v apt)" != "" ]]; then
-		ubuntu_deps
-	elif [[ "$(command -v pacman)" != "" ]]; then
-     		arch_deps
- 	elif [[ "$(command -v yum)" != "" ]]; then
-     		fedora_deps
-	elif [[ "$(command -v eopkg)" != "" ]]; then
-            	solus_deps
-	fi
-
-	# android adb udev rules
-	if [[ ! $HOSTNAME =~ 'VM' ]];then
-		adb_rules_setup
-	fi
-	cd $AOSP_SETUP_ROOT
-}
-
+######################### PATCH & FIX UNIT #########################
 patch_when_low_ram(){
 	# a patch that fix build on low ram PC less than 25Gb
 	# at least 25GB recommended
@@ -284,7 +105,435 @@ sepolicy_patch(){
 	cd $AOSP_SETUP_ROOT
 }
 
-sync_setup(){
+ssh_enlong_patch(){
+        if [[ $HOSTNAME =~ 'VM' ]];then
+		sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
+		sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
+		sudo systemctl restart sshd
+	fi
+}
+
+git_fix_openssl(){
+	# now ubuntu
+	sudo apt-get update
+	sudo apt-get install build-essential fakeroot dpkg-dev libcurl4-openssl-dev
+	sudo apt-get build-dep git
+
+	mkdir ~/git-openssl
+	cd ~/git-openssl
+	apt-get source git
+	cd git-*
+	sed -i 's/libcurl4-gnutls-dev/libcurl4-openssl-dev/g' debian/control
+	sed -i '/TEST =test/ d' debian/rules
+	sudo dpkg-buildpackage -rfakeroot -b
+}
+
+ccache_fix(){
+	# Custom Ccache
+	custom_ccache_dir=
+
+	if [[ ! $(grep 'Generated ccache config' $HOME/.bashrc) ]];then
+		default_ccache_dir=/home/$USER/.aosp_ccache
+		if [[ $custom_ccache_dir == "" ]];then
+			custom_ccache_dir=$default_ccache_dir
+		fi
+		mkdir -p /home/$USER/.ccache
+		mkdir -p $custom_ccache_dir
+		sudo mount --bind /home/$USER/.ccache $custom_ccache_dir
+		sudo chmod -R 777 $custom_ccache_dir
+
+		echo '''
+# Generated ccache config
+export USE_CCACHE=0
+export CCACHE_EXEC=/usr/bin/ccache
+export CCACHE_DIR='"$custom_ccache_dir"'
+ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
+	fi
+}
+
+lineage_sdk_patch(){
+	git clone https://github.com/LineageOS/android_packages_resources_devicesettings.git -b lineage-20.0 packages/resources/devicesettings
+	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
+}
+
+other_fix(){
+        # fix Disallowed PATH Tool error
+
+        disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
+}
+
+######################### MIRROR UNIT (OK) #########################
+
+git_mirror_reset(){
+	git_name=$(git config --global user.name)
+	git_email=$(git config --global user.email)
+	rm -f $HOME/.gitconfig
+	git config --global user.name "${git_name}"
+	git config --global user.email "${git_email}"
+
+        # try: fix git early eof
+        git config --global http.postBuffer 1048576000
+        git config --global core.compression -1
+        git config --global http.lowSpeedLimit 0
+        git config --global http.lowSpeedTime 999999
+	git config --global http.sslVerify false
+}
+
+select_mirror(){
+	if [[ $(which git) == "" ]];then echo -e '\nPlease install git';exit 1;fi
+	sel_github_list=('https://ghproxy.com/https://github.com' 'https://kgithub.com' 'https://hub.njuu.cf' 'https://hub.yzuu.cf' 'https://hub.nuaa.cf' 'https://gh.con.sh/https://github.com' 'https://ghps.cc/https://github.com' 'https://github.moeyy.xyz/https://github.com')
+	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
+
+	# reset before use mirror
+	git_mirror_reset
+
+	if [[ "$(command -v repo)" == "" ]];then echo;fi
+
+	tasks=('github' 'aosp')
+	for task in "${tasks[@]}"
+	do
+		case $task in
+			github)
+				## handle github.com
+				echo -e "${choose_git_mirror_str}\n"
+				select gm in "${sel_github_list[@]}"
+				do
+					if [[ $gm != "" ]];then
+						echo -e "\033[1;32m=>\033[0m ${sel_is_str} $gm"
+						git config --global url."${gm}".insteadof https://github.com
+						case $gm in
+							'https://kgithub.com')
+								git config --global url.https://raw.kgithub.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://hub.njuu.cf')
+								git config --global url.https://raw.njuu.cf.insteadof https://raw.githubusercontent.com
+								;;
+							'https://hub.yzuu.cf')
+								git config --global url.https://raw.yzuu.cf.insteadof https://raw.githubusercontent.com
+								;;
+							'https://hub.nuaa.cf')
+								git config --global url.https://raw.nuaa.cf.insteadof https://raw.githubusercontent.com
+								;;
+							*)
+								git config --global url."https://gh.con.sh/https://raw.githubusercontent.com".insteadof https://raw.githubusercontent.com
+								;;
+						esac
+					else
+						echo -e "\033[1;32m=>\033[0m don't use github mirror"
+					fi
+					break
+				done
+				;;
+			aosp)
+				## handle AOSP
+				echo -e "\n${choose_aosp_mirror_str}\n"
+				select aos in "${sel_aosp_list[@]}"
+				do
+					case $aos in
+						'tuna tsinghua')
+							aom='https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/'
+							;;
+						'ustc')
+							select ustc_pro in "git" "https" "http"
+							do
+								aom="${ustc_pro}://mirrors.ustc.edu.cn/aosp/"
+								break
+							done
+							;;
+						'beijing bfsu')
+							aom='https://mirrors.bfsu.edu.cn/git/AOSP/'
+							;;
+						'nanfang sci (not)')
+							aom='https://mirrors.sustech.edu.cn/AOSP/'
+							;;
+						*)
+							aom='https://android.googlesource.com'
+							;;
+					esac
+					echo -e "\033[1;32m=>\033[0m ${sel_is_str} $aom"
+					git config --global url."${aom}".insteadof https://android.googlesource.com
+					break
+				done
+				;;
+		esac
+	done
+}
+
+git_and_repo_mirror_reset(){
+	git_name=$(git config --global user.name)
+	git_email=$(git config --global user.email)
+	rm -f $HOME/.gitconfig
+	git config --global user.name "${git_name}"
+	git config --global user.email "${git_email}"
+
+	# REPO URL
+	export REPO_URL='https://gerrit.googlesource.com/git-repo'
+}
+
+mirror_unit_main(){
+	# for aosp | git mirrors
+	if [[ $keep_mirror_arg -eq 0 ]];then
+		echo -e "${use_mirror_str}"
+		select use_mirror_sel in "Yes" "No"
+		do
+			case $use_mirror_sel in
+				"Yes")
+					declare -i USE_GIT_AOSP_MIRROR=1
+					select_mirror
+					export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
+					;;
+				"No" | *)
+					declare -i USE_GIT_AOSP_MIRROR=0
+					git_and_repo_mirror_reset
+					echo -e "\033[1;36m=>\033[0m ${skip_mirror_str}"
+					;;
+			esac
+			break
+		done
+	else
+		echo -e "\033[1;32m=>\033[0m ${keep_mirror_str}"
+	fi
+}
+
+######################### DEPS UNIT #########################
+ubuntu_deps(){
+	sudo apt update -y
+	sudo apt install software-properties-common lsb-core -y
+
+	lsb_release="$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')"
+
+	case $lsb_release in
+		"Mint 18"* | "Ubuntu 16"*)
+			other_pkgs="libesd0-dev"
+			;;
+		"Ubuntu 2"* | "Pop!_OS 2"*)
+			other_pkgs="libncurses5 curl python-is-python3"
+			;;
+		"Debian GNU/Linux 10"* | "Debian GNU/Linux 11"*)
+			other_pkgs="libncurses5"
+			;;
+		*)
+			other_pkgs="libncurses5"
+			;;
+	esac
+
+	LATEST_MAKE_VERSION="4.3"
+
+	sudo apt install -y adb autoconf automake axel bc bison build-essential \
+	    ccache clang cmake curl expat fastboot flex g++ \
+	    g++-multilib gawk gcc gcc-multilib git git-lfs gnupg gperf \
+ 	    htop imagemagick lib32ncurses5-dev lib32z1-dev libtinfo5 libc6-dev libcap-dev \
+	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
+	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
+	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
+	    pngquant python2.7 python3 android-platform-tools-base python-all-dev re2c schedtool squashfs-tools subversion \
+	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
+	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
+
+	sudo systemctl restart udev
+}
+
+arch_deps(){
+	sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+
+	if [[ ! $(grep '# aosp-setup add ustc archlinuxcn' /etc/pacman.conf) ]];then
+		 sudo sed -i '$a \
+\
+# aosp-setup add ustc archlinuxcn \
+[archlinuxcn] \
+SigLevel = Optional TrustAll \
+Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
+' /etc/pacman.conf
+        fi
+
+	if [[ $env_run_time -le 2 ]];then
+		sudo pacman -Sy --noconfirm archlinuxcn-keyring
+	fi
+	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
+	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel)
+	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
+	sudo pacman -S --noconfirm --needed android-tools # android-udev
+}
+
+fedora_deps(){
+	sudo dnf install -y \
+		android-tools autoconf213 bison bzip2 ccache clang curl flex gawk gcc-c++ git git-lfs glibc-devel glibc-static libstdc++-static libX11-devel make mesa-libGL-devel ncurses-devel openssl patch zlib-devel ncurses-devel.i686 readline-devel.i686 zlib-devel.i686 libX11-devel.i686 mesa-libGL-devel.i686 glibc-devel.i686 libstdc++.i686 libXrandr.i686 zip perl-Digest-SHA python2 wget lzop openssl-devel java-1.8.0-openjdk-devel ImageMagick schedtool lzip vboot-utils vim
+
+	# The package libncurses5 is not available, so we need to hack our way by symlinking the required library.
+	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libncurses.so.5
+	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libtinfo.so.5
+	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
+	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libtinfo.so.5
+
+	sudo udevadm control --reload-rules
+}
+
+solus_deps(){
+	sudo eopkg it -c system.devel
+	sudo eopkg it openjdk-8-devel curl-devel git gnupg gperf libgcc-32bit libxslt-devel lzop ncurses-32bit-devel ncurses-devel readline-32bit-devel rsync schedtool sdl1-devel squashfs-tools unzip wxwidgets-devel zip zlib-32bit-devel lzip
+
+	sudo usysconf run -f
+}
+
+######################### BUILD DEVICE(POST ENV) ENV UNIT #####################
+repo_check(){
+	### handle git-repo
+	## Decline handle git-repo because scripts do it
+
+	if [[ "$(command -v repo)" == "" ]];then
+		repo_tg_path=/usr/bin/repo
+		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path --silent
+		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
+		echo -e "\033[1;32m=>\033[0m ${repo_added_str}"
+	fi
+
+	touch $HOME/.bashrc
+	if [[ ! $(grep '# android sync-helper' $HOME/.bashrc) ]];then
+		cat <<BASHEOF >> $HOME/.bashrc
+# android sync-helper
+export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
+readonly REPO_URL
+BASHEOF
+	fi
+
+	### handle repo bin path
+	touch $HOME/.profile
+	if [[ ! $(grep '# android sync-helper' $HOME/.profile) ]];then
+		cat <<PROFILEEOF >> $HOME/.profile
+# android sync-helper
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+PROFILEEOF
+	fi
+
+	### handle disconnect ssh issue
+	# sudo sed -i 's/^export TMOUT=.*/export TMOUT=0/' /etc/profile && sudo sed -i "/#ClientAliveInterval/a\ClientAliveInterval 60" /etc/ssh/sshd_config && sudo sed -i "/#ClientAliveInterval/d" /etc/ssh/sshd_config && sudo sed -i '/ClientAliveCountMax/ s/^#//' /etc/ssh/sshd_config &&sudo /bin/systemctl restart sshd.service
+}
+
+adb_rules_setup(){
+	if [[ ! -f /etc/udev/rules.d/51-android.rules ]];then
+		sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/main/51-android.rules
+	fi
+	sudo chmod 644 /etc/udev/rules.d/51-android.rules
+	sudo chown root /etc/udev/rules.d/51-android.rules
+}
+
+setup_build_deps(){
+	#adb path
+	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
+		sed -i '$a \
+# add Android SDK platform tools to path \
+if [ -d "$HOME/platform-tools" ] ; then \
+ PATH="$HOME/platform-tools:$PATH" \
+fi' $HOME/.bashrc
+	fi
+
+	# lineageos:  bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
+	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
+	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
+
+	if [[ "$(command -v apt)" != "" ]]; then
+		ubuntu_deps
+	elif [[ "$(command -v pacman)" != "" ]]; then
+     		arch_deps
+ 	elif [[ "$(command -v yum)" != "" ]]; then
+     		fedora_deps
+	elif [[ "$(command -v eopkg)" != "" ]]; then
+            	solus_deps
+	fi
+
+	# android adb udev rules
+	if [[ ! $HOSTNAME =~ 'VM' ]];then
+		adb_rules_setup
+	fi
+	cd $AOSP_SETUP_ROOT
+}
+
+android_env_setup(){
+	# check repo
+	repo_check
+
+	# setup(install) build deps
+	if [[ $1 -eq 1 ]];then setup_build_deps;fi
+
+	# ssh
+	ssh_enlong_patch
+
+	#ccache fix
+	ccache_fix
+
+	# low RAM patch less than 25Gb
+	patch_when_low_ram
+
+	# fix sepolicy error
+	sepolicy_patch
+
+	# try: fix git early eof
+	git config --global http.postBuffer 1048576000
+	git config --global core.compression -1
+	git config --global http.lowSpeedLimit 0
+	git config --global http.lowSpeedTime 999999
+}
+
+######################### PRE SYNC & SYNC UNIT #########################
+rom_manifest_config(){
+
+	if [[ $1 != "" ]];then
+		if [[ $1 =~ "manifest" ]] || [[ $1 =~ "android" ]] && [[ ! $1 =~ "device" ]] && [[ ! $1 =~ "vendor" ]] && [[ ! $1 =~ "kernel" ]];then
+			ROM_MANIFEST=${rom_url}
+		fi
+	else
+
+		echo -e "\n${sel_rom_source_str}"
+		rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
+		select aosp_source in "${rom_sources[@]}"
+		do
+			case $aosp_source in
+				"LineageOS")
+					ROM_MANIFEST='https://github.com/LineageOS/android.git'
+					;;
+				"ArrowOS")
+					ROM_MANIFEST='https://github.com/ArrowOS/android_manifest.git'
+					;;
+				"Pixel Experience")
+					ROM_MANIFEST='https://github.com/PixelExperience/manifest.git'
+					;;
+				"Crdroid")
+					ROM_MANIFEST='https://github.com/crdroidandroid/android.git'
+					;;
+				"AlphaDroid")
+					ROM_MANIFEST='https://github.com/AlphaDroid-Project/manifest.git'
+					;;
+				"Evolution-X")
+					ROM_MANIFEST='https://github.com/Evolution-X/manifest.git'
+					;;
+				"Project-Elixir")
+					ROM_MANIFEST='https://github.com/Project-Elixir/manifest.git'
+					;;
+				"Paranoid Android (AOSPA)")
+					ROM_MANIFEST='https://github.com/AOSPA/manifest.git'
+					;;
+				"PixysOS")
+					ROM_MANIFEST='https://github.com/PixysOS/manifest.git'
+					;;
+				"SuperiorOS")
+					ROM_MANIFEST='https://github.com/SuperiorOS/manifest.git'
+					;;
+				"PixelPlusUI")
+					ROM_MANIFEST='https://github.com/PixelPlusUI/manifest.git'
+					;;
+				*)
+					echo 'ROM source not added crrently. Plese use: bash aosp.sh ${ROM_manifest_url}'
+					exit 1
+					;;
+			esac
+			break
+		done
+	fi
+}
+
+sync_config(){
 	str_to_arr $1 '/'
         declare -i url_all_num
         url_all_num=${#str_to_arr_result[@]}
@@ -338,251 +587,119 @@ sync_setup(){
 	cd $AOSP_SETUP_ROOT
 }
 
-custom_sync(){
+handle_sync(){
 	cd $aosp_source_dir
 	if [[ $REPO_INIT_NEED -eq 1 ]];then repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
 	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all)
 	cd $AOSP_SETUP_ROOT
 }
 
-use_git_aosp_and_repo_mirror(){
-	if [[ -f aosp-setup/helper.sh ]];then
-		helper_tg=aosp-setup/helper.sh
-	elif [[ -f helper.sh ]];then
-		helper_tg=helper.sh
-	else
-		helper_tg=''
-	fi
-
-	# REPO URL
-	export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
-
-	source $helper_tg
-}
-
-ssh_enlong_patch(){
-        if [[ $HOSTNAME =~ 'VM' ]];then
-		sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
-		sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
-		sudo systemctl restart sshd
-	fi
-}
-
-git_fix_openssl(){
-	# now ubuntu
-	sudo apt-get update
-	sudo apt-get install build-essential fakeroot dpkg-dev libcurl4-openssl-dev
-	sudo apt-get build-dep git
-
-	mkdir ~/git-openssl
-	cd ~/git-openssl
-	apt-get source git
-	cd git-*
-	sed -i 's/libcurl4-gnutls-dev/libcurl4-openssl-dev/g' debian/control
-	sed -i '/TEST =test/ d' debian/rules
-	sudo dpkg-buildpackage -rfakeroot -b
-}
-
-ccache_fix(){
-	# Custom Ccache
-	custom_ccache_dir=
-
-	if [[ ! $(grep 'Generated ccache config' $HOME/.bashrc) ]];then
-		default_ccache_dir=/home/$USER/.aosp_ccache
-		if [[ $custom_ccache_dir == "" ]];then
-			custom_ccache_dir=$default_ccache_dir
-		fi
-		mkdir -p /home/$USER/.ccache
-		mkdir -p $custom_ccache_dir
-		sudo mount --bind /home/$USER/.ccache $custom_ccache_dir
-		sudo chmod -R 777 $custom_ccache_dir
-
-		echo '''
-# Generated ccache config
-export USE_CCACHE=0
-export CCACHE_EXEC=/usr/bin/ccache
-export CCACHE_DIR='"$custom_ccache_dir"'
-ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
-	fi
-}
-
-other_fix(){
-        # fix Disallowed PATH Tool error
-
-        disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
-}
-
-git_and_repo_mirror_reset(){
-	git_name=$(git config --global user.name)
-	git_email=$(git config --global user.email)
-	rm -f $HOME/.gitconfig
-	git config --global user.name "${git_name}"
-	git config --global user.email "${git_email}"
-
-	# REPO URL
-	export REPO_URL='https://gerrit.googlesource.com/git-repo'
-}
+######################### CONFIG UNIT #########################
 
 ################# parse args #####################
 
-	all_args=$@
-	arg_arr=(${all_args})
-	rom_url=
-	keep_mirror_arg=0
+all_args=$@
+arg_arr=(${all_args})
+rom_url=
+keep_mirror_arg=0
 
-	for i in "${arg_arr[@]}"
-	do
-		case $i in
-			-k | -km | --keep-mirror)
-				keep_mirror_arg=1
-				;;
-			https://*)
-				rom_url=${i}
-				;;
-			--psyche)
-				if [[ ${aosp_source_dir_working} != "" ]];then
-					cd ${aosp_source_dir_working}
-					mkdir -p device/xiaomi/psyche_aosp-setup
-					curl -fSsL https://raw.githubusercontent.com/stuartore/android_device_xiaomi_psyche/rice-13-unstable/vendorsetup.sh -o device/xiaomi/psyche_aosp-setup/vendorsetup.sh
-					source build/envsetup.sh
-					rm -rf device/xiaomi/psyche_aosp-setup
-					cd $AOSP_SETUP_ROOT
-				fi
-				exit 0
-				;;
-		esac
-	done
+# for global fuction
+for i in "${arg_arr[@]}"
+do
+	case $i in
+		-k | -km | --keep-mirror)
+			keep_mirror_arg=1
+			;;
+		https://*)
+			rom_url=${i}
+			;;
+	esac
+done
+
+# for independent function
+for i in "${arg_arr[@]}"
+do
+	case $i in
+		--mirror)
+			mirror_unit_main
+			exit 0
+			;;
+		--lineage-sdk)
+			lineage_sdk_patch
+			exit 0
+			;;
+		--psyche)
+			if [[ ${aosp_source_dir_working} != "" ]];then
+				cd ${aosp_source_dir_working}
+				mkdir -p device/xiaomi/psyche_aosp-setup
+				curl -fSsL https://raw.githubusercontent.com/stuartore/android_device_xiaomi_psyche/rice-13-unstable/vendorsetup.sh -o device/xiaomi/psyche_aosp-setup/vendorsetup.sh
+				source build/envsetup.sh
+				rm -rf device/xiaomi/psyche_aosp-setup
+				cd $AOSP_SETUP_ROOT
+			fi
+			exit 0
+			;;
+	esac
+done
 
 ############## Setup Global Configuration ###############
-	# Install deps for setup configuration
-	if [[ "$(command -v apt)" != "" ]]; then
-		if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-			sudo apt-get update -yq
-			sudo apt-get install curl git -yq
-		fi
-	elif [[ "$(command -v pacman)" != "" ]]; then
-		sudo pacman -Syy
-		sudo pacman -Sy curl git
-	elif [[ "$(command -v eopkg)" != "" ]]; then
-        	sudo eopkg it curl git ccache
+# Install deps for setup configuration
+if [[ "$(command -v apt)" != "" ]]; then
+	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+		sudo apt-get update -yq
+		sudo apt-get install curl git -yq
 	fi
-	#clear
+elif [[ "$(command -v pacman)" != "" ]]; then
+	sudo pacman -Syy
+	sudo pacman -Sy curl git
+elif [[ "$(command -v eopkg)" != "" ]]; then
+	sudo eopkg it curl git ccache
+fi
+clear
 
-	####### start setup configuration ########
-	#
+####### start setup configuration ########
+#
 
-	# for aosp | git mirrors
-	if [[ $keep_mirror_arg -eq 0 ]];then
-		echo -e "${use_mirror_str}"
-		select use_mirror_sel in "Yes" "No"
-		do
-			case $use_mirror_sel in
-				"Yes")
-					declare -i USE_GIT_AOSP_MIRROR=1
-					use_git_aosp_and_repo_mirror
-					;;
-				"No" | *)
-					declare -i USE_GIT_AOSP_MIRROR=0
-					git_and_repo_mirror_reset
-					echo -e "\033[1;36m=>\033[0m ${skip_mirror_str}"
-					;;
-			esac
-			break
-		done
-	else
-		echo -e "\033[1;32m=>\033[0m ${keep_mirror_str}"
-	fi
+## select mirror or not
+mirror_unit_main
 
-	# git config
-	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
-		echo -e "\n==> Config git "
-	fi
-	if [[ $(git config user.name) == "" ]];then
-		read -p 'Your name: ' git_name
-		git config --global user.name "${git_name}"
-	fi
+# git config
+if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
+	echo -e "\n==> Config git "
+fi
+if [[ $(git config user.name) == "" ]];then
+	read -p 'Your name: ' git_name
+	git config --global user.name "${git_name}"
+fi
 
-	if [[ $(git config user.email) == "" ]];then
-		read -p 'Your email: ' git_email
-		git config --global user.email "${git_email}"
-	fi
+if [[ $(git config user.email) == "" ]];then
+	read -p 'Your email: ' git_email
+	git config --global user.email "${git_email}"
+fi
 
-	# config install android build dependencies
-	if [[ env_run_time -lt 3 ]];then
-		declare -i INSTALL_BUILD_DEPS=1
-		env_run_return=$?
-		env_run_time+=1
-		sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
-		sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
-	else
-		declare -i INSTALL_BUILD_DEPS=0
-	fi
+# config install android build dependencies
+if [[ env_run_time -lt 3 ]];then
+	declare -i INSTALL_BUILD_DEPS=1
+	env_run_return=$?
+	env_run_time+=1
+	sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
+	sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
+else
+	declare -i INSTALL_BUILD_DEPS=0
+fi
 
-	# custom arg for ROM manifest
-	if [[ $rom_url != "" ]];then
-		if [[ $rom_url =~ "manifest" ]] || [[ $rom_url =~ "android" ]] && [[ ! $rom_url =~ "device" ]] && [[ ! $rom_url =~ "vendor" ]] && [[ ! $rom_url =~ "kernel" ]];then
-			ROM_MANIFEST=${rom_url}
-		fi
-	else
-
-	echo -e "\n${sel_rom_source_str}"
-	rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
-	select aosp_source in "${rom_sources[@]}"
-	do
-		case $aosp_source in
-			"LineageOS")
-				ROM_MANIFEST='https://github.com/LineageOS/android.git'
-				;;
-			"ArrowOS")
-				ROM_MANIFEST='https://github.com/ArrowOS/android_manifest.git'
-				;;
-			"Pixel Experience")
-				ROM_MANIFEST='https://github.com/PixelExperience/manifest.git'
-				;;
-			"Crdroid")
-				ROM_MANIFEST='https://github.com/crdroidandroid/android.git'
-				;;
-			"AlphaDroid")
-				ROM_MANIFEST='https://github.com/AlphaDroid-Project/manifest.git'
-				;;
-			"Evolution-X")
-				ROM_MANIFEST='https://github.com/Evolution-X/manifest.git'
-				;;
-			"Project-Elixir")
-				ROM_MANIFEST='https://github.com/Project-Elixir/manifest.git'
-				;;
-			"Paranoid Android (AOSPA)")
-				ROM_MANIFEST='https://github.com/AOSPA/manifest.git'
-				;;
-			"PixysOS")
-				ROM_MANIFEST='https://github.com/PixysOS/manifest.git'
-				;;
-			"SuperiorOS")
-				ROM_MANIFEST='https://github.com/SuperiorOS/manifest.git'
-				;;
-			"PixelPlusUI")
-				ROM_MANIFEST='https://github.com/PixelPlusUI/manifest.git'
-				;;
-			*)
-				echo 'ROM source not added crrently. Plese use: bash aosp.sh ${ROM_manifest_url}'
-				exit 1
-				;;
-		esac
-		break
-	done
-	fi
-
-	sync_setup ${ROM_MANIFEST}
+# custom arg for ROM manifest
+rom_manifest_config $rom_url
+sync_config ${ROM_MANIFEST}
 
 ################## Setup Global Configuration End ##################
 
-
 main(){
-	#android environment setup
+	# android environment setup
 	android_env_setup $INSTALL_BUILD_DEPS
 
-	#handle aosp source
-	custom_sync
+	# handle aosp source
+	handle_sync
 
         # sync end info
         if [[ $? == "0" ]];then
