@@ -392,13 +392,14 @@ ccache_fix(){
 		if [[ $custom_ccache_dir == "" ]];then
 			custom_ccache_dir=$default_ccache_dir
 		fi
+		mkdir -p /home/$USER/.ccache
 		mkdir -p $custom_ccache_dir
 		sudo mount --bind /home/$USER/.ccache $custom_ccache_dir
 		sudo chmod -R 777 $custom_ccache_dir
 
 		echo '''
 # Generated ccache config
-export USE_CCACHE=1
+export USE_CCACHE=0
 export CCACHE_EXEC=/usr/bin/ccache
 export CCACHE_DIR='"$custom_ccache_dir"'
 ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
