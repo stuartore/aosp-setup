@@ -379,7 +379,7 @@ git_fix_openssl(){
 	apt-get source git
 	cd git-*
 	sed -i 's/libcurl4-gnutls-dev/libcurl4-openssl-dev/g' debian/control
-	sed -i /TEST =test/ d' debian/rules
+	sed -i '/TEST =test/ d' debian/rules
 	sudo dpkg-buildpackage -rfakeroot -b
 }
 
