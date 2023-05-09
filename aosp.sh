@@ -620,7 +620,7 @@ done
 for i in "${arg_arr[@]}"
 do
 	case $i in
-		--mirror)
+		-*-mirror)
 			mirror_unit_main
 			exit 0
 			;;
