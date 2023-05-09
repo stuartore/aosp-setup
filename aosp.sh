@@ -156,6 +156,33 @@ lineage_sdk_patch(){
 	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
 }
 
+dt_str_patch(){
+	# patch device tree string
+	# 1 - device tree directory
+	cd $aosp_source_dir_working
+
+	rom_spec_str="$(basename $(dirname "$(find vendor -maxdepth 2 -type d -iname 'bash_completion')"))"
+	dt_dir=device/$(dirname ${1})/$(basename ${1})
+	if [[ ! -d $dt_dir ]];then echo -e "=> ${dt_patch_exit_str}";exit 1;fi
+	cd $dt_dir
+	dt_device_name="$(grep 'PRODUCT_DEVICE :=' *.mk --max-count=1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')"
+	dt_main_mk=$(grep 'PRODUCT_DEVICE :=' *.mk  --max-count=1 | sed 's/[[:space:]]//g' | sed 's/:PRODUCT_DEVICE.*//g')
+	dt_old_str=$(echo $dt_main_mk | sed 's/_'"${dt_device_name}"'.*//g')
+
+	sed -i 's/'"${dt_old_str}"'/'"${rom_spec_str}"'/g' AndroidProducts.mk
+	sed -i 's/'"${dt_old_str}"'/'"${rom_spec_str}"'/g' $dt_main_mk
+	sed -i 's/vendor\/'"${dt_old_str}"'/vendor\/'"${rom_spec_str}"'/g' BoardConfig*.mk
+
+	dt_new_main_mk="${rom_spec_str}_${dt_device_name}.mk"
+	mv $dt_main_mk $dt_new_main_mk
+}
+
+allow_list_patch(){
+	# file: build/soong/scripts/check_boot_jars/package_allowed_list.txt
+	# com.oplus.os
+	# oplus.content.res
+	echo
+}
 other_fix(){
         # fix Disallowed PATH Tool error
 
@@ -626,6 +653,10 @@ do
 			;;
 		--lineage-sdk)
 			lineage_sdk_patch
+			exit 0
+			;;
+		--dt_bringup)
+			dt_str_patch $2
 			exit 0
 			;;
 		--psyche)
