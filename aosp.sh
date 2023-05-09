@@ -33,7 +33,7 @@ patch_when_low_ram(){
 	 declare -i pc_ram
 	 pc_ram=$get_pc_ram
 
-	 get_pc_swap_ram_raw=($(free -m | grep ${pc_swap_mem_str}))
+	 get_pc_swap_ram_raw=($(free -m | sed -n '2p'))
 	 get_pc_swap_ram=${get_pc_swap_ram_raw[1]}
 	 declare -i pc_sawp_ram=0
 	 pc_sawp_ram=$get_pc_swap_ram
