@@ -13,6 +13,7 @@ declare -i env_run_time
 env_run_last_return=0
 env_run_time=0
 aosp_source_dir_working=
+aosp_setup_dir_check_ok=0
 
 str_to_arr(){
 	# arg 1: string
@@ -152,8 +153,10 @@ ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
 }
 
 lineage_sdk_patch(){
+	cd $aosp_source_dir_working
 	git clone https://github.com/LineageOS/android_packages_resources_devicesettings.git -b lineage-20.0 packages/resources/devicesettings
 	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
+	cd $AOSP_SETUP_ROOT
 }
 
 dt_str_patch(){
@@ -377,7 +380,7 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 		sudo pacman -Sy --noconfirm archlinuxcn-keyring
 	fi
 	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
-	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel)
+	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel python-pip python-setuptools)
 	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
 	sudo pacman -S --noconfirm --needed android-tools # android-udev
 }
@@ -397,7 +400,7 @@ fedora_deps(){
 
 solus_deps(){
 	sudo eopkg it -c system.devel
-	sudo eopkg it openjdk-8-devel curl-devel git gnupg gperf libgcc-32bit libxslt-devel lzop ncurses-32bit-devel ncurses-devel readline-32bit-devel rsync schedtool sdl1-devel squashfs-tools unzip wxwidgets-devel zip zlib-32bit-devel lzip
+	sudo eopkg it openjdk-8-devel curl-devel git gnupg gperf libgcc-32bit libxslt-devel lzop ncurses-32bit-devel ncurses-devel readline-32bit-devel rsync schedtool sdl1-devel squashfs-tools unzip wxwidgets-devel zip zlib-32bit-devel lzip ccache
 
 	sudo usysconf run -f
 }
@@ -478,11 +481,11 @@ fi' $HOME/.bashrc
 }
 
 android_env_setup(){
-	# check repo
-	repo_check
-
 	# setup(install) build deps
 	if [[ $1 -eq 1 ]];then setup_build_deps;fi
+
+	# check repo
+	repo_check
 
 	# ssh
 	ssh_enlong_patch
@@ -622,6 +625,43 @@ handle_sync(){
 }
 
 ######################### CONFIG UNIT #########################
+aosp_setup_check(){
+	if [[ $1 -eq 1 ]];then return;fi
+
+	# check directory do not have non-English words
+	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g')"
+	spec_symbol_list=('~' '`' '!' '@' '#' '$' '%' '^' '&' '-' '+' '=' '[' ']' '\' '|' '/' ':' '<' '>' '?')
+
+	for spec_symbol in "${spec_symbol_list[@]}"
+	do
+		aosp_setup_dir_str="$(echo ${aosp_setup_dir_str} | sed 's|\'"$spec_symbol"'||g')"
+	done
+	if [[ "${aosp_setup_dir_str}" != "" ]];then
+		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=0/g' $(dirname $0)/${BASH_SOURCE}
+		echo -e "\033[1;33m=>\033[0m Found non-English direcotory string [\033[36m${aosp_setup_dir_str}\033[0m]\n\033[1;33m=>\033[0m Suggestions: rename it in Eng."
+		exit
+	else
+		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=1/g' $(dirname $0)/${BASH_SOURCE}
+	fi
+
+	# Install deps for setup configuration
+	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+		if [[ "$(command -v apt)" != "" ]]; then
+			if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+				sudo apt-get update -yq
+				sudo apt-get install curl git -yq
+			fi
+		elif [[ "$(command -v pacman)" != "" ]]; then
+			sudo pacman -Syy
+			sudo pacman -Sy curl git
+		elif [[ "$(command -v eopkg)" != "" ]]; then
+			sudo eopkg it curl git
+		fi
+	fi
+	clear
+}
+
+aosp_setup_check $aosp_setup_dir_check_ok
 
 ################# parse args #####################
 
@@ -674,19 +714,6 @@ do
 done
 
 ############## Setup Global Configuration ###############
-# Install deps for setup configuration
-if [[ "$(command -v apt)" != "" ]]; then
-	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-		sudo apt-get update -yq
-		sudo apt-get install curl git -yq
-	fi
-elif [[ "$(command -v pacman)" != "" ]]; then
-	sudo pacman -Syy
-	sudo pacman -Sy curl git
-elif [[ "$(command -v eopkg)" != "" ]]; then
-	sudo eopkg it curl git ccache
-fi
-clear
 
 ####### start setup configuration ########
 #
