@@ -660,7 +660,53 @@ aosp_setup_check(){
 	fi
 }
 
-aosp_setup_check $aosp_setup_dir_check_ok
+################# INSTRUCTION UNIT #################
+instructions_help(){
+	if [[ $LANG == "zh_CN.utf8" ]];then
+		cat<<INSTCN
+bash aosp.sh [arg]
+
+arg:
+    {ROM_manifest_url}	自定义ROM manifest同步源码
+    			例: bash aosp.sh https://github.com/{ROM_USER_NAME}/manifest.git
+    -k | --keep-mirror	保持镜像配置
+    --recheck		再次检测英文目录环境
+    
+independent arg:
+    --mirror 		配置git & aosp镜像
+    --dt_bringup	快速为当前ROM Bringup设备树
+    			例: device/xiaomi/thyme
+    			    bash aosp.sh --dt_bringup xiaomi/thyme
+    --lineage-sdk	如果你的设备树有Lineage libs并且当前ROM没有Lineage Sdk,可以
+    			使用它. 另外应根据log对vendor/{ROM_vendor}/build/soong/Android.bp
+    			增加module. 或相应的处理
+    --psyche		快速同步Xiaomi 12X编译依赖
+    -h | --help		说明
+INSTCN
+	else
+		cat<<INSTEN
+bash aosp.sh [arg]
+
+arg:
+    {ROM_manifest_url}	custom ROM manifest to sync
+    			eg: bash aosp.sh https://github.com/{ROM_USER_NAME}/manifest.git
+    -k | --keep-mirror	keep mirror configuration
+    --recheck		recheck English directory for build
+    
+independent arg:
+    --mirror 		use mirror for git & aosp
+    --dt_bringup	fast bringup device tree for current rom
+    			eg: bash aosp.sh --dt_bringup xiaomi/thyme
+    --lineage-sdk	if your device tree have lineage libs, try to use
+    			this patch. What's more, you may need to add one or
+    			more module for vendor/{ROM_vendor}/build/soong/Android.bp
+    --psyche		Build ROM for Xiaomi 12X.
+    			Fast sync dependencies
+    -h | --help		Show this instruction (help)
+
+INSTEN
+	fi
+}
 
 ################# parse args #####################
 
@@ -675,6 +721,9 @@ do
 	case $i in
 		-k | -km | --keep-mirror)
 			keep_mirror_arg=1
+			;;
+		--recheck)
+			aosp_setup_dir_check_ok=0
 			;;
 		https://*)
 			rom_url=${i}
@@ -709,6 +758,10 @@ do
 			fi
 			exit 0
 			;;
+		-h | --help)
+			instructions_help
+			exit 0
+			;;
 	esac
 done
 
@@ -716,6 +769,7 @@ done
 
 ####### start setup configuration ########
 #
+aosp_setup_check $aosp_setup_dir_check_ok
 
 ## select mirror or not
 clear
