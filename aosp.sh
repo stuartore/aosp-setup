@@ -658,7 +658,6 @@ aosp_setup_check(){
 			sudo eopkg it curl git
 		fi
 	fi
-	clear
 }
 
 aosp_setup_check $aosp_setup_dir_check_ok
@@ -719,6 +718,7 @@ done
 #
 
 ## select mirror or not
+clear
 mirror_unit_main
 
 # git config
