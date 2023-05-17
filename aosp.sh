@@ -51,10 +51,10 @@ patch_when_low_ram(){
 
 	if [[ $pc_ram_patch == 1 ]];then
 		# zram swap patch
-		if [[ ! -d ~/zram-swap ]];then
+		if [[ ! -f /usr/local/sbin/zram-swap.sh ]];then
 			git clone https://github.com/foundObjects/zram-swap.git ~/zram-swap
+			cd ~/zram-swap && sudo ./install.sh
 		fi
-		cd ~/zram-swap && sudo ./install.sh
 		cd $AOSP_SETUP_ROOT
 		sudo /usr/local/sbin/zram-swap.sh stop
 		sudo sed -i 's/#_zram_fixedsize="2G"/_zram_fixedsize="64G"/g' /etc/default/zram-swap
@@ -156,6 +156,8 @@ lineage_sdk_patch(){
 	cd $aosp_source_dir_working
 	git clone https://github.com/LineageOS/android_packages_resources_devicesettings.git -b lineage-20.0 packages/resources/devicesettings
 	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
+
+	# add trust usb & trust usb defaults
 	cd $AOSP_SETUP_ROOT
 }
 
@@ -186,10 +188,48 @@ allow_list_patch(){
 	# oplus.content.res
 	echo
 }
+
 other_fix(){
         # fix Disallowed PATH Tool error
-
         disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
+
+	# build continue after build error
+	m api-stubs-docs-non-updatable-update-current-api
+	m framework-bluetooth.stubs.source-update-current-api
+	m system-api-stubs-docs-non-updatable-update-current-api
+	m test-api-stubs-docs-non-updatable-update-current-api
+
+}
+
+psyche_7z_pack(){
+	# pack ROM using 7z
+	cd $AOSP_SETUP_ROOT
+	mkdir -p ROM/tmp
+
+	if [[ $1 == "" ]];then
+		rom_out_path=${aosp_source_dir_working}/out/target/product/psyche
+	else
+		if [[ ! -d $1 ]];then exit 1;fi
+		rom_out_path=$1/out/target/product/psyche
+	fi
+
+	if [[ -f $(dirname ${rom_out_path})/$(basename ${rom_out_path})/vbmeta_system.img ]];then
+		if [[ ! -d ROM/psyche_rom_bin ]];then
+			git clone git@github.com:stuartore/psyche_rom_bin.git --depth=1 ROM/psyche_rom_bin
+			if [[ $? != 0 ]];then echo -e "\n\033[1;33m=>\033[0m ${no_perm_git}";exit;fi
+		fi
+		cp -f ${rom_out_path}/*.img ROM/tmp
+		cp -rf ROM/psyche_rom_bin/* ROM/tmp
+		cd ROM/tmp
+		rm -f *test* *debug*
+		rom_pack_name=$(basename ${aosp_source_dir_working})_psyche_Xiaomi_12X_$(date "+%Y%m%d%H%M_%q%w%S").7z
+		7zr a ../${rom_pack_name} ./*.img
+		cd ../.. && rm -rf ROM/tmp
+	else
+		echo -e "\033[1;33m=>\033[0m ${pack_build_not_complete_str} \033[1;33m$(basename ${aosp_source_dir_working})\033[0m"
+		return
+	fi
+
 }
 
 ######################### MIRROR UNIT (OK) #########################
@@ -234,6 +274,9 @@ select_mirror(){
 						case $gm in
 							'https://kgithub.com')
 								git config --global url.https://raw.kgithub.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://hub.fgit.ml')
+								git config --global url.https://raw.fgit.ml.insteadof https://raw.githubusercontent.com
 								;;
 							'https://hub.njuu.cf')
 								git config --global url.https://raw.njuu.cf.insteadof https://raw.githubusercontent.com
@@ -357,7 +400,7 @@ ubuntu_deps(){
 	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
 	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
 	    pngquant python2.7 python3 android-platform-tools-base python-all-dev re2c schedtool squashfs-tools subversion \
-	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip \
+	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip p7zip p7zip-full \
 	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
 
 	sudo systemctl restart udev
@@ -380,14 +423,14 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 		sudo pacman -Sy --noconfirm archlinuxcn-keyring
 	fi
 	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
-	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel python-pip python-setuptools)
+	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel python-pip python-setuptools p7zip)
 	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
 	sudo pacman -S --noconfirm --needed android-tools # android-udev
 }
 
 fedora_deps(){
 	sudo dnf install -y \
-		android-tools autoconf213 bison bzip2 ccache clang curl flex gawk gcc-c++ git git-lfs glibc-devel glibc-static libstdc++-static libX11-devel make mesa-libGL-devel ncurses-devel openssl patch zlib-devel ncurses-devel.i686 readline-devel.i686 zlib-devel.i686 libX11-devel.i686 mesa-libGL-devel.i686 glibc-devel.i686 libstdc++.i686 libXrandr.i686 zip perl-Digest-SHA python2 wget lzop openssl-devel java-1.8.0-openjdk-devel ImageMagick schedtool lzip vboot-utils vim
+		android-tools autoconf213 bison bzip2 ccache clang curl flex gawk gcc-c++ git git-lfs p7zip glibc-devel glibc-static libstdc++-static libX11-devel make mesa-libGL-devel ncurses-devel openssl patch zlib-devel ncurses-devel.i686 readline-devel.i686 zlib-devel.i686 libX11-devel.i686 mesa-libGL-devel.i686 glibc-devel.i686 libstdc++.i686 libXrandr.i686 zip perl-Digest-SHA python2 wget lzop openssl-devel java-1.8.0-openjdk-devel ImageMagick schedtool lzip vboot-utils vim
 
 	# The package libncurses5 is not available, so we need to hack our way by symlinking the required library.
 	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libncurses.so.5
@@ -756,6 +799,10 @@ do
 				rm -rf device/xiaomi/psyche_aosp-setup
 				cd $AOSP_SETUP_ROOT
 			fi
+			exit 0
+			;;
+		--psyche-pack)
+			psyche_7z_pack $2
 			exit 0
 			;;
 		-h | --help)
