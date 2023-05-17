@@ -30,6 +30,10 @@ lang_en(){
 	
 	# fix sepolicy str
 	fix_sepolicy_str='fixed last used prebuilt sepolicy error'
+
+	# pack for psyche str
+	no_perm_git='No permission of this repository because of \033[1;32mself-use\033[0m purpose.'
+	pack_build_not_complete_str='Build not complete |'
 }
 
 lang_zh(){
@@ -62,19 +66,17 @@ lang_zh(){
 
 	# fix sepolicy str
 	fix_sepolicy_str='修复了最近使用的预编译sepolicy错误'
+
+	# pack for psyche str
+	no_perm_git='No permission of this repository because of \033[1;32mself-use\033[0m purpose.'
+	pack_build_not_complete_str='Build not complete |'
 }
 
-
-case $(cat /etc/timezone) in
-	"Asia/Shanghai")
+case $LANG in
+	"zh_CN"*)
 		lang_zh
 		;;
 	*)
-		if [[ $LANG =~ "zh_CN" ]];then
-			lang_zh
-		else
-			lang_en
-
-		fi
+		lang_en
 		;;
 esac
