@@ -154,10 +154,48 @@ ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
 
 lineage_sdk_patch(){
 	cd $aosp_source_dir_working
+	rom_spec_str="$(basename $(dirname "$(find vendor -maxdepth 2 -type d -iname 'bash_completion')"))"
+
 	git clone https://github.com/LineageOS/android_packages_resources_devicesettings.git -b lineage-20.0 packages/resources/devicesettings
 	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
 
 	# add trust usb & trust usb defaults
+	rom_build_soong_bp=vendor/${rom_spec_str}/build/soong/Android.bp
+
+	if [[ ! $(grep 'name: "trust_usb_control_defaults"' $rom_build_soong_bp) ]];then
+		sed -i '1a \
+trust_usb_control { \
+    name: "trust_usb_control_defaults", \
+    soong_config_variables: { \
+        target_trust_usb_control_path: { \
+            cppflags: ["-DUSB_CONTROL_PATH=\\"%s\\""], \
+        }, \
+        target_trust_usb_control_enable: { \
+            cppflags: ["-DUSB_CONTROL_ENABLE=\\"%s\\""], \
+        }, \
+        target_trust_usb_control_disable: { \
+            cppflags: ["-DUSB_CONTROL_DISABLE=\\"%s\\""], \
+        }, \
+    }, \
+}' $rom_build_soong_bp
+	fi
+
+	if [[ ! $(grep 'name: "trust_usb_control"' $rom_build_soong_bp) ]];then
+		sed -i '1a \
+\/\/ aosp-setup: lineage sdk patch \
+soong_config_module_type { \
+    name: "trust_usb_control", \
+    module_type: "cc_defaults", \
+    config_namespace: "lineageGlobalVars", \
+    value_variables: [ \
+        "target_trust_usb_control_path", \
+        "target_trust_usb_control_enable", \
+        "target_trust_usb_control_disable", \
+    ], \
+    properties: ["cppflags"], \
+}' $rom_build_soong_bp
+	fi
+
 	cd $AOSP_SETUP_ROOT
 }
 
