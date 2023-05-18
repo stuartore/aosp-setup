@@ -11,9 +11,9 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=0
-aosp_source_dir_working=
-aosp_setup_dir_check_ok=0
+env_run_time=3
+aosp_source_dir_working=android/SuperiorOS
+aosp_setup_dir_check_ok=1
 
 str_to_arr(){
 	# arg 1: string
@@ -217,7 +217,11 @@ dt_str_patch(){
 	sed -i 's/vendor\/'"${dt_old_str}"'/vendor\/'"${rom_spec_str}"'/g' BoardConfig*.mk
 
 	dt_new_main_mk="${rom_spec_str}_${dt_device_name}.mk"
-	mv $dt_main_mk $dt_new_main_mk
+
+	if [[ ! -f $dt_new_main_mk ]];then
+		mv $dt_main_mk $dt_new_main_mk
+	fi
+
 }
 
 allow_list_patch(){
