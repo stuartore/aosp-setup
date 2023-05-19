@@ -11,9 +11,9 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=3
-aosp_source_dir_working=android/SuperiorOS
-aosp_setup_dir_check_ok=1
+env_run_time=0
+aosp_source_dir_working=
+aosp_setup_dir_check_ok=0
 
 str_to_arr(){
 	# arg 1: string
@@ -154,7 +154,7 @@ ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
 
 lineage_sdk_patch(){
 	cd $aosp_source_dir_working
-	rom_spec_str="$(basename $(dirname "$(find vendor -maxdepth 2 -type d -iname 'bash_completion')"))"
+	rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
 
 	git clone https://github.com/LineageOS/android_packages_resources_devicesettings.git -b lineage-20.0 packages/resources/devicesettings
 	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
@@ -204,7 +204,7 @@ dt_str_patch(){
 	# 1 - device tree directory
 	cd $aosp_source_dir_working
 
-	rom_spec_str="$(basename $(dirname "$(find vendor -maxdepth 2 -type d -iname 'bash_completion')"))"
+	rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
 	dt_dir=device/$(dirname ${1})/$(basename ${1})
 	if [[ ! -d $dt_dir ]];then echo -e "=> ${dt_patch_exit_str}";exit 1;fi
 	cd $dt_dir
@@ -834,11 +834,22 @@ do
 			;;
 		--psyche)
 			if [[ ${aosp_source_dir_working} != "" ]];then
+				select rom_version in "Stable" "Fastcharge"
+				do
+					case $rom_version in
+						"Stable")
+							dt_branch='thirteen'
+							;;
+						*)
+							dt_branch='thirteen-unstable'
+							;;
+					esac
+					break
+				done
+
 				cd ${aosp_source_dir_working}
-				mkdir -p device/xiaomi/psyche_aosp-setup
-				curl -fSsL https://raw.githubusercontent.com/stuartore/android_device_xiaomi_psyche/rice-13-unstable/vendorsetup.sh -o device/xiaomi/psyche_aosp-setup/vendorsetup.sh
-				source build/envsetup.sh
-				rm -rf device/xiaomi/psyche_aosp-setup
+				mkdir -p device/xiaomi
+				git clone https://github.com/stuartore/android_device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
 				cd $AOSP_SETUP_ROOT
 			fi
 			exit 0
