@@ -32,6 +32,7 @@ lang_en(){
 	fix_sepolicy_str='fixed last used prebuilt sepolicy error'
 
 	# pack for psyche str
+	pack_no_rom_str='Please build ROM before pack'
 	no_perm_git='No permission of this repository because of \033[1;32mself-use\033[0m purpose.'
 	pack_build_not_complete_str='Build not complete |'
 }
@@ -68,6 +69,7 @@ lang_zh(){
 	fix_sepolicy_str='修复了最近使用的预编译sepolicy错误'
 
 	# pack for psyche str
+	pack_no_rom_str='Please build ROM before pack'
 	no_perm_git='No permission of this repository because of \033[1;32mself-use\033[0m purpose.'
 	pack_build_not_complete_str='Build not complete |'
 }
