@@ -243,6 +243,21 @@ other_fix(){
 
 }
 
+so_deps(){
+	so_deps_list=($(readelf -a $1 | grep NEEDED | sed 's/.*Shared\ library://g' | sed 's/\[//g' | sed 's/\]//g' | sed 's/[[:space:]]//g' | sort))
+	echo -e "\033[1;32m=>\033[0m Dep \033[4m$(basename $1)\033[0m\n"
+	for so_dep in "${so_deps_list[@]}"
+	do
+		if [[ $(find "$(dirname $1)/.." -iname $so_dep) ]];then
+			echo -e "\033[1;32m$so_dep\033[0m"
+
+		else
+			echo -e "$so_dep"
+		fi
+	done
+	echo
+}
+
 psyche_7z_pack(){
 	# pack ROM using 7z
 	if [[ $aosp_source_dir_working == "" ]];then echo -e "\033[1;33m=>\033[0m ${pack_no_rom_str}";return;fi
@@ -827,6 +842,12 @@ do
 			;;
 		--lineage-sdk)
 			lineage_sdk_patch
+			exit 0
+			;;
+		--so-deps)
+			if [[ $2 =~ ".so" ]];then
+				so_deps $2
+			fi
 			exit 0
 			;;
 		--dt_bringup)
