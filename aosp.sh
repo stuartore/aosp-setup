@@ -480,7 +480,7 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 	if [[ $env_run_time -le 2 ]];then
 		sudo pacman -Sy --noconfirm archlinuxcn-keyring
 	fi
-	sudo pacman -Syyu --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
+	sudo pacman -Syy --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
 	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel python-pip python-setuptools p7zip)
 	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
 	sudo pacman -S --noconfirm --needed android-tools # android-udev
