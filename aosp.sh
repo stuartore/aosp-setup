@@ -273,7 +273,7 @@ psyche_7z_pack(){
 
 	if [[ -f $(dirname ${rom_out_path})/$(basename ${rom_out_path})/vbmeta_system.img ]];then
 		if [[ ! -d ROM/psyche_rom_bin ]];then
-			git clone git@github.com:stuartore/psyche_rom_bin.git --depth=1 ROM/psyche_rom_bin
+			git clone https://github.com/stuartore/psyche_rom_bin.git --depth=1 ROM/psyche_rom_bin
 			if [[ $? != 0 ]];then echo -e "\n\033[1;33m=>\033[0m ${no_perm_git}";exit;fi
 		fi
 		cp -f ${rom_out_path}/*.img ROM/tmp
@@ -281,7 +281,7 @@ psyche_7z_pack(){
 		cd ROM/tmp
 		rm -f *test* *debug*
 		rom_pack_name=$(basename ${aosp_source_dir_working})_psyche_Xiaomi_12X_$(date "+%Y%m%d%H%M_%q%w%S").7z
-		7zr a ../${rom_pack_name} ./*.img
+		7zr a ../${rom_pack_name} ./*
 		cd ../.. && rm -rf ROM/tmp
 	else
 		echo -e "\033[1;33m=>\033[0m ${pack_build_not_complete_str} \033[1;33m$(basename ${aosp_source_dir_working})\033[0m"
