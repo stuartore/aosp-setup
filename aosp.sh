@@ -856,18 +856,7 @@ do
 			;;
 		--psyche)
 			if [[ ${aosp_source_dir_working} != "" ]];then
-				select rom_version in "Stable" "Fastcharge"
-				do
-					case $rom_version in
-						"Stable")
-							dt_branch='thirteen'
-							;;
-						*)
-							dt_branch='thirteen-unstable'
-							;;
-					esac
-					break
-				done
+				dt_branch='thirteen-staging'
 
 				cd ${aosp_source_dir_working}
 				mkdir -p device/xiaomi
