@@ -11,7 +11,7 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=1
+env_run_time=0
 aosp_source_dir_working=
 aosp_setup_dir_check_ok=0
 
@@ -320,7 +320,7 @@ select_mirror(){
 		case $task in
 			github)
 				## handle github.com
-				echo -e "${choose_git_mirror_str}\n"
+				echo -e "\n${choose_git_mirror_str}"
 				select gm in "${sel_github_list[@]}"
 				do
 					if [[ $gm != "" ]];then
@@ -559,7 +559,6 @@ deps_install_check(){
 }
 
 setup_build_deps(){
-	#return 5
 	#adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
 		sed -i '$a \
