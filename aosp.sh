@@ -11,7 +11,7 @@ declare -i env_run_time
 
 # generated to avoid install deps repeatedly. EDIT env_run_time=3 or higher to skip install deps
 env_run_last_return=0
-env_run_time=0
+env_run_time=1
 aosp_source_dir_working=
 aosp_setup_dir_check_ok=0
 
@@ -236,10 +236,7 @@ other_fix(){
         disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
 
 	# build continue after build error
-	m api-stubs-docs-non-updatable-update-current-api
-	m framework-bluetooth.stubs.source-update-current-api
-	m system-api-stubs-docs-non-updatable-update-current-api
-	m test-api-stubs-docs-non-updatable-update-current-api
+	m api-stubs-docs-non-updatable-update-current-api && m framework-bluetooth.stubs.source-update-current-api && m system-api-stubs-docs-non-updatable-update-current-api && m test-api-stubs-docs-non-updatable-update-current-api
 
 }
 
@@ -550,7 +547,19 @@ adb_rules_setup(){
 	sudo chown root /etc/udev/rules.d/51-android.rules
 }
 
+deps_install_check(){
+	# config install android build dependencies
+	if [[ $env_run_time -lt 3 ]] || [[ $env_run_last_return -gt 0 ]];then
+		env_run_time+=1
+		sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
+		echo "Need"
+	else
+		echo "NoNeed"
+	fi
+}
+
 setup_build_deps(){
+	#return 5
 	#adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
 		sed -i '$a \
@@ -583,7 +592,7 @@ fi' $HOME/.bashrc
 
 android_env_setup(){
 	# setup(install) build deps
-	if [[ $1 -eq 1 ]];then setup_build_deps;fi
+	if [[ $1 == "Need" ]];then setup_build_deps && env_run_return=$? && sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE};fi
 
 	# check repo
 	repo_check
@@ -609,14 +618,13 @@ android_env_setup(){
 
 ######################### PRE SYNC & SYNC UNIT #########################
 rom_manifest_config(){
-
 	if [[ $1 != "" ]];then
 		if [[ $1 =~ "manifest" ]] || [[ $1 =~ "android" ]] && [[ ! $1 =~ "device" ]] && [[ ! $1 =~ "vendor" ]] && [[ ! $1 =~ "kernel" ]];then
 			ROM_MANIFEST=${rom_url}
 		fi
 	else
 
-		echo -e "\n${sel_rom_source_str}"
+		#echo -e "\n${sel_rom_source_str}"
 		rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 		select aosp_source in "${rom_sources[@]}"
 		do
@@ -654,17 +662,14 @@ rom_manifest_config(){
 				"PixelPlusUI")
 					ROM_MANIFEST='https://github.com/PixelPlusUI/manifest.git'
 					;;
-				*)
-					echo 'ROM source not added crrently. Plese use: bash aosp.sh ${ROM_manifest_url}'
-					exit 1
-					;;
 			esac
 			break
 		done
 	fi
+	echo ${ROM_MANIFEST}
 }
 
-sync_config(){
+handle_sync(){
 	str_to_arr $1 '/'
         declare -i url_all_num
         url_all_num=${#str_to_arr_result[@]}
@@ -715,50 +720,9 @@ sync_config(){
 		fi
 		break
 	done
-	cd $AOSP_SETUP_ROOT
-}
-
-handle_sync(){
-	cd $aosp_source_dir
 	if [[ $REPO_INIT_NEED -eq 1 ]];then repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
 	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all)
 	cd $AOSP_SETUP_ROOT
-}
-
-######################### CONFIG UNIT #########################
-aosp_setup_check(){
-	if [[ $1 -eq 1 ]];then return;fi
-
-	# check directory do not have non-English words
-	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g')"
-	spec_symbol_list=('~' '`' '!' '@' '#' '$' '%' '^' '&' '-' '+' '=' '[' ']' '\' '|' '/' ':' '<' '>' '?')
-
-	for spec_symbol in "${spec_symbol_list[@]}"
-	do
-		aosp_setup_dir_str="$(echo ${aosp_setup_dir_str} | sed 's|\'"$spec_symbol"'||g')"
-	done
-	if [[ "${aosp_setup_dir_str}" != "" ]];then
-		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=0/g' $(dirname $0)/${BASH_SOURCE}
-		echo -e "\033[1;33m=>\033[0m Found non-English direcotory string [\033[36m${aosp_setup_dir_str}\033[0m]\n\033[1;33m=>\033[0m Suggestions: rename it in Eng."
-		exit
-	else
-		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=1/g' $(dirname $0)/${BASH_SOURCE}
-	fi
-
-	# Install deps for setup configuration
-	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-		if [[ "$(command -v apt)" != "" ]]; then
-			if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-				sudo apt-get update -yq
-				sudo apt-get install curl git -yq
-			fi
-		elif [[ "$(command -v pacman)" != "" ]]; then
-			sudo pacman -Syy
-			sudo pacman -Sy curl git
-		elif [[ "$(command -v eopkg)" != "" ]]; then
-			sudo eopkg it curl git
-		fi
-	fi
 }
 
 ################# INSTRUCTION UNIT #################
@@ -876,53 +840,70 @@ do
 	esac
 done
 
-############## Setup Global Configuration ###############
+######################### CONFIG UNIT #########################
+aosp_setup_check(){
+	if [[ $1 -eq 1 ]];then return;fi
 
-####### start setup configuration ########
-#
+	# check directory do not have non-English words
+	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g')"
+	spec_symbol_list=('~' '`' '!' '@' '#' '$' '%' '^' '&' '-' '+' '=' '[' ']' '\' '|' '/' ':' '<' '>' '?')
+
+	for spec_symbol in "${spec_symbol_list[@]}"
+	do
+		aosp_setup_dir_str="$(echo ${aosp_setup_dir_str} | sed 's|\'"$spec_symbol"'||g')"
+	done
+	if [[ "${aosp_setup_dir_str}" != "" ]];then
+		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=0/g' $(dirname $0)/${BASH_SOURCE}
+		echo -e "\033[1;33m=>\033[0m Found non-English direcotory string [\033[36m${aosp_setup_dir_str}\033[0m]\n\033[1;33m=>\033[0m Suggestions: rename it in Eng."
+		exit
+	else
+		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=1/g' $(dirname $0)/${BASH_SOURCE}
+	fi
+
+	# Install deps for setup configuration
+	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+		if [[ "$(command -v apt)" != "" ]]; then
+			if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+				sudo apt-get update -yq
+				sudo apt-get install curl git -yq
+			fi
+		elif [[ "$(command -v pacman)" != "" ]]; then
+			sudo pacman -Syy
+			sudo pacman -Sy curl git
+		elif [[ "$(command -v eopkg)" != "" ]]; then
+			sudo eopkg it curl git
+		fi
+	fi
+}
+
+git_config_user_info(){
+	# git config
+	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
+		echo -e "\n==> Config git "
+	fi
+	if [[ $(git config user.name) == "" ]];then
+		read -p 'Your name: ' git_name
+		git config --global user.name "${git_name}"
+	fi
+
+	if [[ $(git config user.email) == "" ]];then
+		read -p 'Your email: ' git_email
+		git config --global user.email "${git_email}"
+	fi
+}
+
 aosp_setup_check $aosp_setup_dir_check_ok
-
-## select mirror or not
 clear
+
 mirror_unit_main
-
-# git config
-if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
-	echo -e "\n==> Config git "
-fi
-if [[ $(git config user.name) == "" ]];then
-	read -p 'Your name: ' git_name
-	git config --global user.name "${git_name}"
-fi
-
-if [[ $(git config user.email) == "" ]];then
-	read -p 'Your email: ' git_email
-	git config --global user.email "${git_email}"
-fi
-
-# config install android build dependencies
-if [[ env_run_time -lt 3 ]];then
-	declare -i INSTALL_BUILD_DEPS=1
-	env_run_return=$?
-	env_run_time+=1
-	sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}
-	sed -i '14s/env_run_time=./env_run_time='"${env_run_time}"'/g' $(dirname $0)/${BASH_SOURCE}
-else
-	declare -i INSTALL_BUILD_DEPS=0
-fi
-
-# custom arg for ROM manifest
-rom_manifest_config $rom_url
-sync_config ${ROM_MANIFEST}
-
-################## Setup Global Configuration End ##################
+git_config_user_info
 
 main(){
 	# android environment setup
-	android_env_setup $INSTALL_BUILD_DEPS
+	android_env_setup $(echo $(deps_install_check))
 
 	# handle aosp source
-	handle_sync
+	handle_sync $(echo $(rom_manifest_config ${rom_url}))
 
         # sync end info
         if [[ $? == "0" ]];then
