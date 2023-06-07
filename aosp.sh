@@ -559,6 +559,7 @@ deps_install_check(){
 }
 
 setup_build_deps(){
+	#return 5
 	#adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
 		sed -i '$a \
@@ -819,11 +820,11 @@ do
 			;;
 		--psyche)
 			if [[ ${aosp_source_dir_working} != "" ]];then
-				dt_branch='thirteen-staging'
+				dt_branch='thirteen'
 
 				cd ${aosp_source_dir_working}
 				mkdir -p device/xiaomi
-				git clone https://github.com/stuartore/android_device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
+				git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
 				cd $AOSP_SETUP_ROOT
 			fi
 			exit 0
