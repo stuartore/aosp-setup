@@ -824,7 +824,8 @@ do
 
 				cd ${aosp_source_dir_working}
 				mkdir -p device/xiaomi
-				git clone git@github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
+				git clone git@github.com:stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
+				source build/envsetup.sh
 				cd $AOSP_SETUP_ROOT
 			fi
 			exit 0
