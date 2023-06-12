@@ -231,6 +231,10 @@ allow_list_patch(){
 	echo
 }
 
+source_webview_check(){
+	#  out/host/linux-x86/bin/aapt external/chromium-webview/prebuilt/arm64/webview.apk
+	echo
+}
 other_fix(){
         # fix Disallowed PATH Tool error
         disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
