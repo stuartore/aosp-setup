@@ -143,12 +143,12 @@ ccache_fix(){
 		sudo mount --bind /home/$USER/.ccache $custom_ccache_dir
 		sudo chmod -R 777 $custom_ccache_dir
 
-		echo '''
-# Generated ccache config
-export USE_CCACHE=0
-export CCACHE_EXEC=/usr/bin/ccache
-export CCACHE_DIR='"$custom_ccache_dir"'
-ccache -M 50G -F 0''' | tee -a $HOME/.bashrc
+		sed -i '$a \
+# Generated ccache config \
+export USE_CCACHE=0 \
+export CCACHE_EXEC=\/usr\/bin\/ccache \
+export CCACHE_DIR='"$custom_ccache_dir"' \
+ccache -M 50G -F 0' $HOME/.bashrc
 	fi
 }
 
