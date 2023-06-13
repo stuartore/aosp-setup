@@ -234,7 +234,15 @@ allow_list_patch(){
 source_webview_check(){
 	#  out/host/linux-x86/bin/aapt external/chromium-webview/prebuilt/arm64/webview.apk
 	echo
+}	
+
+sepolicy_error_fix(){
+	# Files system/sepolicy/private/property.te and system/sepolicy/prebuilts/api/33.0/private/property.te differ
+	# Failed to resolve expandtypeattribute statement at /home/ubuntu/aosp-setup/android/Project-Elixir/out/soong/.intermediates/system/sepolicy/compat/system_ext_30.0.cil/android_common/gen/system_ext_30.0.cil:1
+	# 
+	echo
 }
+
 other_fix(){
         # fix Disallowed PATH Tool error
         disallowed_tg_file=${aosp_source_dir}/build/sonng/ui/path/config.go
