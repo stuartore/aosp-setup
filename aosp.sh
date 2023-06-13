@@ -160,6 +160,9 @@ lineage_sdk_patch(){
 	git clone https://github.com/LineageOS/android_packages_resources_devicesettings.git -b lineage-20.0 packages/resources/devicesettings
 	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
 
+	# fix error for aleady defined Android.bp
+	#sh -c "$(cat out/error.log  | grep 'already defined' | sed 's/Android.bp.*/Android.bp/g' | sed 's/.*hardware/hardware/g' | sed 's/^/rm &/g')"
+	
 	# add trust usb & trust usb defaults
 	rom_build_soong_bp=vendor/${rom_spec_str}/build/soong/Android.bp
 
