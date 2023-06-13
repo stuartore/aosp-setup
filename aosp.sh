@@ -91,6 +91,10 @@ sepolicy_patch(){
 	# 1. system/sepolicy/public |  system/sepolicy/prebuilts/api/33.0/public
 	# 2. system/sepolicy/priviate  |  system/sepolicy/prebuilts/api/33.0/priviate
 
+	# Files system/sepolicy/private/property.te and system/sepolicy/prebuilts/api/33.0/private/property.te differ
+	# Failed to resolve expandtypeattribute statement at /home/ubuntu/aosp-setup/android/Project-Elixir/out/soong/.intermediates/system/sepolicy/compat/system_ext_30.0.cil/android_common/gen/system_ext_30.0.cil:1
+	# 
+
 	cd $AOSP_SETUP_ROOT
 	if [[ ! -d $aosp_source_dir_working ]];then
 		return
@@ -98,10 +102,7 @@ sepolicy_patch(){
 		cd ${aosp_source_dir_working}
 		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
 
-		if [[ -d system/sepolicy/public ]];then
-			eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
-			eval "$(diff system/sepolicy/private system/sepolicy/prebuilts/api/33.0/private | grep diff | sed 's/diff/cp -f/g')"
-		fi
+		# need to merge from local shell codes
 	fi
 	cd $AOSP_SETUP_ROOT
 }
@@ -233,13 +234,6 @@ allow_list_patch(){
 
 source_webview_check(){
 	#  out/host/linux-x86/bin/aapt external/chromium-webview/prebuilt/arm64/webview.apk
-	echo
-}	
-
-sepolicy_error_fix(){
-	# Files system/sepolicy/private/property.te and system/sepolicy/prebuilts/api/33.0/private/property.te differ
-	# Failed to resolve expandtypeattribute statement at /home/ubuntu/aosp-setup/android/Project-Elixir/out/soong/.intermediates/system/sepolicy/compat/system_ext_30.0.cil/android_common/gen/system_ext_30.0.cil:1
-	# 
 	echo
 }
 
