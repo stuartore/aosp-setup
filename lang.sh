@@ -31,6 +31,9 @@ lang_en(){
 	# fix sepolicy str
 	fix_sepolicy_str='fixed last used prebuilt sepolicy error'
 
+	# dt bringup str
+	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/rahael"
+
 	# pack for psyche str
 	pack_no_rom_str='Please build ROM before pack'
 	no_perm_git='No permission of this repository because of \033[1;32mself-use\033[0m purpose.'
@@ -67,6 +70,9 @@ lang_zh(){
 
 	# fix sepolicy str
 	fix_sepolicy_str='修复了最近使用的预编译sepolicy错误'
+
+	# dt bringup str
+	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/rahael"
 
 	# pack for psyche str
 	pack_no_rom_str='Please build ROM before pack'
