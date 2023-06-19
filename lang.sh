@@ -32,7 +32,7 @@ lang_en(){
 	fix_sepolicy_str='fixed last used prebuilt sepolicy error'
 
 	# dt bringup str
-	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/rahael"
+	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/raphael"
 
 	# pack for psyche str
 	pack_no_rom_str='Please build ROM before pack'
@@ -72,7 +72,7 @@ lang_zh(){
 	fix_sepolicy_str='修复了最近使用的预编译sepolicy错误'
 
 	# dt bringup str
-	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/rahael"
+	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/raphael"
 
 	# pack for psyche str
 	pack_no_rom_str='Please build ROM before pack'
