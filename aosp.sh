@@ -1050,7 +1050,7 @@ main(){
 	# android environment setup
 	android_env_setup $(echo $(env_install_mode))
 
-	# handle aosp source, device tree source
+	# handle aosp source
 	handle_sync $(echo $(rom_manifest_config ${aosp_manifest_url})) && echo -e "\033[1;32m=>\033[0m ${sync_sucess_str}" || echo -e "\033[1;32m=>\033[0m  ${repo_error_str}"
 
         # post tasks
