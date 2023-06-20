@@ -856,6 +856,10 @@ handle_sync(){
 ################# POST TASK UNIT #################
 
 psyche_deps(){
+	if [[ $aosp_source_dir != "" ]];then
+		aosp_source_dir_working=$aosp_source_dir
+	fi
+
 	if [[ ${aosp_source_dir_working} != "" ]];then
 		dt_branch='thirteen-staging'
 
