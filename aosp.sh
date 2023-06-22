@@ -305,6 +305,13 @@ sepolicy_differ_error_handle(){
 	sh -c "$(grep Command out/error.log | sed 's/Command://g')"
 }
 
+sysprop_dump_error_handle(){
+	# It's maybe not perfect
+	sysprop_dump_in_log=($(grep = out/error.log | grep -v 'Command:' | grep '\.'))
+	sysprop_real_dump_list=($(grep = out/error.log | grep -v 'Command:' | grep '\.' | sed 's/=.*//g' | uniq))
+	
+}
+
 stubs_api_error_handle(){
 	source build/envsetup.sh
 	m api-stubs-docs-non-updatable-update-current-api && m framework-bluetooth.stubs.source-update-current-api && m system-api-stubs-docs-non-updatable-update-current-api && m test-api-stubs-docs-non-updatable-update-current-api
@@ -312,14 +319,11 @@ stubs_api_error_handle(){
 
 allow_list_error_handle(){
 	# file: build/soong/scripts/check_boot_jars/package_allowed_list.txt
-	# com.oplus.os
-	# oplus.content.res.touch
-	# vendor.lineage.livedisplay.*
-	# vendor.lineage
-	# ink.kaleidoscope
-	if [[ ! $(grep 'psyche adds' build/soong/scripts/check_boot_jars/package_allowed_list.txt) ]];then
+
+	# base hals
+	if [[ ! $(grep 'aosp-setup adds' build/soong/scripts/check_boot_jars/package_allowed_list.txt) ]];then
                 sh -c "$(echo '''
-# psyche adds
+# aosp-setup adds
 com\.oplus\.os
 com\.oplus\.os\..*
 oplus\.content\.res
@@ -332,6 +336,14 @@ ink\.kaleidoscope
 ink\.kaleidoscope\..*
 ''' >> build/soong/scripts/check_boot_jars/package_allowed_list.txt)"
         fi
+
+	# some individual hal
+        allow_hal="$(cat out/error.log | sed 's/build\/soong\/scripts\/check_boot_jars\/package_allowed_list.txt.*//g' | sed 's/.*whose\ package\ name//g' | sed 's/is\ empty.*//g' | sed 's/"//g' | sed 's/[[:space:]]//g')"
+
+        allow_hal_1="$(echo $allow_hal | sed 's/\./\\./g')"
+	allow_hal_2="$(echo ${allow_hal_1}\\..*)"
+	echo $allow_hal_1 >> build/soong/scripts/check_boot_jars/package_allowed_list.txt
+	echo $allow_hal_2 >> build/soong/scripts/check_boot_jars/package_allowed_list.txt
 }
 
 handle_build_errror(){
@@ -347,8 +359,6 @@ handle_build_errror(){
 	#error: found duplicate sysprop assignments:
 #persist.sys.sf.native_mode=258
 #persist.sys.sf.native_mode=2
-
-	#sh -c "$(grep differ out/error.log | sed 's/Files/cp/g' | sed 's/and//g' | sed 's/differ//g')"
 
 	# out/soong/.intermediates/frameworks/base/framework-minus-apex/android_common/aligned/framework-minus-apex.jar contains class file ink.kaleidoscope.ParallelSpaceManager$$ExternalSyntheticLambda0, whose package name "ink.kaleidoscope" is empty or not in the allow list build/soong/scripts/check_boot_jars/package_allowed_list.txt of packages allowed on the bootclasspath
 
@@ -378,6 +388,7 @@ handle_build_errror(){
 			echo
 			;;
 		"sysprop_dump_error")
+			sysprop_dump_error_handle
 			;;
 		"stubs_update_api_error")
 			stubs_api_error_handle
@@ -854,6 +865,54 @@ handle_sync(){
 }
 
 ################# POST TASK UNIT #################
+auto_build(){
+	# 1 - brand/codename . eg: xiaomi/psyche
+	
+	# set defailt device xiaomi/psyche
+	local brand_device=xiaomi/psyche
+	if [[ -n $1 ]] && [[ $1 =~ '/' ]];then brand_device=$1;fi
+	if [[ $brand_device == "xiaomi/psyche" ]];then psyche_deps;fi
+
+	if [[ $aosp_source_dir != "" ]];then
+		aosp_source_dir_working=$aosp_source_dir
+	fi
+
+	if [[ ${aosp_source_dir_working} != "" ]];then
+		dt_str_patch ${brand_device}
+
+		cd ${aosp_source_dir_working}
+		AOSP_BUILD_ROOT=$(pwd)
+
+		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
+		local build_device=$dt_device_name
+	
+		repo sync -j$(nproc --all)
+		source build/envsetup.sh
+		lunch "${rom_spec_str}_${build_device}-user"
+		declare -i build_time=0
+		while [[ $build_time -lt 5 ]]
+		do
+			m bacon -j$(nproc --all)
+			if [[ $? != 0 ]];then
+				declare -i cmd_run_time=0
+				build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
+				while [[ $cmd_run_time -lt 4 ]]
+				do
+					sh -c "$build_failed_cmd" && break || handle_build_errror
+					let cmd_run_time++
+				done
+                      		if [[ $cmd_run_time -ge 3 ]];then
+                                        echo "=> ${error_handle_mannually_str}"
+                                        break
+                                fi
+				break
+			else
+				break
+			fi
+			let build_time++
+		done
+	fi
+}
 
 psyche_deps(){
 	if [[ $aosp_source_dir != "" ]];then
@@ -962,6 +1021,10 @@ while (( "$#" )); do
 		--lineage-sdk)
 			# wait for sync complete and add lineage sdk
 			post_task_str="${post_task_str} lineage_sdk_patch"
+			;;
+		--auto_build)
+			shift
+			post_task_str="${post_task_str} auto_buildPOSTSPACE${1}"
 			;;
 		--psyche)
 			# wait for sync complete and clone psyche dependencies

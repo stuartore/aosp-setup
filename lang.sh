@@ -34,10 +34,8 @@ lang_en(){
 	# dt bringup str
 	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/raphael"
 
-	# pack for psyche str
-	pack_no_rom_str='Please build ROM before pack'
-	no_perm_git='No permission of this repository because of \033[1;32mself-use\033[0m purpose.'
-	pack_build_not_complete_str='Build not complete |'
+	# error handle str
+	error_handle_mannually_str="Please mannually handle the error"
 }
 
 lang_zh(){
@@ -74,10 +72,8 @@ lang_zh(){
 	# dt bringup str
 	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/raphael"
 
-	# pack for psyche str
-	pack_no_rom_str='Please build ROM before pack'
-	no_perm_git='No permission of this repository because of \033[1;32mself-use\033[0m purpose.'
-	pack_build_not_complete_str='Build not complete |'
+	# error handle str
+	error_handle_mannually_str="Please mannually handle the error"s
 }
 
 case $LANG in
