@@ -134,6 +134,7 @@ git_fix_openssl(){
 }
 
 ccache_fix(){
+	# Only ccache fix when build failed
 	# Custom Ccache
 	custom_ccache_dir=
 
@@ -149,7 +150,7 @@ ccache_fix(){
 
 		sed -i '$a \
 # Generated ccache config \
-export USE_CCACHE=0 \
+export USE_CCACHE=1 \
 export CCACHE_EXEC=\/usr\/bin\/ccache \
 export CCACHE_DIR='"$custom_ccache_dir"' \
 ccache -M 50G -F 0' $HOME/.bashrc
@@ -273,9 +274,6 @@ setup_patches(){
 	# ssh
 	ssh_enlong_patch
 
-	#ccache fix
-	ccache_fix
-
 	# low RAM patch less than 25Gb
 	patch_when_low_ram
 
@@ -370,6 +368,8 @@ handle_build_errror(){
 	local failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
 	if [[ $(grep 'Files' $default_error_log) ]] && [[ $(grep 'differ' $default_error_log) ]] && [[ $(grep 'sepolicy' $default_error_log) ]];then
 		local error_type="sepolicy_differ_error"
+	elif [[ $(grep 'Read-only file system' $default_error_log) ]] && [[ $(grep 'ccache:' $default_error_log) ]];then
+		local error_type="ccache_readonly_error"
 	elif [[ $(grep 'Duplicate declaration of type' $default_error_log) ]] && [[ $(grep 'sepolicy' $default_error_log) ]];then
 		local error_type="sepolicy_dump_type_error"
 	elif [[ $(grep 'duplicate sysprop' $default_error_log) ]];then
@@ -384,9 +384,15 @@ handle_build_errror(){
 		"sepolicy_differ_error")
 			sepolicy_differ_error_handle
 			;;
+		"ccache_readonly_error")
+			# It seems user still need to run command mannually
+			ccache_fix
+			sudo mount --bind /home/$USER/.ccache $custom_ccache_dir
+			;;
 		"sepolicy_dump_type_error")
 			echo
 			;;
+		# typeattribute/ expandtypeattribute
 		"sysprop_dump_error")
 			sysprop_dump_error_handle
 			;;
@@ -889,27 +895,28 @@ auto_build(){
 		repo sync -j$(nproc --all)
 		source build/envsetup.sh
 		lunch "${rom_spec_str}_${build_device}-user"
+
 		declare -i build_time=0
-		while [[ $build_time -lt 5 ]]
+		while [[ $build_time -le 5 ]]
 		do
-			m bacon -j$(nproc --all)
+			let build_time++
+			m bacon -j$(nproc --all) && exit 0
 			if [[ $? != 0 ]];then
 				declare -i cmd_run_time=0
 				build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
-				while [[ $cmd_run_time -lt 4 ]]
+				while [[ $cmd_run_time -le 6 ]]
 				do
-					sh -c "$build_failed_cmd" && break || handle_build_errror
 					let cmd_run_time++
+					if [[ $cmd_run_time -lt 5 ]];then
+						sh -c "$build_failed_cmd" && break || handle_build_errror
+			      		elif [[ $cmd_run_time -eq 5 ]];then
+			      			m bacon -j$(nproc --all) && exit 0 || handle_build_errror
+			      		elif [[ $cmd_run_time -eq 6 ]];then
+			                        echo "=> ${error_handle_mannually_str}"
+			                        break
+			                fi
 				done
-                      		if [[ $cmd_run_time -ge 3 ]];then
-                                        echo "=> ${error_handle_mannually_str}"
-                                        break
-                                fi
-				break
-			else
-				break
 			fi
-			let build_time++
 		done
 	fi
 }
