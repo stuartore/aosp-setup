@@ -27,6 +27,9 @@ lang_en(){
 	patch_out_of_mem_info_str='Fixed Ran out of memory error on low ram pc'
 	try_fix_out_of_mem_str='Try fix memory error next run because not sync completely'
 	sync_sucess_str='sync source \033[32msuccess\033[0m.'
+	repo_failed_usr_str='Enter directory(-ies) sync failed'
+	repo_failed_usr_eg_str='eg, bootable/recovery frameworks/av'
+	repo_sync_mannual_str='Please repo sync mannually, then continue'
 	
 	# fix sepolicy str
 	fix_sepolicy_str='fixed last used prebuilt sepolicy error'
@@ -65,15 +68,18 @@ lang_zh(){
 	patch_out_of_mem_info_str='修补了在低内存设备上编译时内存不足的错误'
 	try_fix_out_of_mem_str='下次运行修复内存不足错误，因为源码没有同步完全'
 	sync_sucess_str='源码已同步\033[32m成功\033[0m.'
+	repo_failed_usr_str='请输入同步失败目录'
+	repo_failed_usr_eg_str='例：  bootable/recovery frameworks/av'
+	repo_sync_mannual_str='请手动完成同步再继续'
 
 	# fix sepolicy str
 	fix_sepolicy_str='修复了最近使用的预编译sepolicy错误'
 
 	# dt bringup str
-	dt_bringup_name_error_str="Device tree bringup skip. eg. --dt_bringup xiaomi/raphael"
+	dt_bringup_name_error_str="跳过设备树Bringup. 例： --dt_bringup xiaomi/raphael"
 
 	# error handle str
-	error_handle_mannually_str="Please mannually handle the error"s
+	error_handle_mannually_str="请手动处理错误"
 }
 
 case $LANG in
