@@ -820,22 +820,31 @@ repo_sync_fail_handle(){
 		fi
 	fi
 
-	repo_fail_str=""
-	while [[ ${1} =~ '/' ]]
-	do
-		# do not pass a dangerous direcotory
-		if [[ ${1:0:1} == '/' ]];then continue;fi
-		repo_fail_str="${repo_fail_str} ${1}"
-		shift
-	done
-	exit 0
+	if [[ ${1} == "" ]];then
+		echo -e "\033[1;32m=>\033[0m ${repo_failed_usr_str}"
+		echo "   ${repo_failed_usr_eg_str}"
+		read -p '=>' repo_fail_str
+	else
+		repo_fail_str=""
+		while [[ ${1} =~ '/' ]]
+		do
+			# do not pass a dangerous direcotory
+			if [[ ${1:0:1} == '/' ]];then continue;fi
+			repo_fail_str="${repo_fail_str} ${1}"
+			shift
+		done
+	fi
 
-	repo_fail_list=($(echo ${repo_fail_str} | sort))
-	
 	declare -i repo_fail_num=0
 	while [[ repo_fail_num -lt 4 ]]
 	do
 		let repo_fail_num++
+
+		echo -e "\033[1;32m=>\033[0m ${repo_failed_usr_str}"
+		echo "   ${repo_failed_usr_eg_str}"
+		read -p '=>' repo_fail_str
+
+		repo_fail_list=($(echo ${repo_fail_str} | sort))
 
 		# handle by log
 		#declare -i repo_line_a=$(grep -n repos: t.log | awk -F ':' '{print $1}') && let repo_line_a++
@@ -847,7 +856,6 @@ repo_sync_fail_handle(){
 
 		for repo_fail in "${repo_fail_list[@]}"
 		do
-			exit 0
 			eval "$(grep "${repo_fail}" .repo/manifest* -r | sed 's/ /\n/g' | grep name | grep -v '/')"
 			if [[ -d .repo/project-objects/${name}.git ]];then
 				rm -rf .repo/project-objects/${name}.git
@@ -863,8 +871,9 @@ repo_sync_fail_handle(){
 
 		return
 
-		# repo sync again
+		# synchronize again
 		repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) && break
+		repo_fail_str=""
 	done
 }
 
@@ -921,7 +930,7 @@ handle_sync(){
 		break
 	done
 	if [[ $REPO_INIT_NEED -eq 1 ]];then yes | repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
-	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all)
+	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
 		cd $AOSP_SETUP_ROOT
@@ -954,7 +963,7 @@ auto_build(){
 		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
 		local build_device=$dt_device_name
 	
-		repo sync -j$(nproc --all)
+		repo sync -j$(nproc --all) || exit 1
 		source build/envsetup.sh
 		lunch "${rom_spec_str}_${build_device}-user"
 
@@ -1106,10 +1115,12 @@ while (( "$#" )); do
 			while [[ ${1} =~ '/' ]]
 			do
 				failed_repo_list_str="${failed_repo_list_str} ${1}"
+				if [[ ${1} =~ '--' ]];then break;fi
 				shift
 			done
 			failed_repo_list_str_arg="$(echo $failed_repo_list_str | sed 's/ /POSTSPACE/g')"
 			post_task_str="${post_task_str} repo_sync_fail_handlePOSTSPACE${failed_repo_list_str_arg}"
+			eval "$(echo $post_task_str | sed 's/POSTSPACE/ /g')" && exit 0
 			;;
 		--psyche)
 			# wait for sync complete and clone psyche dependencies
