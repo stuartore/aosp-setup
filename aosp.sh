@@ -806,6 +806,68 @@ rom_manifest_config(){
 	echo ${ROM_MANIFEST}
 }
 
+repo_sync_fail_handle(){
+	# 1 - failed repo directory list
+
+	if [[ ! -f build/envsetup.sh ]];then
+		if [[ $aosp_source_dir != "" ]];then
+			aosp_source_dir_working=$aosp_source_dir
+		fi
+		if [[ ${aosp_source_dir_working} != "" ]];then
+			cd $aosp_source_dir_working
+		else
+			return 1
+		fi
+	fi
+
+	repo_fail_str=""
+	while [[ ${1} =~ '/' ]]
+	do
+		# do not pass a dangerous direcotory
+		if [[ ${1:0:1} == '/' ]];then continue;fi
+		repo_fail_str="${repo_fail_str} ${1}"
+		shift
+	done
+	exit 0
+
+	repo_fail_list=($(echo ${repo_fail_str} | sort))
+	
+	declare -i repo_fail_num=0
+	while [[ repo_fail_num -lt 4 ]]
+	do
+		let repo_fail_num++
+
+		# handle by log
+		#declare -i repo_line_a=$(grep -n repos: t.log | awk -F ':' '{print $1}') && let repo_line_a++
+		#declare -i repo_line_b=$(grep -n 'Try re-running' t.log | awk -F ':' '{print $1}') && let repo_line_b--
+		#repo_fail_list=($(sed -n ''"${repo_line_a}"','"${repo_line_b}"'p' t.log | sort))
+
+		# recheck in aosp source directory - because remove is a dangerous command
+		if [[ ! -d build ]] || [[ ! -d bootable ]];then return 0;fi
+
+		for repo_fail in "${repo_fail_list[@]}"
+		do
+			exit 0
+			eval "$(grep "${repo_fail}" .repo/manifest* -r | sed 's/ /\n/g' | grep name | grep -v '/')"
+			if [[ -d .repo/project-objects/${name}.git ]];then
+				rm -rf .repo/project-objects/${name}.git
+			else
+				repo_fail_in_po_list=($(find .repo/project-objects/ -maxdepth 2 -iname "*$(echo ${repo_fail} | sed 's/\//_/g')*"))
+				if [[ ! ${#repo_fail_in_po_list[@]} -eq 0 ]];then
+					echo "rm -rf ${repo_fail_in_po_list[@]}"
+				fi
+			fi
+			rm -rf .repo/projects/${repo_fail}.git
+			rm -rf ${repo_fail}
+		done
+
+		return
+
+		# repo sync again
+		repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) && break
+	done
+}
+
 handle_sync(){
 	# aosp source
 	str_to_arr $1 '/'
@@ -943,8 +1005,13 @@ post_tasks(){
 	post_task_list=($(echo $post_task_str | sort))
 	for post_task in "${post_task_list[@]}"
 	do
+		if [[ $post_task =~ "auto_build" ]];then
+			post_end_task=$post_task
+			continue
+		fi
 		eval "$(echo $post_task | sed 's/POSTSPACE/ /g')"
 	done
+	eval "$(echo $post_end_task | sed 's/POSTSPACE/ /g')"
 }
 
 ################# INSTRUCTION UNIT #################
@@ -1032,6 +1099,17 @@ while (( "$#" )); do
 		--auto_build)
 			shift
 			post_task_str="${post_task_str} auto_buildPOSTSPACE${1}"
+			;;
+		--failed-repo)
+			shift
+			failed_repo_list_str=""
+			while [[ ${1} =~ '/' ]]
+			do
+				failed_repo_list_str="${failed_repo_list_str} ${1}"
+				shift
+			done
+			failed_repo_list_str_arg="$(echo $failed_repo_list_str | sed 's/ /POSTSPACE/g')"
+			post_task_str="${post_task_str} repo_sync_fail_handlePOSTSPACE${failed_repo_list_str_arg}"
 			;;
 		--psyche)
 			# wait for sync complete and clone psyche dependencies
