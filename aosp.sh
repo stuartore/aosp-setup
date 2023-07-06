@@ -406,37 +406,15 @@ handle_build_errror(){
 }
 
 ######################### MIRROR UNIT (OK) #########################
-
-git_mirror_reset(){
-	git_name=$(git config --global user.name)
-	git_email=$(git config --global user.email)
-	rm -f $HOME/.gitconfig
-	git config --global user.name "${git_name}"
-	git config --global user.email "${git_email}"
-
-        # try: fix git early eof
-        git config --global http.postBuffer 1048576000
-        git config --global core.compression -1
-        git config --global http.lowSpeedLimit 0
-        git config --global http.lowSpeedTime 999999
-	git config --global http.sslVerify false
-}
-
 select_mirror(){
 	if [[ $(which git) == "" ]];then echo -e '\nPlease install git';exit 1;fi
 	sel_github_list=('https://ghproxy.com/https://github.com' 'https://kgithub.com' 'https://hub.fgit.ml' 'https://hub.njuu.cf' 'https://hub.yzuu.cf' 'https://hub.nuaa.cf' 'https://gh.con.sh/https://github.com' 'https://ghps.cc/https://github.com' 'https://github.moeyy.xyz/https://github.com')
 	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
 
-	# reset before use mirror
-	git_mirror_reset
-
-	if [[ "$(command -v repo)" == "" ]];then echo;fi
-
-	tasks=('github' 'aosp')
-	for task in "${tasks[@]}"
-	do
-		case $task in
-			github)
+        while (( "$#" ))
+        do
+                case "$1" in
+			"github")
 				## handle github.com
 				echo -e "\n${choose_git_mirror_str}"
 				select gm in "${sel_github_list[@]}"
@@ -470,7 +448,7 @@ select_mirror(){
 					break
 				done
 				;;
-			aosp)
+			"aosp")
 				## handle AOSP
 				echo -e "\n${choose_aosp_mirror_str}\n"
 				select aos in "${sel_aosp_list[@]}"
@@ -502,6 +480,7 @@ select_mirror(){
 				done
 				;;
 		esac
+		shift
 	done
 }
 
@@ -539,12 +518,11 @@ mirror_unit_main(){
 		do
 			case $use_mirror_sel in
 				"Yes")
-					declare -i USE_GIT_AOSP_MIRROR=1
-					select_mirror
+					sel_mirror_list=$(echo $sel_mirror_list_str | sort)
+					select_mirror "${sel_mirror_list[@]}"
 					export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 					;;
 				"No" | *)
-					declare -i USE_GIT_AOSP_MIRROR=0
 					git_aosp_repo_mirror_reset "github" "aosp"
 					echo -e "\033[1;36m=>\033[0m ${skip_mirror_str}"
 					;;
@@ -1084,6 +1062,7 @@ INSTEN
 aosp_manifest_url=
 declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
+sel_mirror_list_str="github aosp"
 post_task_str=""
 
 # for global fuction
@@ -1120,7 +1099,6 @@ while (( "$#" )); do
 			done
 			failed_repo_list_str_arg="$(echo $failed_repo_list_str | sed 's/ /POSTSPACE/g')"
 			post_task_str="${post_task_str} repo_sync_fail_handlePOSTSPACE${failed_repo_list_str_arg}"
-			eval "$(echo $post_task_str | sed 's/POSTSPACE/ /g')" && exit 0
 			;;
 		--psyche)
 			# wait for sync complete and clone psyche dependencies
@@ -1129,7 +1107,8 @@ while (( "$#" )); do
 		--github-mirror)
 			shift
 			if [[ -n "$1" ]];then
-				git_aosp_repo_mirror_reset "github"
+				git_aosp_repo_mirror_reset "github" "aosp"
+				sel_mirror_list_str="aosp"
 				custom_git_mirror="$1"
 				git config --global url."${custom_git_mirror}".insteadof https://github.com
 			fi
@@ -1137,7 +1116,8 @@ while (( "$#" )); do
 		--aosp-mirror)
 			shift
 			if [[ -n "$1" ]];then
-				git_aosp_repo_mirror_reset "aosp"
+				git_aosp_repo_mirror_reset "github" "aosp"
+				sel_mirror_list_str="github"
 				custom_aosp_mirror="$1"
 				git config --global url."${custom_aosp_mirror}".insteadof https://android.googlesource.com
 			fi
