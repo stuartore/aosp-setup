@@ -1003,7 +1003,7 @@ post_tasks(){
 
 ################# INSTRUCTION UNIT #################
 instructions_help(){
-	if [[ $LANG == "zh_CN.utf8" ]];then
+	if [[ $LANG =~ "zh_CN" ]];then
 		cat<<INSTCN
 bash aosp.sh [arg]
 
@@ -1013,6 +1013,11 @@ arg:
     -k | --keep-mirror	保持镜像配置
     --recheck		再次检测英文目录环境
     --psyche		快速同步Xiaomi 12X编译依赖
+    --auto_build	尝试自动编译
+			eg. bash aosp.sh --auto_build
+			    bash aosp.sh --auto_build xiaomi/raphael
+
+			 其他设备手动配置好依赖，目前xiaomi/psyche为默认
 
 independent arg:
     --mirror 		配置git & aosp镜像
@@ -1043,6 +1048,11 @@ arg:
     
     --psyche		Build ROM for Xiaomi 12X.
     			Fast sync dependencies
+    --auto_build	Try to build automaticlly
+			eg. bash aosp.sh --auto_build
+			    bash aosp.sh --auto_build xiaomi/raphael
+
+			Other device need to config dependencies mannually. default: xiaomi/psyche
     
 independent arg:
     --mirror 		use mirror for git & aosp
