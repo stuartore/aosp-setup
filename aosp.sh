@@ -945,28 +945,24 @@ auto_build(){
 		source build/envsetup.sh
 		lunch "${rom_spec_str}_${build_device}-user"
 
-		declare -i build_time=0
-		while [[ $build_time -le 5 ]]
-		do
-			let build_time++
-			m bacon -j$(nproc --all) && exit 0
-			if [[ $? != 0 ]];then
-				declare -i cmd_run_time=0
-				build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
-				while [[ $cmd_run_time -le 6 ]]
-				do
-					let cmd_run_time++
-					if [[ $cmd_run_time -lt 5 ]];then
-						sh -c "$build_failed_cmd" && break || handle_build_errror
-			      		elif [[ $cmd_run_time -eq 5 ]];then
-			      			m bacon -j$(nproc --all) && exit 0 || handle_build_errror
-			      		elif [[ $cmd_run_time -eq 6 ]];then
-			                        echo "=> ${error_handle_mannually_str}"
-			                        break
-			                fi
-				done
-			fi
-		done
+		let build_time++
+		m bacon -j$(nproc --all) && exit 0
+		if [[ $? != 0 ]];then
+			declare -i cmd_run_time=0
+			build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
+			while [[ $cmd_run_time -le 6 ]]
+			do
+				let cmd_run_time++
+				if [[ $cmd_run_time -lt 5 ]];then
+					sh -c "$build_failed_cmd" && break || handle_build_errror
+		      		elif [[ $cmd_run_time -eq 5 ]];then
+		      			m bacon -j$(nproc --all) && exit 0 || handle_build_errror
+		      		elif [[ $cmd_run_time -eq 6 ]];then
+		                        echo "=> ${error_handle_mannually_str}"
+		                        break
+		                fi
+			done
+		fi
 	fi
 }
 
