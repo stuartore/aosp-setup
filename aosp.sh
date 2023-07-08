@@ -907,7 +907,7 @@ handle_sync(){
 		fi
 		break
 	done
-	if [[ $REPO_INIT_NEED -eq 1 ]];then yes | repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch;fi
+	if [[ $REPO_INIT_NEED -eq 1 ]];then yes | repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch --git-lfs;fi
 	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
