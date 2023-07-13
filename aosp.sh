@@ -940,13 +940,24 @@ auto_build(){
 
 		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
 		local build_device=$dt_device_name
+
+		# build command
+		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
+		case $rom_spec_str in
+			"evolution" | "pixys" | "xd")
+				build_rom_cmd="mka ${rom_spec_str}"
+				;;
+			*)
+				build_rom_cmd="mka bacon"
+				;;
+		esac
 	
 		repo sync -j$(nproc --all) || exit 1
 		source build/envsetup.sh
 		lunch "${rom_spec_str}_${build_device}-user"
 
 		let build_time++
-		m bacon -j$(nproc --all) && exit 0
+		eval "${build_rom_cmd} -j$(nproc --all)" && exit 0
 		if [[ $? != 0 ]];then
 			declare -i cmd_run_time=0
 			build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
@@ -956,7 +967,7 @@ auto_build(){
 				if [[ $cmd_run_time -lt 5 ]];then
 					sh -c "$build_failed_cmd" && break || handle_build_errror
 		      		elif [[ $cmd_run_time -eq 5 ]];then
-		      			m bacon -j$(nproc --all) && exit 0 || handle_build_errror
+		      			eval "${build_rom_cmd} -j$(nproc --all)" && exit 0 || handle_build_errror
 		      		elif [[ $cmd_run_time -eq 6 ]];then
 		                        echo "=> ${error_handle_mannually_str}"
 		                        break
