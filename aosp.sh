@@ -942,7 +942,7 @@ auto_build(){
 		local build_device=$dt_device_name
 
 		# build command
-		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
+		local rom_spec_str=$rom_spec_str
 		case $rom_spec_str in
 			"evolution" | "pixys" | "xd")
 				build_rom_cmd="mka ${rom_spec_str}"
