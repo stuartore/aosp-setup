@@ -925,6 +925,8 @@ handle_sync(){
 		break
 	done
 
+	if [[ $REPO_INIT_NEED -eq 1 ]];then yes | repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch --git-lfs;fi
+
 	# update repo
 	declare -i repo_launcher_main_version=$(grep 'VERSION =' .repo/repo/repo -w | sed 's/[[:space:]]//g' | sed 's/VERSION=//g' | sed 's/(//g' | sed 's/)//g' | sed 's/,.*//g')
 	declare -i repo_launcher_sub_version=$(grep 'VERSION =' .repo/repo/repo -w | sed 's/[[:space:]]//g' | sed 's/VERSION=//g' | sed 's/(//g' | sed 's/)//g' | sed 's/.*,//g')
@@ -942,7 +944,6 @@ handle_sync(){
 		fi
 	fi
 
-	if [[ $REPO_INIT_NEED -eq 1 ]];then yes | repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch --git-lfs;fi
 	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
