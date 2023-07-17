@@ -754,7 +754,7 @@ rom_manifest_config(){
 	else
 
 		#echo -e "\n${sel_rom_source_str}"
-		rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
+		rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "RisingOS" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 		select aosp_source in "${rom_sources[@]}"
 		do
 			case $aosp_source in
@@ -766,6 +766,9 @@ rom_manifest_config(){
 					;;
 				"Pixel Experience")
 					ROM_MANIFEST='https://github.com/PixelExperience/manifest.git'
+					;;
+     				"RisingOS")
+					ROM_MANIFEST='https://github.com/RisingTechOSS/android.git'
 					;;
 				"Crdroid")
 					ROM_MANIFEST='https://github.com/crdroidandroid/android.git'
