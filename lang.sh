@@ -4,6 +4,8 @@ lang_en(){
 	pc_mem_str='Mem'
 	pc_swap_mem_str='Swap'
 
+	split_half_line_str='================'
+
 	# repo added
 	repo_added_str='git-repo url added'
 	repo_error_str='If you receive \033[33mrepo error\033[0m related to itself . Run it next time'
@@ -39,11 +41,21 @@ lang_en(){
 
 	# error handle str
 	error_handle_mannually_str="Please mannually handle the error"
+
+	# upload rom str
+	upload_user_str='Upload to gitlab repo ? [Y/n]'
+	upload_git_repo_str='Gitlab/Github etc. repository address'
+	upload_add_sshkey_str='Please add key to your Gitlab/Github Settings'
+	upload_rom_info_str='Please choose witch archive to upload'
+	upload_check_str='Enter to continue'
+	upload_never_str="Won't upload"
 }
 
 lang_zh(){
 	pc_mem_str='内存'
 	pc_swap_mem_str='交换'
+
+	split_half_line_str='================'
 
 	# repo added
 	repo_added_str='已添加git-repo\n'
@@ -80,6 +92,14 @@ lang_zh(){
 
 	# error handle str
 	error_handle_mannually_str="请手动处理错误"
+
+	# upload rom str
+	upload_user_str='上传到远程仓库 ? [Y/n]'
+	upload_git_repo_str='Gitlab/Github等仓库地址'
+	upload_add_sshkey_str='请将密钥添加到你的Gitlab/Github设置'
+	upload_rom_info_str='请选择需要上传的压缩包'
+	upload_check_str='回车以继续'
+	upload_never_str='不上传'
 }
 
 case $LANG in

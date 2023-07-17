@@ -957,7 +957,7 @@ auto_build(){
 		lunch "${rom_spec_str}_${build_device}-user"
 
 		let build_time++
-		eval "${build_rom_cmd} -j$(nproc --all)" && exit 0
+		eval "${build_rom_cmd} -j$(nproc --all)" && rom_upload "${global_upload_user_cho}" ${build_device} "${global_upload_user_repo}"
 		if [[ $? != 0 ]];then
 			declare -i cmd_run_time=0
 			build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
@@ -967,7 +967,7 @@ auto_build(){
 				if [[ $cmd_run_time -lt 5 ]];then
 					sh -c "$build_failed_cmd" && break || handle_build_errror
 		      		elif [[ $cmd_run_time -eq 5 ]];then
-		      			eval "${build_rom_cmd} -j$(nproc --all)" && exit 0 || handle_build_errror
+		      			eval "${build_rom_cmd} -j$(nproc --all)" && rom_upload "${global_upload_user_cho}" ${build_device} "${global_upload_user_repo}" || handle_build_errror
 		      		elif [[ $cmd_run_time -eq 6 ]];then
 		                        echo "=> ${error_handle_mannually_str}"
 		                        break
@@ -975,6 +975,82 @@ auto_build(){
 			done
 		fi
 	fi
+	cd $AOSP_SETUP_ROOT
+}
+
+rom_upload(){
+	# Gitlab/Github repo etc.
+
+	# 1* - upload [Y/n]
+	# 2 - build device
+	# 3* - git remote
+
+	if [[ $1 == 'no' ]];then return;fi
+
+	build_device=$2
+	user_git_remote=$3
+
+	case $1 in
+		Yes | yes | y | Y | YES)
+			upload_cho='Y'
+			;;
+		No | no | n | N)
+			upload_cho=n
+			echo -e "\033[1;33m=>\033[0m ${upload_never_str}"
+			return
+			;;
+		*)
+			echo -ne "\033[1;32m=>\033[0m ${upload_user_str}"
+			read upload_cho
+			;;
+	esac
+
+	case $upload_cho in
+		Y | y | yes | Yes | YES)
+			rom_out_dir=out/target/product/${build_device}
+			rom_build_list=($(basename -a $(ls ${rom_out_dir}/*.zip) | sort))
+			rom_upload_dir=$(dirname ${AOSP_SETUP_ROOT})/upload_rom
+			echo -e "\033[1;32m=>\033[0m ${upload_rom_info_str}"
+			select out_rom_sel in "${rom_build_list[@]}"
+			do
+				git init ${rom_upload_dir}
+				cp -f ${rom_out_dir}/${out_rom_sel} ${rom_upload_dir}
+				cd $rom_upload_dir
+				git add $out_rom_sel
+				git commit -m "aosp-setup: ${build_device}: release"
+				git log
+				if [[ ! $(git remote -v) ]];then
+					if [[ $user_git_remote =~ 'git@' ]];then
+						upload_git_remote="${user_git_remote}"
+					else
+						echo -e "\033[1;32m=>\033[0m ${upload_git_repo_str}" && echo -ne '\033[1;32m=>\033[0m '
+						read upload_git_remote
+					fi
+					git remote add origin "${upload_git_remote}"
+				fi
+				if [[ ! -f ${HOME}/.ssh/aosp-upload.pub ]];then
+					echo | ssh-keygen -f ${HOME}/.ssh/aosp-upload
+				fi
+				echo -e "${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
+				cat ${HOME}/.ssh/aosp-upload.pub
+				echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
+				echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
+				read no_sense_str
+				git push origin master
+				break
+			done
+			;;
+		*)
+			echo -e "\033[1;33m=>\033[0m ${upload_never_str}"
+			;;		
+	esac
+	cd $AOSP_SETUP_ROOT
+	exit 0
+}
+
+rom_upload_config(){
+	global_upload_user_cho='Yes'
+	global_upload_user_repo="${1}"
 }
 
 psyche_deps(){
@@ -1025,6 +1101,8 @@ arg:
 			    bash aosp.sh --auto_build xiaomi/raphael
 
 			 其他设备手动配置好依赖，目前xiaomi/psyche为默认
+    --upload		上传到Gitlab等仓库
+    			eg.  bash aosp.sh --auto_build xiaomi/raphael --upload git@gitlab.com:username/example.git
 
 independent arg:
     --mirror 		配置git & aosp镜像
@@ -1060,6 +1138,8 @@ arg:
 			    bash aosp.sh --auto_build xiaomi/raphael
 
 			Other device need to config dependencies mannually. default: xiaomi/psyche
+    --upload		Upload auto build ROM to Repository such as Gitlab etc.
+    			eg.  bash aosp.sh --auto_build xiaomi/raphael --upload git@gitlab.com:username/example.git
     
 independent arg:
     --mirror 		use mirror for git & aosp
@@ -1081,6 +1161,7 @@ declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
 sel_mirror_list_str="github aosp"
 post_task_str=""
+global_upload_user_cho="No"
 
 # for global fuction
 while (( "$#" )); do
@@ -1102,8 +1183,20 @@ while (( "$#" )); do
 			post_task_str="${post_task_str} lineage_sdk_patch"
 			;;
 		--auto_build)
-			shift
-			post_task_str="${post_task_str} auto_buildPOSTSPACE${1}"
+			if [[ ${2} =~ '/' ]];then
+				shift
+				post_task_str="${post_task_str} auto_buildPOSTSPACE${1}"
+			else
+				post_task_str="${post_task_str} auto_build"
+			fi
+			;;
+		--upload)
+			if [[ ${2} =~ 'git@' ]];then
+				shift
+				post_task_str="${post_task_str} rom_upload_configPOSTSPACE${1}"
+			else
+				post_task_str="${post_task_str} rom_upload_config"
+			fi
 			;;
 		--failed-repo)
 			shift
