@@ -26,6 +26,7 @@ bash aosp.sh --keep-mirror
 + LineageOS
 + ArrowOS
 + Pixel Experience
++ RisingOS
 + Crdroid
 + AlphaDroid
 + Evolution-X
