@@ -299,8 +299,18 @@ lineage_sdk_dump_error(){
 sepolicy_differ_error_handle(){
 	log_file=out/error.log
 	tmp_log_file=out/aosp_setup_error.log
-	sh -c "$(grep differ out/error.log | sed 's/Files/cp/g' | sed 's/and//g' | sed 's/differ//g')"
-	sh -c "$(grep Command out/error.log | sed 's/Command://g')"
+
+	cp -f $log_file $tmp_log_file
+
+	declare -i sepolicy_handle_num=0
+	while [[ $sepolicy_handle_num -lt 2 ]]
+	do
+		sh -c "$(grep differ $tmp_log_file | sed 's/Files/cp/g' | sed 's/and//g' | sed 's/differ//g')"
+		sh -c "$(grep Command $tmp_log_file | sed 's/Command://g')" > $tmp_log_file
+		let sepolicy_handle_num++
+	done
+	sh -c "$(grep Command $tmp_log_file | sed 's/Command://g')"
+	if [[ $? != 0 ]];then exit 1;fi
 }
 
 sysprop_dump_error_handle(){
@@ -378,6 +388,8 @@ handle_build_errror(){
 		local error_type="stubs_update_api_error"
 	elif [[ $(grep 'package_allowed_list.txt' $default_error_log) ]];then
 		local error_type="allow_list_error"
+	else
+		local error_type="unhandled"
 	fi
 	
 	case $error_type in
@@ -402,6 +414,8 @@ handle_build_errror(){
 		"allow_list_error")
 			allow_list_error_handle
 			;;
+		"unhandled")
+			exit 1
 	esac
 }
 
@@ -979,16 +993,16 @@ auto_build(){
 		if [[ $? != 0 ]];then
 			declare -i cmd_run_time=0
 			build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
-			while [[ $cmd_run_time -le 6 ]]
+			while [[ $cmd_run_time -le 4 ]]
 			do
 				let cmd_run_time++
-				if [[ $cmd_run_time -lt 5 ]];then
-					sh -c "$build_failed_cmd" && break || handle_build_errror
-		      		elif [[ $cmd_run_time -eq 5 ]];then
+				if [[ $cmd_run_time -lt 3 ]];then
+					sh -c "$build_failed_cmd" && continue || handle_build_errror
+		      		elif [[ $cmd_run_time -eq 3 ]];then
 		      			eval "${build_rom_cmd} -j$(nproc --all)" && rom_upload "${global_upload_user_cho}" ${build_device} "${global_upload_user_repo}" || handle_build_errror
-		      		elif [[ $cmd_run_time -eq 6 ]];then
+		      		elif [[ $cmd_run_time -eq 4 ]];then
 		                        echo "=> ${error_handle_mannually_str}"
-		                        break
+		                        exit 1
 		                fi
 			done
 		fi
