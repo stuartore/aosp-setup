@@ -1066,10 +1066,10 @@ rom_upload(){
 					git remote add origin "${upload_git_remote}"
 				fi
 				if [[ ! -f ${HOME}/.ssh/id_rsa.pub ]];then
-					echo n | ssh-keygen -N -q -f $HOME/.ssh/id_rsa
+					ssh-keygen -f $HOME/.ssh/id_rsa
 				fi
 				echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
-				cat ${HOME}/.ssh/aosp-upload.pub
+				cat ${HOME}/.ssh/id_rsa.pub
 				echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
 				echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
 				read no_sense_str
