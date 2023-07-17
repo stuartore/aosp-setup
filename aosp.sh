@@ -987,8 +987,11 @@ auto_build(){
 				build_rom_cmd="mka bacon"
 				;;
 		esac
-	
-		repo sync -j$(nproc --all) || exit 1
+
+		if [[ ! $(ls out/target/product/${build_device}/*.zip) ]];then
+			repo sync -j$(nproc --all) || exit 1
+		fi
+
 		source build/envsetup.sh
 		lunch "${rom_spec_str}_${build_device}-user"
 
