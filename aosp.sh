@@ -907,6 +907,24 @@ handle_sync(){
 		fi
 		break
 	done
+
+	# update repo
+	declare -i repo_launcher_main_version=$(grep 'VERSION =' .repo/repo/repo -w | sed 's/[[:space:]]//g' | sed 's/VERSION=//g' | sed 's/(//g' | sed 's/)//g' | sed 's/,.*//g')
+	declare -i repo_launcher_sub_version=$(grep 'VERSION =' .repo/repo/repo -w | sed 's/[[:space:]]//g' | sed 's/VERSION=//g' | sed 's/(//g' | sed 's/)//g' | sed 's/.*,//g')
+	declare -i repo_main_version=$(grep 'VERSION =' $(which repo) -w | sed 's/[[:space:]]//g' | sed 's/VERSION=//g' | sed 's/(//g' | sed 's/)//g' | sed 's/,.*//g')
+	declare -i repo_sub_version=$(grep 'VERSION =' $(which repo) -w | sed 's/[[:space:]]//g' | sed 's/VERSION=//g' | sed 's/(//g' | sed 's/)//g' | sed 's/.*,//g')
+	if [[ $repo_launcher_main_version -gt $repo_main_version ]];then
+		sudo rm -f $(which repo)
+		sudo cp -f .repo/repo/repo /usr/bin/repo
+		sudo chmod a+x /usr/bin/repo
+	elif [[ $repo_launcher_main_version -eq $repo_main_version ]];then
+		if [[ $repo_launcher_sub_version -gt $repo_sub_version ]];then
+		        sudo rm -f $(which repo)
+			sudo cp -f .repo/repo/repo /usr/bin/repo
+			sudo chmod a+x /usr/bin/repo
+		fi
+	fi
+
 	if [[ $REPO_INIT_NEED -eq 1 ]];then yes | repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch --git-lfs;fi
 	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
