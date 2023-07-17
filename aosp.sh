@@ -1042,9 +1042,10 @@ rom_upload(){
 			rom_out_dir=out/target/product/${build_device}
 			rom_build_list=($(basename -a $(ls ${rom_out_dir}/*.zip) | sort))
 			rom_upload_dir=$(dirname ${AOSP_SETUP_ROOT})/upload_rom
-			echo -e "\033[1;32m=>\033[0m ${upload_rom_info_str}"
+			echo -e "\n\033[1;32m=>\033[0m ${upload_rom_info_str}"
 			select out_rom_sel in "${rom_build_list[@]}"
 			do
+				echo
 				git init ${rom_upload_dir}
 				cp -f ${rom_out_dir}/${out_rom_sel} ${rom_upload_dir}
 				cd $rom_upload_dir
@@ -1060,10 +1061,10 @@ rom_upload(){
 					fi
 					git remote add origin "${upload_git_remote}"
 				fi
-				if [[ ! -f ${HOME}/.ssh/aosp-upload.pub ]];then
-					echo | ssh-keygen -f ${HOME}/.ssh/aosp-upload
+				if [[ ! -f ${HOME}/.ssh/id_rsa.pub ]];then
+					echo n | ssh-keygen -N -q -f $HOME/.ssh/id_rsa
 				fi
-				echo -e "${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
+				echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
 				cat ${HOME}/.ssh/aosp-upload.pub
 				echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
 				echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
