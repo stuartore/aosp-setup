@@ -425,6 +425,7 @@ select_mirror(){
 	sel_github_list=('https://ghproxy.com/https://github.com' 'https://kgithub.com' 'https://hub.fgit.ml' 'https://hub.njuu.cf' 'https://hub.yzuu.cf' 'https://hub.nuaa.cf' 'https://gh.con.sh/https://github.com' 'https://ghps.cc/https://github.com' 'https://github.moeyy.xyz/https://github.com' 'https://slink.ltd/https://github.com')
 	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
 
+	git_aosp_repo_mirror_reset "github" "aosp"
         while (( "$#" ))
         do
                 case "$1" in
