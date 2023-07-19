@@ -533,7 +533,7 @@ mirror_unit_main(){
 			case $use_mirror_sel in
 				"Yes")
 					sel_mirror_list=$(echo $sel_mirror_list_str | sort)
-					select_mirror "${sel_mirror_list[@]}"
+					eval "select_mirror ${sel_mirror_list[@]}"
 					export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 					;;
 				"No" | *)
