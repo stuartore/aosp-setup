@@ -1122,7 +1122,9 @@ psyche_deps(){
 
 		cd ${aosp_source_dir_working}
 		mkdir -p device/xiaomi
-		git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
+		if [[ ! -d device/xiaomi/psyche ]];then
+			git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
+		fi
 		source build/envsetup.sh
 		cd $AOSP_SETUP_ROOT
 	fi
