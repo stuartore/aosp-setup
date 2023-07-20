@@ -896,35 +896,42 @@ handle_sync(){
 	if [[ ! -f $custom_json ]];then
 		curl https://api.github.com/repos/${rom_str}/${manifest_str}/branches -o $custom_json
 	fi
-	custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' | tr "," " "))
-	echo -e "\n${rom_branch_str}"
-	select custom_branch in "${custom_branches[@]}"
-	do
-	        # source bashrc everytime sync source
-        	source $HOME/.bashrc
 
-		cd $aosp_source_dir
-		echo -e "\n\033[1;32m=>\033[0m ${enter_to_sync_str}\033[1;3;34m$(pwd)\033[0m"
+	custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g'))
+	if [[ ${#custom_branches[@]} -eq 1 ]];then
+		custom_branch=${custom_branches[0]}
+	else
+		echo -e "\n${rom_branch_str}"
+		select custom_branch_sel in "${custom_branches[@]}"
+		do
+			custom_branch=$custom_branch_sel
+			break
+		done
+	fi
 
-		if [[ -d .repo/project-objects ]];then
-			repo_init_need=0
-		else
-			if [[ -d .repo ]];then
-				declare -i repo_init_dir_size
-				repo_init_dir_raw=$(du -sm .repo | sed 's/[[:space:]]*.repo//g')
-				repo_init_dir_size=$repo_init_dir_raw
-				if [[ $repo_init_dir_size -lt 4 ]];then
-					rm -rf .repo
-					export REPO_INIT_NEED=1
-				else
-					export REPO_INIT_NEED=0
-				fi
-			else
+        # source bashrc everytime sync source
+	source $HOME/.bashrc
+
+	cd $aosp_source_dir
+	echo -e "\n\033[1;32m=>\033[0m ${enter_to_sync_str}\033[1;3;34m$(pwd)\033[0m"
+
+	if [[ -d .repo/project-objects ]];then
+		repo_init_need=0
+	else
+		if [[ -d .repo ]];then
+			declare -i repo_init_dir_size
+			repo_init_dir_raw=$(du -sm .repo | sed 's/[[:space:]]*.repo//g')
+			repo_init_dir_size=$repo_init_dir_raw
+			if [[ $repo_init_dir_size -lt 4 ]];then
+				rm -rf .repo
 				export REPO_INIT_NEED=1
+			else
+				export REPO_INIT_NEED=0
 			fi
+		else
+			export REPO_INIT_NEED=1
 		fi
-		break
-	done
+	fi
 
 	if [[ $REPO_INIT_NEED -eq 1 ]];then yes | repo init --depth=1 -u https://github.com/${rom_str}/${manifest_str} -b $custom_branch --git-lfs;fi
 
