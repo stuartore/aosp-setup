@@ -667,15 +667,26 @@ PROFILEEOF
 
 git_config_user_info(){
 	# git config
-	if [[ $(git config user.name) == "" ]] || [[ $(git config user.email) == "" ]];then
+	# 1 - user.name
+	# 2 - user.email
+
+	if [[ $(git config user.name) != "" ]] && [[ $(git config user.email) != "" ]];then
+		return
+	else
 		echo -e "\n==> Config git "
 	fi
-	if [[ $(git config user.name) == "" ]];then
+
+	# with arg
+	if [[ $1 != "" ]];then
+		git config --global user.name "$1"
+	else
 		read -p 'Your name: ' git_name
 		git config --global user.name "${git_name}"
 	fi
 
-	if [[ $(git config user.email) == "" ]];then
+	if [[ $2 != "" ]] && [[ $2 =~ "@" ]];then
+		git config --global user.email "$2"
+	else
 		read -p 'Your email: ' git_email
 		git config --global user.email "${git_email}"
 	fi
@@ -737,7 +748,7 @@ env_install_mode(){
 android_env_setup(){
 	# setup(install) build deps
 	mirror_unit_main
-	git_config_user_info
+	git_config_user_info "${custom_git_username}" "${custom_git_email}"
 	case $1 in
 		"Need" | "OnlyEnv")
 			setup_build_deps && env_run_return=$? && sed -i '13s/env_run_last_return=./env_run_last_return='"${env_run_return}"'/g' $(dirname $0)/${BASH_SOURCE}	
@@ -1292,6 +1303,12 @@ while (( "$#" )); do
 		-*-mirror)
 			mirror_unit_main
 			exit 0
+			;;
+		--github-config)
+			shift
+			custom_git_username=$1
+			custom_git_email=$2
+			shift
 			;;
 		--so-deps)
 			# get so deps - experiment
