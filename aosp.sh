@@ -1088,7 +1088,7 @@ rom_upload(){
 					git remote add origin "${upload_git_remote}"
 				fi
 				if [[ ! -f ${HOME}/.ssh/id_rsa.pub ]];then
-					ssh-keygen -f $HOME/.ssh/id_rsa
+					echo 'n' | ssh-keygen -t ed25519 -f $HOME/.ssh/id_ed25519 -N '' -q
 				fi
 				echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
 				cat ${HOME}/.ssh/id_rsa.pub
