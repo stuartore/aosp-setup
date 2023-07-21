@@ -908,7 +908,12 @@ handle_sync(){
 		curl https://api.github.com/repos/${rom_str}/${manifest_str}/branches -o $custom_json
 	fi
 
-	custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g'))
+	if [[ $(echo $rom_str | tr A-Z a-z) == "lineageos" ]];then
+		custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g' | grep "lineage") lineage-19.1 lineage-20.0)
+	else
+		custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g'))
+	fi
+
 	if [[ ${#custom_branches[@]} -eq 1 ]];then
 		custom_branch=${custom_branches[0]}
 	else
@@ -975,12 +980,239 @@ handle_sync(){
 }
 
 ################# POST TASK UNIT #################
+# Prepare sources
+git_check_dir(){
+        if [[ ! -d $3 ]];then
+                mkdir -p $(dirname $3)
+                git clone --depth=1 $1 -b $2 $3
+        else
+                echo -e "\033[1;32m=>\033[0m Found $3"
+        fi
+}
+
+custom_deps(){
+	# 1 - brand
+	# 2 - device
+	local build_brand="$(dirname $1)"
+	local build_device="$(basename $1)"
+	local rom_org="$(echo ${rom_str} | tr A-Z a-z)"
+	case $rom_org in
+		lineageos | crdroidandroid | aospa)
+			custom_rom_org="${rom_org}"
+			;;
+		arrowos | pixelexperience | evolution-x | pixysos | superioros | pixelplusui)
+			custom_rom_org="${rom_org}-devices"
+			;;
+		risingtechoss)
+			custom_rom_org='risingoss-devices'
+			;;
+		alphadroid-project)
+			custom_rom_org='alphadroid-devices'
+			;;
+		project-elixir)
+			custom_rom_org='projectelixir-devices'
+			;;
+		*)
+			custom_rom_org="pixelexperience-devices"
+			;;
+	esac
+
+	cd $aosp_source_dir_working
+	custom_deps_tmp_dir=aosp-setup_tmp
+	mkdir -p $custom_deps_tmp_dir
+
+	# device
+	local device_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}.json
+	if [[ ! -f $device_search_json ]];then
+		curl https://api.github.com/search/repositories?q=${build_brand}+${build_device}+user:${custom_rom_org} -o $device_search_json
+	fi
+	device_clone_url=$(grep device_${build_brand}_${build_device} $device_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')
+	# device - if no device, then select pixelexperience-devices
+	if [[ $device_clone_url == "" ]];then
+		custom_rom_org=pixelexperience-devices
+		local device_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}.json
+		if [[ ! -f $device_search_json ]];then
+			curl https://api.github.com/search/repositories?q=${build_brand}+${build_device}+user:${custom_rom_org} -o $device_search_json
+		fi
+		device_clone_url=$(grep device_${build_brand}_${build_device} $device_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')
+	fi
+
+	echo "device/${build_brand}/${build_device}: $device_clone_url"
+	if [[ ! -d device/${build_brand}/${build_device} ]];then
+		git clone --depth=1 $device_clone_url device/${build_brand}/${build_device}
+	fi
+
+	device_common_name="$(grep device/${build_brand} device/${build_brand}/${build_device}/*.mk | grep common -m 1 | grep '.mk' | sed 's/device\/'"${build_brand}"'\/'"${build_device}"'\///g' | sed 's/.*device\/'"${build_brand}"'\///g' | sed 's/\/.*//g')"
+	if [[ $device_common_name == "" ]];then
+		declare -i device_use_common=0
+	else
+		declare -i device_use_common=1
+		local device_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}.json
+		if [[ ! -f $device_common_search_json ]];then
+			curl https://api.github.com/search/repositories?q=device+${build_brand}+${device_common_name}+user:${custom_rom_org} -o $device_common_search_json
+		fi
+		device_common_clone_url="$(grep device_${build_brand}_${device_common_name} $device_common_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+		echo "device/${build_brand}/${device_common_name}: $device_common_clone_url"
+		if [[ ! -d device/${build_brand}/${device_common_name} ]];then
+			git clone --depth=1 $device_common_clone_url device/${build_brand}/${device_common_name}
+		fi
+	fi
+
+	# kernel
+	local kernel_path=$(grep "TARGET_KERNEL_SOURCE" device/${build_brand} -rnsw -m 1 | grep -v '#' | head -1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')
+	local kernel_name="$(basename $kernel_path)"
+	if [[ ${kernel_name} == ${build_device} ]];then
+		# use same kernel whose name the same with device name
+		# default kernel
+		local kernel_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_kernel.json
+		if [[ ! -f $kernel_search_json ]];then
+			curl https://api.github.com/search/repositories?q=kernel_${build_brand}_${build_device}+user:${custom_rom_org} -o $kernel_search_json
+		fi
+		kernel_clone_url="$(grep kernel_${build_brand}_${build_device} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+		echo "kernel/${build_brand}/${build_device}: $kernel_clone_url"
+		#git clone --depth=1 $kernel_clone_url kernel/${build_brand}/${build_device}
+	else
+		# common kernel
+		local kernel_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_kernel_common.json
+		if [[ ! -f $kernel_common_search_json ]];then
+			curl https://api.github.com/search/repositories?q=kernel_${build_brand}_${kernel_name}+user:${custom_rom_org} -o $kernel_common_search_json
+		fi
+		kernel_common_clone_url="$(grep kernel_${build_brand}_${kernel_name} $kernel_common_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+		echo "kernel/${build_brand}/${kernel_name}: $kernel_common_clone_url"
+		#git clone --depth=1 $kernel_common_clone_url kernel/${build_brand}/${kernel_name}
+	fi
+
+	# vendor
+	case $custom_rom_org in
+		pixelexperience-devices)
+			vendor_base_url="https://gitlab.pixelexperience.org/android/vendor-blobs/"
+			vendor_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor/${build_brand}/${build_device}.git"
+			echo "vendor/${build_brand}/${build_device}: $vendor_clone_url"
+			#git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
+
+			if [[ $device_use_common -eq 1 ]];then
+				vendor_common_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_${build_brand}_${device_common_name}.git"
+				echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
+				#git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+			fi
+			;;
+		*)
+			local vendor_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_vendor.json
+			if [[ ! -f $vendor_search_json ]];then
+				curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${build_device}+user:${custom_rom_org} -o $vendor_search_json
+			fi
+			vendor_clone_url="$(grep vendor_${build_brand}_${build_device} $vendor_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+			if [[ $vendor_clone_url == "" ]];then
+				echo "NO vendor"
+			else
+				echo "vendor/${build_brand}/${device_common_name}: $vendor_clone_url"
+				#git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
+
+				local vendor_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}_vendor.json
+				if [[ ! -f $vendor_common_search_json ]];then
+					curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${device_common_name}+user:${custom_rom_org} -o $vendor_common_search_json
+				fi
+				if [[ $device_use_common -eq 1 ]];then
+					vendor_common_clone_url="$(grep vendor_${build_brand}_${device_common_name} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+					echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
+					#git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+				fi
+			fi
+			;;
+	esac
+
+	# firmware
+	# hardware
+	local hardware_search_json=$custom_deps_tmp_dir/$(echo ${custom_rom_org} | sed 's/-devices//g')_${build_brand}_${build_device}_hardware.json
+	if [[ ! -f $hardware_search_json ]];then
+		curl https://api.github.com/search/repositories?q=hardware_${build_brand}+user:$(echo ${custom_rom_org} | sed 's/-devices//g') -o $hardware_search_json
+	fi
+	hardware_clone_url="$(grep hardware_${build_brand} $hardware_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+	echo "hardware/${build_brand}: $hardware_clone_url"
+	#git clone --depth=1 $hardware_clone_url hardware/${build_brand}
+
+	# Other
+	cd $AOSP_SETUP_ROOT
+}
+
+psyche_deps(){
+	if [[ $aosp_source_dir != "" ]];then
+		aosp_source_dir_working=$aosp_source_dir
+	fi
+
+	if [[ ${aosp_source_dir_working} != "" ]];then
+		dt_branch='thirteen-staging'
+
+		cd ${aosp_source_dir_working}
+		mkdir -p device/xiaomi
+		if [[ ! -d device/xiaomi/psyche ]];then
+			git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
+		fi
+		source build/envsetup.sh
+		cd $AOSP_SETUP_ROOT
+	fi
+}
+
+guacamole_deps(){
+	if [[ $aosp_source_dir != "" ]];then
+		aosp_source_dir_working=$aosp_source_dir
+	fi
+
+	if [[ ${aosp_source_dir_working} != "" ]];then
+
+		cd ${aosp_source_dir_working}
+		mkdir -p device/oneplus
+
+		# hardware
+		git_check_dir https://github.com/PixelExperience/hardware_oplus thirteen hardware/oplus
+
+		# device
+		git_check_dir https://github.com/PixelExperience-Devices/device_oneplus_guacamole thirteen device/oneplus/guacamole
+		git_check_dir https://github.com/PixelExperience-Devices/device_oneplus_sm8150-common thirteen device/oneplus/sm8150-common
+
+		# vendor
+		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus_guacamole thirteen vendor/oneplus/guacamole
+		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus_sm8150-common thirteen vendor/oneplus/sm8150-common
+
+		# vendor - firmware
+		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus-firmware thirteen vendor/oneplus/firmware
+
+		# kernel
+		git_check_dir https://github.com/PixelExperience-Devices/kernel_oneplus_sm8150 thirteen  kernel/oneplus/sm8150
+
+		# Other
+		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus_sm8150_apps thirteen vendor/oneplus/sm8150/apps
+		cd $AOSP_SETUP_ROOT
+	fi
+}
+
 auto_build(){
 	# 1 - brand/codename . eg: xiaomi/psyche
 	
 	# set defailt device xiaomi/psyche
 	local brand_device=xiaomi/psyche
 	if [[ -n $1 ]] && [[ $1 =~ '/' ]];then brand_device=$1;fi
+	case $brand_device in
+		"xiaomi/psyche")
+			psyche_deps
+			;;
+		"oneplus/guacamole")
+			guacamole_deps
+			;;
+		*)
+			#  debug pull source
+			echo "Device Search is debugging ... Continue ?"
+			read device_unknown_continue
+			case $device_unknown_continue in
+				Yes | yes | y | Y | YES)
+					custom_deps $brand_device
+					;;
+				*)
+					exit
+					;;
+			esac
+	esac
+
 	if [[ $brand_device == "xiaomi/psyche" ]];then psyche_deps;fi
 
 	if [[ $aosp_source_dir != "" ]];then
@@ -1116,24 +1348,6 @@ rom_upload(){
 rom_upload_config(){
 	global_upload_user_cho='Yes'
 	global_upload_user_repo="${1}"
-}
-
-psyche_deps(){
-	if [[ $aosp_source_dir != "" ]];then
-		aosp_source_dir_working=$aosp_source_dir
-	fi
-
-	if [[ ${aosp_source_dir_working} != "" ]];then
-		dt_branch='thirteen-staging'
-
-		cd ${aosp_source_dir_working}
-		mkdir -p device/xiaomi
-		if [[ ! -d device/xiaomi/psyche ]];then
-			git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
-		fi
-		source build/envsetup.sh
-		cd $AOSP_SETUP_ROOT
-	fi
 }
 
 post_tasks(){
