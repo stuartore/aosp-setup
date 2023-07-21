@@ -1066,38 +1066,44 @@ rom_upload(){
 	case $upload_cho in
 		Y | y | yes | Yes | YES)
 			rom_out_dir=out/target/product/${build_device}
-			rom_build_list=($(basename -a $(ls ${rom_out_dir}/*.zip) | sort))
+			rom_build_list=($(basename -a $(ls ${rom_out_dir}/*.zip) | grep -v 'eng' | sort))
 			rom_upload_dir=$(dirname ${AOSP_SETUP_ROOT})/upload_rom
-			echo -e "\n\033[1;32m=>\033[0m ${upload_rom_info_str}"
-			select out_rom_sel in "${rom_build_list[@]}"
-			do
-				echo
-				git init ${rom_upload_dir}
-				cp -f ${rom_out_dir}/${out_rom_sel} ${rom_upload_dir}
-				cd $rom_upload_dir
-				git add $out_rom_sel
-				git commit -m "aosp-setup: ${build_device}: release"
-				git log
-				if [[ ! $(git remote -v) ]];then
-					if [[ $user_git_remote =~ 'git@' ]];then
-						upload_git_remote="${user_git_remote}"
-					else
-						echo -e "\033[1;32m=>\033[0m ${upload_git_repo_str}" && echo -ne '\033[1;32m=>\033[0m '
-						read upload_git_remote
-					fi
-					git remote add origin "${upload_git_remote}"
+
+			if [[ ${#rom_build_list[@]} -eq 1 ]];then
+				rom_to_upload=${rom_build_list[0]}
+			else
+				echo -e "\n\033[1;32m=>\033[0m ${upload_rom_info_str}"
+				select rom_user_sel in "${rom_build_list[@]}"
+				do
+					rom_to_upload=$rom_user_sel
+					break
+				done
+			fi
+
+			git init ${rom_upload_dir}
+			cp -f ${rom_out_dir}/${rom_to_upload} ${rom_upload_dir}
+			cd $rom_upload_dir
+			git add $rom_to_upload
+			git commit -m "aosp-setup: ${build_device}: release"
+			git log
+			if [[ ! $(git remote -v) ]];then
+				if [[ $user_git_remote =~ 'git@' ]];then
+					upload_git_remote="${user_git_remote}"
+				else
+					echo -e "\033[1;32m=>\033[0m ${upload_git_repo_str}" && echo -ne '\033[1;32m=>\033[0m '
+					read upload_git_remote
 				fi
-				if [[ ! -f ${HOME}/.ssh/id_ed25519.pub ]];then
-					echo 'n' | ssh-keygen -t ed25519 -f $HOME/.ssh/id_ed25519 -N '' -q
-				fi
-				echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
-				cat ${HOME}/.ssh/id_ed25519.pub
-				echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
-				echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
-				read no_sense_str
-				git push origin master
-				break
-			done
+				git remote add origin "${upload_git_remote}"
+			fi
+			if [[ ! -f ${HOME}/.ssh/id_ed25519.pub ]];then
+				echo 'n' | ssh-keygen -t ed25519 -f $HOME/.ssh/id_ed25519 -N '' -q
+			fi
+			echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
+			cat ${HOME}/.ssh/id_ed25519.pub
+			echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
+			echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
+			read no_sense_str
+			git push origin master
 			;;
 		*)
 			echo -e "\033[1;33m=>\033[0m ${upload_never_str}"
