@@ -1108,21 +1108,23 @@ custom_deps(){
 				curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${build_device}+user:${custom_rom_org} -o $vendor_search_json
 			fi
 			vendor_clone_url="$(grep vendor_${build_brand}_${build_device} $vendor_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-			if [[ $vendor_clone_url == "" ]];then
-				echo "NO vendor. Please config: --device-org unknown"
-				exit 1
-			else
-				echo "vendor/${build_brand}/${device_common_name}: $vendor_clone_url"
-				git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
+			if [[ ! -d vendor/${build_brand}/${build_device} ]] && [[ ! -d vendor/${build_brand}/${device_common_name} ]];then
+				if [[ $vendor_clone_url == "" ]];then
+					echo "NO vendor. Please config: --device-org unknown"
+					exit 1
+				else
+					echo "vendor/${build_brand}/${device_common_name}: $vendor_clone_url"
+					git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
 
-				local vendor_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}_vendor.json
-				if [[ ! -f $vendor_common_search_json ]];then
-					curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${device_common_name}+user:${custom_rom_org} -o $vendor_common_search_json
-				fi
-				if [[ $device_use_common -eq 1 ]];then
-					vendor_common_clone_url="$(grep vendor_${build_brand}_${device_common_name} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-					echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
-					git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+					local vendor_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}_vendor.json
+					if [[ ! -f $vendor_common_search_json ]];then
+						curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${device_common_name}+user:${custom_rom_org} -o $vendor_common_search_json
+					fi
+					if [[ $device_use_common -eq 1 ]];then
+						vendor_common_clone_url="$(grep vendor_${build_brand}_${device_common_name} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+						echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
+						git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+					fi
 				fi
 			fi
 			;;
