@@ -1028,24 +1028,26 @@ custom_deps(){
 	mkdir -p $custom_deps_tmp_dir
 
 	# device
-	local device_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}.json
-	if [[ ! -f $device_search_json ]];then
-		curl https://api.github.com/search/repositories?q=${build_brand}+${build_device}+user:${custom_rom_org} -o $device_search_json
-	fi
-	device_clone_url=$(grep device_${build_brand}_${build_device} $device_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')
-	# device - if no device, then select pixelexperience-devices
-	if [[ $device_clone_url == "" ]];then
-		custom_rom_org=pixelexperience-devices
+	if [[ ! -d device/${build_brand}/${build_device} ]];then
 		local device_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}.json
 		if [[ ! -f $device_search_json ]];then
 			curl https://api.github.com/search/repositories?q=${build_brand}+${build_device}+user:${custom_rom_org} -o $device_search_json
 		fi
 		device_clone_url=$(grep device_${build_brand}_${build_device} $device_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')
-	fi
+		# device - if no device, then select pixelexperience-devices
+		if [[ $device_clone_url == "" ]];then
+			custom_rom_org=pixelexperience-devices
+			local device_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}.json
+			if [[ ! -f $device_search_json ]];then
+				curl https://api.github.com/search/repositories?q=${build_brand}+${build_device}+user:${custom_rom_org} -o $device_search_json
+			fi
+			device_clone_url=$(grep device_${build_brand}_${build_device} $device_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')
+		fi
 
-	echo "device/${build_brand}/${build_device}: $device_clone_url"
-	if [[ ! -d device/${build_brand}/${build_device} ]];then
-		git clone --depth=1 $device_clone_url device/${build_brand}/${build_device}
+		echo "device/${build_brand}/${build_device}: $device_clone_url"
+		if [[ ! -d device/${build_brand}/${build_device} ]];then
+			git clone --depth=1 $device_clone_url device/${build_brand}/${build_device}
+		fi
 	fi
 
 	device_common_name="$(grep device/${build_brand} device/${build_brand}/${build_device}/*.mk | grep common -m 1 | grep '.mk' | sed 's/device\/'"${build_brand}"'\/'"${build_device}"'\///g' | sed 's/.*device\/'"${build_brand}"'\///g' | sed 's/\/.*//g')"
@@ -1053,94 +1055,109 @@ custom_deps(){
 		declare -i device_use_common=0
 	else
 		declare -i device_use_common=1
-		local device_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}.json
-		if [[ ! -f $device_common_search_json ]];then
-			curl https://api.github.com/search/repositories?q=device+${build_brand}+${device_common_name}+user:${custom_rom_org} -o $device_common_search_json
-		fi
-		device_common_clone_url="$(grep device_${build_brand}_${device_common_name} $device_common_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-		echo "device/${build_brand}/${device_common_name}: $device_common_clone_url"
 		if [[ ! -d device/${build_brand}/${device_common_name} ]];then
-			git clone --depth=1 $device_common_clone_url device/${build_brand}/${device_common_name}
+			local device_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}.json
+			if [[ ! -f $device_common_search_json ]];then
+				curl https://api.github.com/search/repositories?q=device+${build_brand}+${device_common_name}+user:${custom_rom_org} -o $device_common_search_json
+			fi
+			device_common_clone_url="$(grep device_${build_brand}_${device_common_name} $device_common_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+			echo "device/${build_brand}/${device_common_name}: $device_common_clone_url"
+			if [[ ! -d device/${build_brand}/${device_common_name} ]];then
+				git clone --depth=1 $device_common_clone_url device/${build_brand}/${device_common_name}
+			fi
 		fi
 	fi
+
 
 	# kernel
 	local kernel_path=$(grep "TARGET_KERNEL_SOURCE" device/${build_brand} -rnsw -m 1 | grep -v '#' | head -1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')
 	local kernel_name="$(basename $kernel_path)"
-	if [[ ${kernel_name} == ${build_device} ]];then
-		# use same kernel whose name the same with device name
-		# default kernel
-		local kernel_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_kernel.json
-		if [[ ! -f $kernel_search_json ]];then
-			curl https://api.github.com/search/repositories?q=kernel_${build_brand}_${build_device}+user:${custom_rom_org} -o $kernel_search_json
+	if [[ ! -d kernel/${build_brand}/${kernel_name} ]];then
+		if [[ ${kernel_name} == ${build_device} ]];then
+			# use same kernel whose name the same with device name
+			# default kernel
+			local kernel_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_kernel.json
+			if [[ ! -f $kernel_search_json ]];then
+				curl https://api.github.com/search/repositories?q=kernel_${build_brand}_${build_device}+user:${custom_rom_org} -o $kernel_search_json
+			fi
+			kernel_clone_url="$(grep kernel_${build_brand}_${build_device} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+			echo "kernel/${build_brand}/${build_device}: $kernel_clone_url"
+			git clone --depth=1 $kernel_clone_url kernel/${build_brand}/${build_device}
+		else
+			# common kernel
+			local kernel_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_kernel_common.json
+			if [[ ! -f $kernel_common_search_json ]];then
+				curl https://api.github.com/search/repositories?q=kernel_${build_brand}_${kernel_name}+user:${custom_rom_org} -o $kernel_common_search_json
+			fi
+			kernel_common_clone_url="$(grep kernel_${build_brand}_${kernel_name} $kernel_common_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+			echo "kernel/${build_brand}/${kernel_name}: $kernel_common_clone_url"
+			git clone --depth=1 $kernel_common_clone_url kernel/${build_brand}/${kernel_name}
 		fi
-		kernel_clone_url="$(grep kernel_${build_brand}_${build_device} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-		echo "kernel/${build_brand}/${build_device}: $kernel_clone_url"
-		git clone --depth=1 $kernel_clone_url kernel/${build_brand}/${build_device}
-	else
-		# common kernel
-		local kernel_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_kernel_common.json
-		if [[ ! -f $kernel_common_search_json ]];then
-			curl https://api.github.com/search/repositories?q=kernel_${build_brand}_${kernel_name}+user:${custom_rom_org} -o $kernel_common_search_json
-		fi
-		kernel_common_clone_url="$(grep kernel_${build_brand}_${kernel_name} $kernel_common_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-		echo "kernel/${build_brand}/${kernel_name}: $kernel_common_clone_url"
-		git clone --depth=1 $kernel_common_clone_url kernel/${build_brand}/${kernel_name}
 	fi
 
 	# vendor
-	case $custom_rom_org in
-		pixelexperience-devices)
-			vendor_base_url="https://gitlab.pixelexperience.org/android/vendor-blobs/"
-			vendor_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor/${build_brand}/${build_device}.git"
-			echo "vendor/${build_brand}/${build_device}: $vendor_clone_url"
-			git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
+	if [[ ! -d vendor/${build_brand}/${build_device} ]];then
+		case $custom_rom_org in
+			pixelexperience-devices)
+				vendor_base_url="https://gitlab.pixelexperience.org/android/vendor-blobs/"
+				vendor_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor/${build_brand}/${build_device}.git"
+				echo "vendor/${build_brand}/${build_device}: $vendor_clone_url"
+				git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
 
-			if [[ $device_use_common -eq 1 ]];then
-				vendor_common_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_${build_brand}_${device_common_name}.git"
-				echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
-				git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
-			fi
-			;;
-		*)
-			local vendor_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_vendor.json
-			if [[ ! -f $vendor_search_json ]];then
-				curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${build_device}+user:${custom_rom_org} -o $vendor_search_json
-			fi
-			vendor_clone_url="$(grep vendor_${build_brand}_${build_device} $vendor_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-			if [[ ! -d vendor/${build_brand}/${build_device} ]] && [[ ! -d vendor/${build_brand}/${device_common_name} ]];then
-				if [[ $vendor_clone_url == "" ]];then
-					echo "NO vendor. Please config: --device-org unknown"
-					exit 1
-				else
-					echo "vendor/${build_brand}/${device_common_name}: $vendor_clone_url"
-					git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
+				if [[ $device_use_common -eq 1 ]];then
+					vendor_common_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_${build_brand}_${device_common_name}.git"
+					echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
+					git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+				fi
+				;;
+			*)
+				local vendor_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_vendor.json
+				if [[ ! -f $vendor_search_json ]];then
+					curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${build_device}+user:${custom_rom_org} -o $vendor_search_json
+				fi
+				vendor_clone_url="$(grep vendor_${build_brand}_${build_device} $vendor_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+				if [[ ! -d vendor/${build_brand}/${build_device} ]] && [[ ! -d vendor/${build_brand}/${device_common_name} ]];then
+					if [[ $vendor_clone_url == "" ]];then
+						echo "NO vendor. Please config: --device-org unknown"
+						exit 1
+					else
+						echo "vendor/${build_brand}/${device_common_name}: $vendor_clone_url"
+						git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
 
-					local vendor_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}_vendor.json
-					if [[ ! -f $vendor_common_search_json ]];then
-						curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${device_common_name}+user:${custom_rom_org} -o $vendor_common_search_json
-					fi
-					if [[ $device_use_common -eq 1 ]];then
-						vendor_common_clone_url="$(grep vendor_${build_brand}_${device_common_name} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-						echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
-						git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+						local vendor_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}_vendor.json
+						if [[ ! -f $vendor_common_search_json ]];then
+							curl https://api.github.com/search/repositories?q=vendor_${build_brand}_${device_common_name}+user:${custom_rom_org} -o $vendor_common_search_json
+						fi
+						if [[ $device_use_common -eq 1 ]];then
+							vendor_common_clone_url="$(grep vendor_${build_brand}_${device_common_name} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+							echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
+							git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+						fi
 					fi
 				fi
-			fi
-			;;
-	esac
+				;;
+		esac
+	fi
 
 	# firmware
 	# hardware
-	local hardware_search_json=$custom_deps_tmp_dir/$(echo ${custom_rom_org} | sed 's/-devices//g')_${build_brand}_${build_device}_hardware.json
-	if [[ ! -f $hardware_search_json ]];then
-		curl https://api.github.com/search/repositories?q=hardware_${build_brand}+user:$(echo ${custom_rom_org} | sed 's/-devices//g') -o $hardware_search_json
+	if [[ ! -d hardware/${build_brand} ]];then
+		local hardware_search_json=$custom_deps_tmp_dir/$(echo ${custom_rom_org} | sed 's/-devices//g')_${build_brand}_${build_device}_hardware.json
+		if [[ ! -f $hardware_search_json ]];then
+			curl https://api.github.com/search/repositories?q=hardware_${build_brand}+user:$(echo ${custom_rom_org} | sed 's/-devices//g') -o $hardware_search_json
+		fi
+		hardware_clone_url="$(grep hardware_${build_brand} $hardware_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
+		echo "hardware/${build_brand}: $hardware_clone_url"
+		git clone --depth=1 $hardware_clone_url hardware/${build_brand}
 	fi
-	hardware_clone_url="$(grep hardware_${build_brand} $hardware_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
-	echo "hardware/${build_brand}: $hardware_clone_url"
-	git clone --depth=1 $hardware_clone_url hardware/${build_brand}
 
 	# Other
+
+	# Remove json tmp dir if device/vendor/kernel exists
+	if [[ -d device/${build_brand}/${build_device} ]] && [[ -d kernel/${build_brand}/${kernel_name} ]] && [[ -d vendor/${build_brand}/${build_device} ]] && [[ -d hardware/${build_brand} ]];then
+		rm -rf $custom_deps_tmp_dir
+	fi
+
 	cd $AOSP_SETUP_ROOT
 }
 
