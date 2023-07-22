@@ -991,11 +991,17 @@ git_check_dir(){
 }
 
 custom_deps(){
-	# 1 - brand
-	# 2 - device
+	# 1 - brand/device
+	# 2 - device deps org from
 	local build_brand="$(dirname $1)"
 	local build_device="$(basename $1)"
-	local rom_org="$(echo ${rom_str} | tr A-Z a-z)"
+
+	if [[ ! $2 == "" ]];then
+		rom_org=$2
+	else
+		local rom_org="$(echo ${rom_str} | tr A-Z a-z)"
+	fi
+
 	case $rom_org in
 		lineageos | crdroidandroid | aospa)
 			custom_rom_org="${rom_org}"
@@ -1070,7 +1076,7 @@ custom_deps(){
 		fi
 		kernel_clone_url="$(grep kernel_${build_brand}_${build_device} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
 		echo "kernel/${build_brand}/${build_device}: $kernel_clone_url"
-		#git clone --depth=1 $kernel_clone_url kernel/${build_brand}/${build_device}
+		git clone --depth=1 $kernel_clone_url kernel/${build_brand}/${build_device}
 	else
 		# common kernel
 		local kernel_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${build_device}_kernel_common.json
@@ -1079,7 +1085,7 @@ custom_deps(){
 		fi
 		kernel_common_clone_url="$(grep kernel_${build_brand}_${kernel_name} $kernel_common_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
 		echo "kernel/${build_brand}/${kernel_name}: $kernel_common_clone_url"
-		#git clone --depth=1 $kernel_common_clone_url kernel/${build_brand}/${kernel_name}
+		git clone --depth=1 $kernel_common_clone_url kernel/${build_brand}/${kernel_name}
 	fi
 
 	# vendor
@@ -1088,12 +1094,12 @@ custom_deps(){
 			vendor_base_url="https://gitlab.pixelexperience.org/android/vendor-blobs/"
 			vendor_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor/${build_brand}/${build_device}.git"
 			echo "vendor/${build_brand}/${build_device}: $vendor_clone_url"
-			#git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
+			git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
 
 			if [[ $device_use_common -eq 1 ]];then
 				vendor_common_clone_url="https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_${build_brand}_${device_common_name}.git"
 				echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
-				#git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+				git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
 			fi
 			;;
 		*)
@@ -1103,10 +1109,11 @@ custom_deps(){
 			fi
 			vendor_clone_url="$(grep vendor_${build_brand}_${build_device} $vendor_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
 			if [[ $vendor_clone_url == "" ]];then
-				echo "NO vendor"
+				echo "NO vendor. Please config: --device-org unknown"
+				exit 1
 			else
 				echo "vendor/${build_brand}/${device_common_name}: $vendor_clone_url"
-				#git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
+				git clone --depth=1 $vendor_clone_url vendor/${build_brand}/${build_device}
 
 				local vendor_common_search_json=$custom_deps_tmp_dir/${custom_rom_org}_${build_brand}_${device_common_name}_vendor.json
 				if [[ ! -f $vendor_common_search_json ]];then
@@ -1115,7 +1122,7 @@ custom_deps(){
 				if [[ $device_use_common -eq 1 ]];then
 					vendor_common_clone_url="$(grep vendor_${build_brand}_${device_common_name} $kernel_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
 					echo "vendor/${build_brand}/${device_common_name}: $vendor_common_clone_url"
-					#git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
+					git clone --depth=1 $vendor_common_clone_url vendor/${build_brand}/${device_common_name}
 				fi
 			fi
 			;;
@@ -1129,7 +1136,7 @@ custom_deps(){
 	fi
 	hardware_clone_url="$(grep hardware_${build_brand} $hardware_search_json | grep "clone_url" -m 1 | head -1 | sed 's/[[:space:]]//g' | sed 's/"//g' | sed 's/,//g' | sed 's/.*clone_url://g')"
 	echo "hardware/${build_brand}: $hardware_clone_url"
-	#git clone --depth=1 $hardware_clone_url hardware/${build_brand}
+	git clone --depth=1 $hardware_clone_url hardware/${build_brand}
 
 	# Other
 	cd $AOSP_SETUP_ROOT
@@ -1208,7 +1215,7 @@ auto_build(){
 			read device_unknown_continue
 			case $device_unknown_continue in
 				Yes | yes | y | Y | YES)
-					custom_deps $brand_device
+					custom_deps $brand_device $user_device_org
 					;;
 				*)
 					exit
@@ -1238,6 +1245,7 @@ auto_build(){
 
 		if [[ ! $(ls out/target/product/${build_device}/*.zip) ]];then
 			repo sync -j$(nproc --all) || exit 1
+			echo
 		fi
 
 		source build/envsetup.sh
@@ -1379,6 +1387,16 @@ arg:
 			    bash aosp.sh --auto_build xiaomi/raphael
 
 			 其他设备手动配置好依赖，目前xiaomi/psyche为默认
+    --device-org 	自Github用户仓库查找  device/vendor/kernel
+    			选项:
+					lineageos | crdroidandroid | aospa | arrowos | pixelexperience
+					evolution-x | pixysos | superioros | pixelplusui risingtechoss
+					alphadroid-project | project-elixir
+
+					{User} | unkown
+
+					Note: 所有为Github组织或用户
+					      unkown选项默认pixelexperience
     --upload		上传到Gitlab等仓库
     			eg.  bash aosp.sh --auto_build xiaomi/raphael --upload git@gitlab.com:username/example.git
 
@@ -1416,6 +1434,17 @@ arg:
 			    bash aosp.sh --auto_build xiaomi/raphael
 
 			Other device need to config dependencies mannually. default: xiaomi/psyche
+    --device-org 	Search device/vendor/kernel from User
+    			select from:
+					lineageos | crdroidandroid | aospa | arrowos | pixelexperience
+					evolution-x | pixysos | superioros | pixelplusui risingtechoss
+					alphadroid-project | project-elixir
+
+					{User} | unkown
+
+					Note: all organizations or user from github
+					      unkown will use pixelexperience
+
     --upload		Upload auto build ROM to Repository such as Gitlab etc.
     			eg.  bash aosp.sh --auto_build xiaomi/raphael --upload git@gitlab.com:username/example.git
     
@@ -1438,6 +1467,7 @@ aosp_manifest_url=
 declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
 sel_mirror_list_str="github aosp"
+user_device_org=""
 post_task_str=""
 global_upload_user_cho="No"
 
@@ -1518,6 +1548,14 @@ while (( "$#" )); do
 			# wait for sync complete and bringup dt. eg. xiaomi/raphael. function with arg need to use arr[]
 			shift
 			post_task_str="${post_task_str} dt_str_patchPOSTSPACE${1}"
+			;;
+		--device-org)
+			shift
+			if [[ $1 == 'unknown' ]];then
+				user_device_org="$(echo $1 | tr A-Z a-z)"
+			else
+				user_device_org="$(echo $1 | sed 's/.*github.com\///g' | sed 's/\///g' | tr A-Z a-z)"
+			fi
 			;;
 		-*-mirror)
 			mirror_unit_main
