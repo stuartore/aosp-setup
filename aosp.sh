@@ -224,10 +224,10 @@ dt_str_patch(){
 	sed -i 's/vendor\/'"${dt_old_str}"'/vendor\/'"${rom_spec_str}"'/g' BoardConfig*.mk
 
 	dt_new_main_mk="${rom_spec_str}_${dt_device_name}.mk"
-	if [[ ! -f $dt_new_main_mk ]];then
+	if [[ -f $dt_main_mk ]] && [[ ! -f $dt_new_main_mk ]];then
 		mv $dt_main_mk $dt_new_main_mk
 	fi
-	if [[ ! -f ${rom_spec_str}.dependencies ]];then
+	if [[ -f ${dt_old_str}.dependencies ]] && [[ ! -f ${rom_spec_str}.dependencies ]];then
 		mv ${dt_old_str}.dependencies ${rom_spec_str}.dependencies
 	fi
 
@@ -1188,7 +1188,10 @@ guacamole_deps(){
 
 auto_build(){
 	# 1 - brand/codename . eg: xiaomi/psyche
-	
+	if [[ $aosp_source_dir != "" ]];then
+		aosp_source_dir_working=$aosp_source_dir
+	fi
+
 	# set defailt device xiaomi/psyche
 	local brand_device=xiaomi/psyche
 	if [[ -n $1 ]] && [[ $1 =~ '/' ]];then brand_device=$1;fi
@@ -1213,10 +1216,6 @@ auto_build(){
 			esac
 	esac
 
-	if [[ $aosp_source_dir != "" ]];then
-		aosp_source_dir_working=$aosp_source_dir
-	fi
-
 	if [[ ${aosp_source_dir_working} != "" ]];then
 		dt_str_patch ${brand_device}
 
@@ -1224,7 +1223,7 @@ auto_build(){
 		AOSP_BUILD_ROOT=$(pwd)
 
 		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
-		local build_device=$dt_device_name
+		local build_device=$(basename ${brand_device})
 
 		# build command
 		local rom_spec_str=$rom_spec_str
