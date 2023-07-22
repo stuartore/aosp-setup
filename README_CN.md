@@ -26,6 +26,15 @@ git clone https://github.com/stuartore/aosp-setup.git && aosp-setup
 ./aosp.sh --keep-mirror
 ```
 
+### 自动编译
+```
+./aosp.sh --auto_build 品牌/设备代号
+
+# 例子
+./aosp.sh --auto_build xiaomi/psyche
+```
+> 实验性：仍然需要用户处理和修复出错
+
 + LineageOS
 + ArrowOS
 + Pixel Experience

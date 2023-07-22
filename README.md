@@ -13,7 +13,7 @@ git clone https://github.com/stuartore/aosp-setup.git && cd aosp-setup
 # example
 ./aosp.sh https://github.com/xxxxxxx/manifest.git
 ```
-### mirror
+### Mirror
 ```
 # set github & aosp mirror for synchonization
 ./aosp.sh --mirror
@@ -22,6 +22,15 @@ git clone https://github.com/stuartore/aosp-setup.git && cd aosp-setup
 ./aosp.sh -k
 ./aosp.sh --keep-mirror
 ```
+
+### Auto Build
+```
+./aosp.sh --auto_build {brand}/{device_code}
+
+# example
+./aosp.sh --auto_build xiaomi/psyche
+```
+> Debug: Still uer to fix error & mannual handle
 
 + LineageOS
 + ArrowOS
