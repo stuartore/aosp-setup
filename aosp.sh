@@ -879,7 +879,7 @@ repo_sync_fail_handle(){
 		return
 
 		# synchronize again
-		repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) && break
+		repo sync -c --depth=1 --no-repo-verify -u --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) && break
 		repo_fail_str=""
 	done
 }
@@ -968,7 +968,7 @@ handle_sync(){
 		fi
 	fi
 
-	repo sync -c --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
+	repo sync -c --depth=1 --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
 		cd $AOSP_SETUP_ROOT
@@ -1263,7 +1263,7 @@ auto_build(){
 		esac
 
 		if [[ ! $(ls out/target/product/${build_device}/*.zip) ]];then
-			repo sync -j$(nproc --all) || exit 1
+			repo sync -c --depth=1 --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || exit 1
 			echo
 		fi
 
