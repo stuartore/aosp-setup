@@ -879,7 +879,7 @@ repo_sync_fail_handle(){
 		return
 
 		# synchronize again
-		repo sync -c --depth=1 --no-repo-verify -u --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) && break
+		repo sync -c --no-repo-verify -u --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) && break
 		repo_fail_str=""
 	done
 }
@@ -968,7 +968,7 @@ handle_sync(){
 		fi
 	fi
 
-	repo sync -c --depth=1 --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
+	repo sync -c --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
 		cd $AOSP_SETUP_ROOT
@@ -1262,8 +1262,8 @@ auto_build(){
 				;;
 		esac
 
-		if [[ ! $(ls out/target/product/${build_device}/*.zip) ]];then
-			repo sync -c --depth=1 --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || exit 1
+		if [[ ! $(find out/target/product/${build_device} -maxdepth 1 -iname "*.zip") ]];then
+			repo sync -c --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || exit 1
 			echo
 		fi
 
@@ -1336,6 +1336,9 @@ rom_upload(){
 				done
 			fi
 
+			if [[ $(find $rom_upload_dir -maxdepth 1 -iname "*.zip") ]];then
+				rm -rf $rom_upload_dir
+			fi
 			git init ${rom_upload_dir}
 			cp -f ${rom_out_dir}/${rom_to_upload} ${rom_upload_dir}
 			cd $rom_upload_dir
