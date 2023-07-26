@@ -1358,7 +1358,7 @@ rom_upload(){
 			cat ${HOME}/.ssh/id_ed25519.pub
 			echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
 			echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
-			read no_sense_str
+			read -t 120 no_sense_str || echo -e "$upload_auto_check_str"
 			git push origin master
 			;;
 		*)

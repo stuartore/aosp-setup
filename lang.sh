@@ -49,6 +49,7 @@ lang_en(){
 	upload_rom_info_str='Please choose witch archive to upload'
 	upload_check_str='Enter to continue'
 	upload_never_str="Won't upload"
+	upload_auto_check_str="\033[1;32mAuto Continue\033[0m \033[1;33m(2minutes)\033[0m"
 }
 
 lang_zh(){
@@ -100,6 +101,7 @@ lang_zh(){
 	upload_rom_info_str='请选择需要上传的压缩包'
 	upload_check_str='回车以继续'
 	upload_never_str='不上传'
+	upload_auto_check_str="\033[1;32m自动继续\033[0m \033[1;33m(2分钟)\033[0m"
 }
 
 case $LANG in
