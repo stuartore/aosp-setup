@@ -111,7 +111,7 @@ sepolicy_patch(){
 }
 
 ssh_enlong_patch(){
-        if [[ $HOSTNAME =~ 'VM' ]];then
+        if [[ $run_on_vm -eq 1 ]];then
 		sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
 		sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
 		sudo systemctl restart sshd
@@ -718,7 +718,7 @@ fi' $HOME/.bashrc
 	fi
 
 	# android adb udev rules
-	if [[ ! $HOSTNAME =~ 'VM' ]];then
+	if [[ $run_on_vm -eq 0 ]];then
 		adb_rules_setup
 	fi
 	cd $AOSP_SETUP_ROOT
@@ -994,18 +994,49 @@ check_run(){
 	fi
 
 	# write login info
-	if [[ ! $(grep "aosp-setup: check_run "${1}"" -w $HOME/.profile) ]];then
-		echo "NOT FOUND"
-		sed -i '$a \
-# aosp-setup: check_run '"${1}"' \
-if [[ $(ps -ef | grep '"$1"' | grep -v 'grep' | grep -v 'check-run.sh' | wc -l) != 0 ]];then \
-	echo -e "\\033[1;32m=>\\033[0m '"${1}"' is running" \
-else \
-	echo -e "\\033[1;33m=>\\033[0m '"${1}"' done" \
-fi' $HOME/.profile
+	check_list_str="$@"
+	if [[ ! $(grep '# aosp-setup check' $HOME/.profile) ]];then
+		cat>>$HOME/.profile<<PROFILEINFO
+
+# aosp-setup check
+check_list=($check_list_str)
+profile_info_str=
+for check_ele in "\${check_list[@]}"
+do
+	if [[ \$(ps -ef | grep -w \$check_ele | grep -v 'grep' | grep -v 'gpg-agent' | wc -l) != 0 ]];then
+		if [[ \$profile_info_str == "" ]];then
+			profile_info_str="\033[1;32m\${check_ele}\033[0m"
+		else
+			profile_info_str="\${profile_info_str} - \033[1;32m\${check_ele}\033[0m"
+		fi
 	else
-		echo "HAS FOUND"
+		if [[ \$profile_info_str == "" ]];then
+			profile_info_str="\033[1;32m\${check_ele}\033[0m"
+		else
+			profile_info_str="\${profile_info_str} - \033[1;34m\${check_ele}\033[0m"
+		fi
 	fi
+done
+echo -e "=> Status:"
+echo -e "   \$profile_info_str"
+PROFILEINFO
+	fi
+	sed -i 's/check_list=\(.*\)/check_list=\('"$check_list_str"'\)/g' $HOME/.profile
+}
+
+track_info_for_build(){
+	# check run when login
+	if [[ "$(command -v apt)" != "" ]]; then
+		local deps_cmd=apt
+	elif [[ "$(command -v pacman)" != "" ]]; then
+     		local deps_cmd=pacman
+ 	elif [[ "$(command -v yum)" != "" ]]; then
+     		local deps_cmd=yum
+	elif [[ "$(command -v eopkg)" != "" ]]; then
+            	local deps_cmd=eopkg
+	fi
+
+	check_run $deps_cmd select repo make git
 }
 
 # Prepare sources
@@ -1259,7 +1290,7 @@ auto_build(){
 		*)
 			#  debug pull source
 			echo "Device Search is debugging ... Continue ?"
-			read device_unknown_continue
+			read -t 10 device_unknown_continue
 			case $device_unknown_continue in
 				Yes | yes | y | Y | YES)
 					custom_deps $brand_device $user_device_org
@@ -1389,7 +1420,7 @@ rom_upload(){
 			cat ${HOME}/.ssh/id_ed25519.pub
 			echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
 			echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
-			read -t 120 no_sense_str || echo -e "$upload_auto_check_str"
+			read -t 10 no_sense_str || echo -e "$upload_auto_check_str"
 			git push origin master
 			;;
 		*)
@@ -1521,6 +1552,11 @@ sel_mirror_list_str="github aosp"
 user_device_org=""
 post_task_str=""
 global_upload_user_cho="No"
+if [[ $HOSTNAME =~ 'VM' ]];then
+	declare -i run_on_vm=1
+else
+	declare -i run_on_vm=0
+fi
 
 # for global fuction
 while (( "$#" )); do
@@ -1529,7 +1565,7 @@ while (( "$#" )); do
 			aosp_manifest_url=${1}
 			if [[ ${2} != '-k' ]] && [[ ${2} != '-h' ]] && [[ ! ${2} =~ '--' ]];then
 				aosp_manifest_branch=${2}
-			fi 
+			fi
 			;;
 		-k | -km | --keep-mirror)
 			keep_mirror_arg=1
@@ -1545,6 +1581,7 @@ while (( "$#" )); do
 			post_task_str="${post_task_str} lineage_sdk_patch"
 			;;
 		--auto_build)
+			track_info_for_build
 			if [[ ${2} =~ '/' ]];then
 				shift
 				post_task_str="${post_task_str} auto_buildPOSTSPACE${1}"
@@ -1674,7 +1711,6 @@ aosp_setup_check(){
 	clear
 }
 
-
 main(){
 	# aosp directory check
 	aosp_setup_check $aosp_setup_dir_check_ok
@@ -1683,7 +1719,7 @@ main(){
 	android_env_setup $(echo $(env_install_mode))
 
 	# handle aosp source
-	handle_sync $(echo $(rom_manifest_config ${aosp_manifest_url})) && echo -e "\033[1;32m=>\033[0m ${sync_sucess_str}" || echo -e "\033[1;32m=>\033[0m  ${repo_error_str}"
+	handle_sync $(echo $(rom_manifest_config ${aosp_manifest_url})) ${aosp_manifest_branch} && echo -e "\033[1;32m=>\033[0m ${sync_sucess_str}" || echo -e "\033[1;32m=>\033[0m  ${repo_error_str}"
 
 	# post tasks
 	post_tasks
