@@ -821,7 +821,9 @@ repo_sync_fail_handle(){
 			aosp_source_dir_working=$aosp_source_dir
 		fi
 		if [[ ${aosp_source_dir_working} != "" ]];then
-			cd $aosp_source_dir_working
+			if [[ ! -d .repo ]] && [[ -d $aosp_source_dir_working ]];then
+				cd $aosp_source_dir_working
+			fi
 		else
 			return 1
 		fi
@@ -908,21 +910,25 @@ handle_sync(){
 		curl https://api.github.com/repos/${rom_str}/${manifest_str}/branches -o $custom_json
 	fi
 
-	if [[ $(echo $rom_str | tr A-Z a-z) == "lineageos" ]];then
-		custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g' | grep "lineage") lineage-19.1 lineage-20.0)
+	if [[ $2 != "" ]];then
+		custom_branch=$2
 	else
-		custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g'))
-	fi
+		if [[ $(echo $rom_str | tr A-Z a-z) == "lineageos" ]];then
+			custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g' | grep "lineage") lineage-19.1 lineage-20.0)
+		else
+			custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g'))
+		fi
 
-	if [[ ${#custom_branches[@]} -eq 1 ]];then
-		custom_branch=${custom_branches[0]}
-	else
-		echo -e "\n${rom_branch_str}"
-		select custom_branch_sel in "${custom_branches[@]}"
-		do
-			custom_branch=$custom_branch_sel
-			break
-		done
+		if [[ ${#custom_branches[@]} -eq 1 ]];then
+			custom_branch=${custom_branches[0]}
+		else
+			echo -e "\n${rom_branch_str}"
+			select custom_branch_sel in "${custom_branches[@]}"
+			do
+				custom_branch=$custom_branch_sel
+				break
+			done
+		fi
 	fi
 
         # source bashrc everytime sync source
@@ -980,6 +986,28 @@ handle_sync(){
 }
 
 ################# POST TASK UNIT #################
+
+check_run(){
+	# 1 - process (make)
+	if [[ ! -n $1 ]];then
+		$1=make
+	fi
+
+	# write login info
+	if [[ ! $(grep "aosp-setup: check_run "${1}"" -w $HOME/.profile) ]];then
+		echo "NOT FOUND"
+		sed -i '$a \
+# aosp-setup: check_run '"${1}"' \
+if [[ $(ps -ef | grep '"$1"' | grep -v 'grep' | grep -v 'check-run.sh' | wc -l) != 0 ]];then \
+	echo -e "\\033[1;32m=>\\033[0m '"${1}"' is running" \
+else \
+	echo -e "\\033[1;33m=>\\033[0m '"${1}"' done" \
+fi' $HOME/.profile
+	else
+		echo "HAS FOUND"
+	fi
+}
+
 # Prepare sources
 git_check_dir(){
         if [[ ! -d $3 ]];then
@@ -1486,6 +1514,7 @@ INSTEN
 ################# parse args #####################
 
 aosp_manifest_url=
+aosp_manifest_branch=
 declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
 sel_mirror_list_str="github aosp"
@@ -1498,6 +1527,9 @@ while (( "$#" )); do
 	case "$1" in
 		https://*)
 			aosp_manifest_url=${1}
+			if [[ ${2} != '-k' ]] && [[ ${2} != '-h' ]] && [[ ! ${2} =~ '--' ]];then
+				aosp_manifest_branch=${2}
+			fi 
 			;;
 		-k | -km | --keep-mirror)
 			keep_mirror_arg=1
@@ -1606,7 +1638,7 @@ done
 
 ######################### CONFIG UNIT #########################
 aosp_setup_check(){
-	if [[ $1 -eq 1 ]];then return;fi
+	if [[ $1 -eq 1 ]];then clear;return;fi
 
 	# check directory do not have non-English words
 	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g')"
@@ -1638,20 +1670,23 @@ aosp_setup_check(){
 			sudo eopkg it curl git
 		fi
 	fi
+	
+	clear
 }
 
-aosp_setup_check $aosp_setup_dir_check_ok
-clear
 
 main(){
+	# aosp directory check
+	aosp_setup_check $aosp_setup_dir_check_ok
+
 	# android environment setup
 	android_env_setup $(echo $(env_install_mode))
 
 	# handle aosp source
 	handle_sync $(echo $(rom_manifest_config ${aosp_manifest_url})) && echo -e "\033[1;32m=>\033[0m ${sync_sucess_str}" || echo -e "\033[1;32m=>\033[0m  ${repo_error_str}"
 
-        # post tasks
-        post_tasks
+	# post tasks
+	post_tasks
 }
 
 main
