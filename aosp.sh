@@ -1418,7 +1418,7 @@ rom_upload(){
 			fi
 			echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
 			read -t 10 no_sense_str || echo -e "$upload_auto_check_str"
-			git push origin master
+			echo yes | git push origin master
 			;;
 		*)
 			echo -e "\033[1;33m=>\033[0m ${upload_never_str}"
