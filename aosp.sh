@@ -1055,7 +1055,7 @@ do
 		fi
 	fi
 done
-echo -e "=> Status:"
+echo -e "\n=> Status:"
 echo -e "   \$profile_info_str"
 PROFILEINFO
 	fi
