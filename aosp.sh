@@ -1596,7 +1596,11 @@ while (( "$#" )); do
 			cat ${HOME}/.ssh/id_ed25519.pub
 			echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
 
-			sleep 20
+			if [[ $env_run_time -gt 2 ]];then
+				sleep 2
+			else
+				sleep 20
+			fi
 
 			if [[ ${2} =~ 'git@' ]];then
 				shift
