@@ -1026,56 +1026,20 @@ handle_sync(){
 
 ################# POST TASK UNIT #################
 
-check_run(){
-	# 1 - process (make)
-	if [[ ! -n $1 ]];then
-		$1=make
-	fi
-
-	# write login info
-	check_list_str="$@"
-	if [[ ! $(grep '# aosp-setup check' $HOME/.profile) ]];then
-		cat>>$HOME/.profile<<PROFILEINFO
-
-# aosp-setup check
-check_list=($check_list_str)
-profile_info_str=
-for check_ele in "\${check_list[@]}"
-do
-	if [[ \$(ps -ef | grep -w \$check_ele | grep -v 'grep' | grep -v 'gpg-agent' | wc -l) != 0 ]];then
-		if [[ \$profile_info_str == "" ]];then
-			profile_info_str="\033[1;32m\${check_ele}\033[0m"
-		else
-			profile_info_str="\${profile_info_str} - \033[1;32m\${check_ele}\033[0m"
-		fi
-	else
-		if [[ \$profile_info_str == "" ]];then
-			profile_info_str="\033[1;32m\${check_ele}\033[0m"
-		else
-			profile_info_str="\${profile_info_str} - \033[1;34m\${check_ele}\033[0m"
-		fi
-	fi
-done
-echo -e "\n=> Status:"
-echo -e "   \$profile_info_str"
-PROFILEINFO
-	fi
-	sed -i 's/check_list=\(.*\)/check_list=\('"$check_list_str"'\)/g' $HOME/.profile
-}
-
 track_info_for_build(){
-	# check run when login
-	if [[ "$(command -v apt)" != "" ]]; then
-		local deps_cmd=apt
-	elif [[ "$(command -v pacman)" != "" ]]; then
-     		local deps_cmd=pacman
- 	elif [[ "$(command -v yum)" != "" ]]; then
-     		local deps_cmd=yum
-	elif [[ "$(command -v eopkg)" != "" ]]; then
-            	local deps_cmd=eopkg
-	fi
 
-	check_run $deps_cmd select repo make git
+	cat>>$HOME/.profile<<PROFILEINFO
+
+# aosp-setup: track aosp.sh
+track_pid=\$(ps -ef | grep $(basename ${BASH_SOURCE[@]}) | grep -v 'grep' | awk -F ' ' '{print \$2}' | head -1)
+if [[ \$track_pid  != "" ]];then
+	echo
+	pstree -s \$track_pid
+	echo
+else
+	echo -e "\n=> Process inactive"
+fi
+PROFILEINFO
 }
 
 # Prepare sources
