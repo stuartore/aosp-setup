@@ -630,6 +630,44 @@ solus_deps(){
 }
 
 ######################### BUILD DEVICE(POST ENV) ENV UNIT #####################
+aosp_setup_check(){
+	# This function must run before repo sync to ensure non-English directory not exist for android source
+	if [[ $1 -eq 1 ]];then clear;return;fi
+
+	# check directory do not have non-English words
+	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g')"
+	spec_symbol_list=('~' '`' '!' '@' '#' '$' '%' '^' '&' '-' '+' '=' '[' ']' '\' '|' '/' ':' '<' '>' '?')
+
+	for spec_symbol in "${spec_symbol_list[@]}"
+	do
+		aosp_setup_dir_str="$(echo ${aosp_setup_dir_str} | sed 's|\'"$spec_symbol"'||g')"
+	done
+	if [[ "${aosp_setup_dir_str}" != "" ]];then
+		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=0/g' $(dirname $0)/${BASH_SOURCE}
+		echo -e "\033[1;33m=>\033[0m Found non-English direcotory string [\033[36m${aosp_setup_dir_str}\033[0m]\n\033[1;33m=>\033[0m Suggestions: rename it in Eng."
+		exit
+	else
+		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=1/g' $(dirname $0)/${BASH_SOURCE}
+	fi
+
+	# Install deps for setup configuration
+	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+		if [[ "$(command -v apt)" != "" ]]; then
+			if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
+				sudo apt-get update -yq
+				sudo apt-get install curl git -yq
+			fi
+		elif [[ "$(command -v pacman)" != "" ]]; then
+			sudo pacman -Syy
+			sudo pacman -Sy curl git
+		elif [[ "$(command -v eopkg)" != "" ]]; then
+			sudo eopkg it curl git
+		fi
+	fi
+
+	clear
+}
+
 repo_check(){
 	### handle git-repo
 	## Decline handle git-repo because scripts do it
@@ -1413,12 +1451,6 @@ rom_upload(){
 				fi
 				git remote add origin "${upload_git_remote}"
 			fi
-			if [[ ! -f ${HOME}/.ssh/id_ed25519.pub ]];then
-				echo 'n' | ssh-keygen -t ed25519 -f $HOME/.ssh/id_ed25519 -N '' -q
-			fi
-			echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
-			cat ${HOME}/.ssh/id_ed25519.pub
-			echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
 			echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
 			read -t 10 no_sense_str || echo -e "$upload_auto_check_str"
 			git push origin master
@@ -1542,6 +1574,8 @@ INSTEN
 	fi
 }
 
+aosp_setup_check $aosp_setup_dir_check_ok
+
 ################# parse args #####################
 
 aosp_manifest_url=
@@ -1571,7 +1605,7 @@ while (( "$#" )); do
 			keep_mirror_arg=1
 			;;
 		--recheck)
-			aosp_setup_dir_check_ok=0
+			aosp_setup_check 0
 			;;
 		--only-env)
 			only_env_mode=1
@@ -1590,6 +1624,15 @@ while (( "$#" )); do
 			fi
 			;;
 		--upload)
+			if [[ ! -f ${HOME}/.ssh/id_ed25519.pub ]];then
+				echo 'n' | ssh-keygen -t ed25519 -f $HOME/.ssh/id_ed25519 -N '' -q
+			fi
+			echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
+			cat ${HOME}/.ssh/id_ed25519.pub
+			echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
+
+			sleep 20
+
 			if [[ ${2} =~ 'git@' ]];then
 				shift
 				post_task_str="${post_task_str} rom_upload_configPOSTSPACE${1}"
@@ -1673,47 +1716,7 @@ while (( "$#" )); do
 	shift
 done
 
-######################### CONFIG UNIT #########################
-aosp_setup_check(){
-	if [[ $1 -eq 1 ]];then clear;return;fi
-
-	# check directory do not have non-English words
-	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g')"
-	spec_symbol_list=('~' '`' '!' '@' '#' '$' '%' '^' '&' '-' '+' '=' '[' ']' '\' '|' '/' ':' '<' '>' '?')
-
-	for spec_symbol in "${spec_symbol_list[@]}"
-	do
-		aosp_setup_dir_str="$(echo ${aosp_setup_dir_str} | sed 's|\'"$spec_symbol"'||g')"
-	done
-	if [[ "${aosp_setup_dir_str}" != "" ]];then
-		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=0/g' $(dirname $0)/${BASH_SOURCE}
-		echo -e "\033[1;33m=>\033[0m Found non-English direcotory string [\033[36m${aosp_setup_dir_str}\033[0m]\n\033[1;33m=>\033[0m Suggestions: rename it in Eng."
-		exit
-	else
-		sed -i '16s/aosp_setup_dir_check_ok=.*/aosp_setup_dir_check_ok=1/g' $(dirname $0)/${BASH_SOURCE}
-	fi
-
-	# Install deps for setup configuration
-	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-		if [[ "$(command -v apt)" != "" ]]; then
-			if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-				sudo apt-get update -yq
-				sudo apt-get install curl git -yq
-			fi
-		elif [[ "$(command -v pacman)" != "" ]]; then
-			sudo pacman -Syy
-			sudo pacman -Sy curl git
-		elif [[ "$(command -v eopkg)" != "" ]]; then
-			sudo eopkg it curl git
-		fi
-	fi
-	
-	clear
-}
-
 main(){
-	# aosp directory check
-	aosp_setup_check $aosp_setup_dir_check_ok
 
 	# android environment setup
 	android_env_setup $(echo $(env_install_mode))
