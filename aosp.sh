@@ -1399,9 +1399,10 @@ rom_upload(){
 				done
 			fi
 
-			if [[ $(find $rom_upload_dir -maxdepth 1 -iname "*.zip") ]];then
+			if [[ -d ${rom_upload_dir} ]];then
 				rm -rf $rom_upload_dir
 			fi
+
 			git init ${rom_upload_dir}
 			cp -f ${rom_out_dir}/${rom_to_upload} ${rom_upload_dir}
 			cd $rom_upload_dir
