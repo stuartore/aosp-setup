@@ -1027,8 +1027,8 @@ handle_sync(){
 ################# POST TASK UNIT #################
 
 track_info_for_build(){
-
-	cat>>$HOME/.profile<<PROFILEINFO
+	if [[ ! $(grep '# aosp-setup: track' $HOME/.profile) ]];then
+		cat>>$HOME/.profile<<PROFILEINFO
 
 # aosp-setup: track aosp.sh
 track_pid=\$(ps -ef | grep $(basename ${BASH_SOURCE[@]}) | grep -v 'grep' | awk -F ' ' '{print \$2}' | head -1)
@@ -1040,6 +1040,7 @@ else
 	echo -e "\n=> Process inactive"
 fi
 PROFILEINFO
+fi
 }
 
 # Prepare sources
