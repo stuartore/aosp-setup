@@ -631,7 +631,7 @@ solus_deps(){
 
 ######################### BUILD DEVICE(POST ENV) ENV UNIT #####################
 aosp_setup_check(){
-	# This function must run before repo sync to ensure non-English directory not exist for android source
+	# This function must run before sync to ensure non-English directory not exist for android source
 	if [[ $1 -eq 1 ]];then clear;return;fi
 
 	# check directory do not have non-English words
@@ -1325,11 +1325,6 @@ auto_build(){
 				;;
 		esac
 
-		if [[ ! $(find out/target/product/${build_device} -maxdepth 1 -iname "*.zip") ]];then
-			repo sync -c --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || exit 1
-			echo
-		fi
-
 		source build/envsetup.sh
 		lunch "${rom_spec_str}_${build_device}-user"
 
@@ -1362,7 +1357,7 @@ rom_upload(){
 	# 2 - build device
 	# 3* - git remote
 
-	if [[ $1 == 'no' ]];then return;fi
+	if [[ $1 == 'no' ]];then exit 0;fi
 
 	build_device=$2
 	user_git_remote=$3
