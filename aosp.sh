@@ -920,7 +920,8 @@ repo_sync_fail_handle(){
 		return
 
 		# synchronize again
-		repo sync -c --no-repo-verify -u --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) && break
+		# don't use --force-remove-dirty --prune
+		repo sync -c --no-repo-verify --no-clone-bundle --optimized-fetch --force-sync -j$(nproc --all) && break
 		repo_fail_str=""
 	done
 }
@@ -1013,7 +1014,7 @@ handle_sync(){
 		fi
 	fi
 
-	repo sync -c --no-repo-verify --no-clone-bundle --force-remove-dirty --optimized-fetch --prune --force-sync -j$(nproc --all) || repo_sync_fail_handle
+	repo sync -c --no-repo-verify --no-clone-bundle --optimized-fetch --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
 		cd $AOSP_SETUP_ROOT
