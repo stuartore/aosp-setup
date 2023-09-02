@@ -677,6 +677,7 @@ repo_check(){
 		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path --silent
 		sudo chown ubuntu:ubuntu $repo_tg_path || chown ubuntu:ubuntu $repo_tg_path
 		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
+		sudo chmod 0755 $repo_tg_path || chmod 0755 $repo_tg_path
 		echo -e "\033[1;32m=>\033[0m ${repo_added_str}"
 	fi
 
