@@ -216,7 +216,7 @@ dt_str_patch(){
 	dt_dir=device/$(dirname ${1})/$(basename ${1})
 	cd $dt_dir
 	dt_device_name="$(grep 'PRODUCT_DEVICE' *.mk --max-count=1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')"
-	dt_main_mk=$(grep 'PRODUCT_DEVICE :=' *.mk  --max-count=1 | sed 's/[[:space:]]//g' | sed 's/:PRODUCT_DEVICE.*//g')
+	dt_main_mk=$(grep 'PRODUCT_DEVICE :=' *.mk  --max-count=1 | sed 's/[[:space:]]//g' | sed 's/:PRODUCT_DEVICE.*//g' | head -1)
 	dt_old_str=$(echo $dt_main_mk | sed 's/_.*//g')
 
 	sed -i 's/'"${dt_old_str}"'/'"${rom_spec_str}"'/g' AndroidProducts.mk
@@ -1591,6 +1591,13 @@ while (( "$#" )); do
 		--upload)
 			if [[ ! -f ${HOME}/.ssh/id_ed25519.pub ]];then
 				echo 'n' | ssh-keygen -t ed25519 -f $HOME/.ssh/id_ed25519 -N '' -q
+			fi
+			if [[ $run_on_vm -eq 1 ]] && [[ ! $(grep 'Your-key' ~/.profile) ]];then
+				touch /home/ubuntu/.profile
+				cat>>/home/ubuntu/.profile<<BASHINFO
+				echo ">>> Your-key"
+				cat /home/ubuntu/.ssh/id_ed25519.pub
+				BASHINFO
 			fi
 			echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
 			cat ${HOME}/.ssh/id_ed25519.pub
