@@ -1597,7 +1597,7 @@ while (( "$#" )); do
 				cat>>/home/ubuntu/.profile<<BASHINFO
 				echo ">>> Your-key"
 				cat /home/ubuntu/.ssh/id_ed25519.pub
-				BASHINFO
+BASHINFO
 			fi
 			echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
 			cat ${HOME}/.ssh/id_ed25519.pub
