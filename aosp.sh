@@ -1336,7 +1336,7 @@ auto_build(){
 		lunch "${rom_spec_str}_${build_device}-user"
 
 		let build_time++
-		eval "${build_rom_cmd} -j$(nproc --all)" && rom_upload "${global_upload_user_cho}" ${build_device} "${global_upload_user_repo}"
+		eval "${build_rom_cmd} -j$(nproc --all)"
 		if [[ $? != 0 ]];then
 			declare -i cmd_run_time=0
 			build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
@@ -1346,7 +1346,7 @@ auto_build(){
 				if [[ $cmd_run_time -lt 3 ]];then
 					sh -c "$build_failed_cmd" && continue || handle_build_errror
 		      		elif [[ $cmd_run_time -eq 3 ]];then
-		      			eval "${build_rom_cmd} -j$(nproc --all)" && rom_upload "${global_upload_user_cho}" ${build_device} "${global_upload_user_repo}" || handle_build_errror
+		      			eval "${build_rom_cmd} -j$(nproc --all)" && || handle_build_errror
 		      		elif [[ $cmd_run_time -eq 4 ]];then
 		                        echo "=> ${error_handle_mannually_str}"
 		                        exit 1
@@ -1355,87 +1355,6 @@ auto_build(){
 		fi
 	fi
 	cd $AOSP_SETUP_ROOT
-}
-
-rom_upload(){
-	# Gitlab/Github repo etc.
-
-	# 1* - upload [Y/n]
-	# 2 - build device
-	# 3* - git remote
-
-	if [[ $1 == 'no' ]];then exit 0;fi
-
-	build_device=$2
-	user_git_remote=$3
-
-	case $1 in
-		Yes | yes | y | Y | YES)
-			upload_cho='Y'
-			;;
-		No | no | n | N)
-			upload_cho=n
-			echo -e "\033[1;33m=>\033[0m ${upload_never_str}"
-			return
-			;;
-		*)
-			echo -ne "\033[1;32m=>\033[0m ${upload_user_str}"
-			read upload_cho
-			;;
-	esac
-
-	case $upload_cho in
-		Y | y | yes | Yes | YES)
-			rom_out_dir=out/target/product/${build_device}
-			rom_build_list=($(basename -a $(ls ${rom_out_dir}/*.zip) | grep -v 'eng' | sort))
-			rom_upload_dir=$(dirname ${AOSP_SETUP_ROOT})/upload_rom
-
-			if [[ ${#rom_build_list[@]} -eq 1 ]];then
-				rom_to_upload=${rom_build_list[0]}
-			else
-				echo -e "\n\033[1;32m=>\033[0m ${upload_rom_info_str}"
-				select rom_user_sel in "${rom_build_list[@]}"
-				do
-					rom_to_upload=$rom_user_sel
-					break
-				done
-			fi
-
-			if [[ -d ${rom_upload_dir} ]];then
-				rm -rf $rom_upload_dir
-			fi
-
-			git init ${rom_upload_dir}
-			cp -f ${rom_out_dir}/${rom_to_upload} ${rom_upload_dir}
-			cd $rom_upload_dir
-			git add $rom_to_upload
-			git commit -m "aosp-setup: ${build_device}: release"
-			git log
-			if [[ ! $(git remote -v) ]];then
-				if [[ $user_git_remote =~ 'git@' ]];then
-					upload_git_remote="${user_git_remote}"
-				else
-					echo -e "\033[1;32m=>\033[0m ${upload_git_repo_str}" && echo -ne '\033[1;32m=>\033[0m '
-					read upload_git_remote
-				fi
-				git remote add origin "${upload_git_remote}"
-			fi
-			echo -e "\033[1;32m=>\033[0m ${upload_check_str}"
-			read -t 10 no_sense_str || echo -e "$upload_auto_check_str"
-			ssh -T -o "StrictHostKeyChecking no" git@gitlab.com
-			git push origin master
-			;;
-		*)
-			echo -e "\033[1;33m=>\033[0m ${upload_never_str}"
-			;;		
-	esac
-	cd $AOSP_SETUP_ROOT
-	exit 0
-}
-
-rom_upload_config(){
-	global_upload_user_cho='Yes'
-	global_upload_user_repo="${1}"
 }
 
 post_tasks(){
@@ -1480,8 +1399,6 @@ arg:
 
 					Note: 所有为Github组织或用户
 					      unkown选项默认pixelexperience
-    --upload		上传到Gitlab等仓库
-    			eg.  bash aosp.sh --auto_build xiaomi/raphael --upload git@gitlab.com:username/example.git
 
 independent arg:
     --mirror 		配置git & aosp镜像
@@ -1528,8 +1445,7 @@ arg:
 					Note: all organizations or user from github
 					      unkown will use pixelexperience
 
-    --upload		Upload auto build ROM to Repository such as Gitlab etc.
-    			eg.  bash aosp.sh --auto_build xiaomi/raphael --upload git@gitlab.com:username/example.git
+    			eg.  bash aosp.sh --auto_build xiaomi/raphael
     
 independent arg:
     --mirror 		use mirror for git & aosp
@@ -1555,7 +1471,6 @@ declare -i only_env_mode=0
 sel_mirror_list_str="github aosp"
 user_device_org=""
 post_task_str=""
-global_upload_user_cho="No"
 if [[ $HOSTNAME =~ 'VM' ]];then
 	declare -i run_on_vm=1
 else
@@ -1591,34 +1506,6 @@ while (( "$#" )); do
 				post_task_str="${post_task_str} auto_buildPOSTSPACE${1}"
 			else
 				post_task_str="${post_task_str} auto_build"
-			fi
-			;;
-		--upload)
-			if [[ ! -f ${HOME}/.ssh/id_ed25519.pub ]];then
-				echo 'n' | ssh-keygen -t ed25519 -f $HOME/.ssh/id_ed25519 -N '' -q
-			fi
-			if [[ $run_on_vm -eq 1 ]] && [[ ! $(grep 'Your-key' ~/.profile) ]];then
-				touch /home/ubuntu/.profile
-				cat>>/home/ubuntu/.profile<<BASHINFO
-				echo ">>> Your-key"
-				cat /home/ubuntu/.ssh/id_ed25519.pub
-BASHINFO
-			fi
-			echo -e "\n${split_half_line_str} ${upload_add_sshkey_str} ${split_half_line_str}"
-			cat ${HOME}/.ssh/id_ed25519.pub
-			echo -e "${split_half_line_str}${split_half_line_str}${split_half_line_str}"
-
-			if [[ $env_run_time -gt 2 ]];then
-				sleep 2
-			else
-				sleep 20
-			fi
-
-			if [[ ${2} =~ 'git@' ]];then
-				shift
-				post_task_str="${post_task_str} rom_upload_configPOSTSPACE${1}"
-			else
-				post_task_str="${post_task_str} rom_upload_config"
 			fi
 			;;
 		--failed-repo)
