@@ -354,7 +354,7 @@ ink\.kaleidoscope\..*
 	echo $allow_hal_2 >> build/soong/scripts/check_boot_jars/package_allowed_list.txt
 }
 
-handle_build_errror(){
+handle_build_error(){
 	# FAILED: out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil
 #out/host/linux-x86/bin/checkpolicy -C -M -c 30 -o out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.conf/android_common/plat_policy_for_vendor.conf && cat system/sepolicy/private/technical_debt.cil >>  out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil && out/host/linux-x86/bin/secilc -m -M true -G -c 30 out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil -o /dev/null -f /dev/null # hash of input list: 6e559a895c8d47ee372fecf016f5b2639b5d5d288a4777b8a065fc673afaa911
 	#device/xiaomi/psyche/sepolicy/public/attributes:9:ERROR 'Duplicate declaration of type' at token ';' on line 6983:
@@ -1344,9 +1344,9 @@ auto_build(){
 			do
 				let cmd_run_time++
 				if [[ $cmd_run_time -lt 3 ]];then
-					sh -c "$build_failed_cmd" && continue || handle_build_errror
+					sh -c "$build_failed_cmd" && continue || handle_build_error
 		      		elif [[ $cmd_run_time -eq 3 ]];then
-		      			eval "${build_rom_cmd} -j$(nproc --all)" && || handle_build_errror
+		      			eval "${build_rom_cmd} -j$(nproc --all)" || handle_build_error
 		      		elif [[ $cmd_run_time -eq 4 ]];then
 		                        echo "=> ${error_handle_mannually_str}"
 		                        exit 1
