@@ -4,7 +4,7 @@
 sudo apt update -y
 sudo apt install -y git
 git config --global user.name name
-git config --global user.email email@example.com
+git config --global user.email example@example.com
 
 # check aosp-setup
 if [[ ! -d /home/ubuntu/aosp-setup ]];then
@@ -29,5 +29,4 @@ BASHINFO
 
 # now sync source & build
 cd /home/ubuntu/aosp-setup
-./aosp.sh -k https://github.com/PixelExperience/manifest thirteen-plus --auto_build --auto_build --upload git@gitlab.com:example/psyche_release_aosp.git
-
+./aosp.sh -k https://github.com/RisingTechOSS/android thirteen --auto_build
