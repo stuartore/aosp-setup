@@ -22,10 +22,12 @@ sudo chmod -R 700 /home/ubuntu/.ssh
 
 # add login info for profile
 touch /home/ubuntu/.profile
+if [[ ! $(grep 'Your-key' /home/ubuntu/.profile) ]];then
 cat>>/home/ubuntu/.profile<<BASHINFO
 echo ">>> Your-key"
 cat /home/ubuntu/.ssh/id_ed25519.pub
 BASHINFO
+fi
 
 # now sync source & build
 cd /home/ubuntu/aosp-setup
