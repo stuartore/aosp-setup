@@ -955,7 +955,7 @@ handle_sync(){
 		custom_branch=$2
 	else
 		if [[ $(echo $rom_str | tr A-Z a-z) == "lineageos" ]];then
-			custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g' | grep "lineage") lineage-19.1 lineage-20.0 | lineage-21.0)
+			custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g' | grep "lineage") lineage-19.1 lineage-20.0 lineage-21.0)
 		else
 			custom_branches=($(cat $custom_json | grep name | sed 's/"name"://g' | sed 's/"//g' |  sed 's/,//g' | sed 's/[[:space:]]//g'))
 		fi
