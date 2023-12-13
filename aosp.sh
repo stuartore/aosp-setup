@@ -1235,9 +1235,7 @@ psyche_deps(){
 		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
-			dt_branch='thirteen-staging'
-		else
-			dt_branch='thirteen-staging'
+			dt_branch='thirteen'
 		fi
 		cd ${aosp_source_dir_working}
 		mkdir -p device/xiaomi
