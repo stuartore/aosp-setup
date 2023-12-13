@@ -1232,12 +1232,14 @@ psyche_deps(){
 	fi
 
 	if [[ ${aosp_source_dir_working} != "" ]];then
+		cd ${aosp_source_dir_working}
 		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
+		else
+			dt_branch='thirteen'
 		fi
-		cd ${aosp_source_dir_working}
 		mkdir -p device/xiaomi
 		if [[ ! -d device/xiaomi/psyche ]];then
 			git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
