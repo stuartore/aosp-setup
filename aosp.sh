@@ -422,7 +422,21 @@ handle_build_error(){
 ######################### MIRROR UNIT (OK) #########################
 select_mirror(){
 	if [[ $(which git) == "" ]];then echo -e '\nPlease install git';exit 1;fi
-	sel_github_list=('https://ghproxy.com/https://github.com' 'https://kgithub.com' 'https://hub.fgit.ml' 'https://hub.njuu.cf' 'https://hub.yzuu.cf' 'https://hub.nuaa.cf' 'https://gh.con.sh/https://github.com' 'https://ghps.cc/https://github.com' 'https://github.moeyy.xyz/https://github.com' 'https://slink.ltd/https://github.com')
+	sel_github_list=(
+	'https://mirror.ghproxy.com/https://github.com'
+	'https://githubfast.com'
+	'https://github.moeyy.xyz/https://github.com'
+	'https://ghproxy.net/https://github.com'
+	'https://hub.fgit.mxtrans.net'
+	'https://kgithub.com'
+	'https://hub.fgit.cf'
+	'https://hub.njuu.cf'
+	'https://hub.yzuu.cf'
+	'https://github.moeyy.xyz/https://github.com'
+	'https://slink.ltd/https://github.com'
+	'https://gh.con.sh/https://github.com'
+	'https://ghps.cc/https://github.com'
+	)
 	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
 
 	git_aosp_repo_mirror_reset "github" "aosp"
@@ -454,7 +468,26 @@ select_mirror(){
 								git config --global url.https://raw.nuaa.cf.insteadof https://raw.githubusercontent.com
 								;;
 							*)
-								git config --global url."https://gh.con.sh/https://raw.githubusercontent.com".insteadof https://raw.githubusercontent.com
+								# create random raw github mirror list
+								ramdom_raw_github_mirror_list=(
+								'https://mirror.ghproxy.com/https://raw.githubusercontent.com'
+								'https://fastly.jsdelivr.net/gh'
+								'https://github.moeyy.xyz/https://raw.githubusercontent.com'
+								'https://ghproxy.net/https://raw.githubusercontent.com'
+								'https://raw.fgit.mxtrans.net'
+								'https://gcore.jsdelivr.net/gh'
+								'https://jsdelivr.b-cdn.net/gh'
+								)
+								declare -i raw_github_list_num=${#ramdom_raw_github_mirror_list[@]}
+								raw_github_gen_i_raw=$(expr $RANDOM % $raw_github_list_num)
+								# sometimes RANDOM could be null, auto select 0 if this happends
+								if [[ $raw_github_gen_i_raw == "" ]];then
+									declare -i raw_github_gen_i=0
+								else
+									declare -i raw_github_gen_i=$raw_github_gen_i_raw
+								fi
+								ramdom_raw_github_mirror=${ramdom_raw_github_mirror_list[${raw_github_gen_i}]}
+								git config --global url."${ramdom_raw_github_mirror}".insteadof https://raw.githubusercontent.com
 								;;
 						esac
 					else
