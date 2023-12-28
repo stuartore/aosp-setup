@@ -669,7 +669,7 @@ aosp_setup_check(){
 	if [[ $1 -eq 1 ]];then clear;return;fi
 
 	# check directory do not have non-English words
-	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g')"
+	aosp_setup_dir_str="$(echo $AOSP_SETUP_ROOT | sed 's/[a-zA-Z]//g' | sed 's/[:doirt:]//g')"
 	spec_symbol_list=('~' '`' '!' '@' '#' '$' '%' '^' '&' '-' '+' '=' '[' ']' '\' '|' '/' ':' '<' '>' '?')
 
 	for spec_symbol in "${spec_symbol_list[@]}"
