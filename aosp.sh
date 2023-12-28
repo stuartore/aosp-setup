@@ -436,6 +436,7 @@ select_mirror(){
 	'https://slink.ltd/https://github.com'
 	'https://gh.con.sh/https://github.com'
 	'https://ghps.cc/https://github.com'
+	'https://gitclone.com'
 	)
 	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
 
