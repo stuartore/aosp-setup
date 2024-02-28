@@ -586,22 +586,29 @@ mirror_unit_main(){
 ######################### DEPS UNIT #########################
 ubuntu_deps(){
 	sudo apt update -y
-	sudo apt install software-properties-common lsb-core -y
+	sudo apt install software-properties-common -y
 
 	lsb_release="$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')"
 
+	other_pkgs="lsb-core ncurses-dev android-platform-tools-base pngcrush python-all-dev schedtool"
+
 	case $lsb_release in
 		"Mint 18"* | "Ubuntu 16"*)
-			other_pkgs="libesd0-dev"
+			other_pkgs+="libesd0-dev"
 			;;
 		"Ubuntu 2"* | "Pop!_OS 2"*)
-			other_pkgs="libncurses5 curl python-is-python3"
+			other_pkgs+="libncurses5 curl python-is-python3"
 			;;
 		"Debian GNU/Linux 10"* | "Debian GNU/Linux 11"*)
-			other_pkgs="libncurses5"
+			other_pkgs+="libncurses5"
+			;;
+		"Deepin 2"*)
+			# Deepin absent for common: ncurses-dev android-platform-tools-base pngcrush python-all-dev schedtool
+			# Deepin could find: libncurses-dev android-sdk-platform-tools-common
+			other_pkgs="libncurses-dev android-sdk-platform-tools-common"
 			;;
 		*)
-			other_pkgs="libncurses5"
+			other_pkgs+="libncurses5"
 			;;
 	esac
 
@@ -613,8 +620,8 @@ ubuntu_deps(){
  	    htop imagemagick lib32ncurses5-dev lib32z1-dev libtinfo5 libc6-dev libcap-dev \
 	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
 	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
-	    maven ncftp ncurses-dev patch patchelf pkg-config pngcrush \
-	    pngquant python2.7 python3 android-platform-tools-base python-all-dev re2c schedtool squashfs-tools subversion \
+	    maven ncftp patch patchelf pkg-config \
+	    pngquant python2.7 python3 re2c squashfs-tools subversion \
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip p7zip p7zip-full \
 	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
 
