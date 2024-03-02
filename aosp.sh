@@ -643,6 +643,7 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 
 	if [[ -f /usr/bin/repo ]];then sudo rm -f /usr/bin/repo;fi
 	if [[ $env_run_time -le 2 ]];then
+		sudo pacman-key --lsign-key "farseerfc@archlinux.org"
 		sudo pacman -Sy --noconfirm archlinuxcn-keyring
 	fi
 	sudo pacman -Syy --noconfirm --needed git git-lfs multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle 
