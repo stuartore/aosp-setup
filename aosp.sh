@@ -641,6 +641,7 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 ' /etc/pacman.conf
         fi
 
+	if [[ -f /usr/bin/repo ]];then sudo rm -f /usr/bin/repo;fi
 	if [[ $env_run_time -le 2 ]];then
 		sudo pacman -Sy --noconfirm archlinuxcn-keyring
 	fi
