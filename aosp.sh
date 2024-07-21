@@ -590,7 +590,7 @@ ubuntu_deps(){
 
 	lsb_release="$(lsb_release -d | cut -d ':' -f 2 | sed -e 's/^[[:space:]]*//')"
 
-	other_pkgs="lsb-core ncurses-dev android-platform-tools-base pngcrush python-all-dev schedtool"
+	other_pkgs="lsb-core ncurses-dev android-platform-tools-base pngcrush python-all-dev schedtool "
 
 	case $lsb_release in
 		"Mint 18"* | "Ubuntu 16"*)
