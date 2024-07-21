@@ -1281,25 +1281,21 @@ psyche_deps(){
 			dt_branch='fourteen'
    			# Use Other User's Repos
    			dt_branch='lineage-21'
-      			git clone https://github.com/xiaomi-psyche-development/android_device_xiaomi_psyche.git -b lineage-21 device/xiaomi/psyche
-	 		git clone https://github.com/xiaomi-psyche-development/android_device_xiaomi_sm8250-common -b lineage-21 device/xiaomi/sm8250-common
-	 		git clone https://github.com/xiaomi-psyche-development/proprietary_vendor_xiaomi_psyche -b lineage-21 vendor/xiaomi/psyche
-    			git clone https://github.com/xiaomi-sm8250-devs/proprietary_vendor_xiaomi_sm8250-common.git -b lineage-21 vendor/xiaomi/sm8250-common
-       			git clone https://github.com/LineageOS/android_kernel_xiaomi_sm8250.git -b lineage-21 kernel/xiaomi/sm8250
+      			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/xiaomi-psyche-development/android_device_xiaomi_psyche.git -b lineage-21 device/xiaomi/psyche --depth=1;fi
+	 		if [[ ! -d device/xiaomi/sm8250-common ]];then git clone https://github.com/xiaomi-psyche-development/android_device_xiaomi_sm8250-common -b lineage-21 device/xiaomi/sm8250-common --depth=1;fi
+	 		if [[ ! -d vendor/xiaomi/psyche ]];then git clone https://github.com/xiaomi-psyche-development/proprietary_vendor_xiaomi_psyche -b lineage-21 vendor/xiaomi/psyche --depth=1;fi
+    			if [[ ! -d vendor/xiaomi/sm8250-common ]];then git clone https://github.com/xiaomi-sm8250-devs/proprietary_vendor_xiaomi_sm8250-common.git -b lineage-21 vendor/xiaomi/sm8250-common --depth=1;fi
+       			if [[ ! -d kernel/xiaomi/sm8250 ]];then git clone https://github.com/LineageOS/android_kernel_xiaomi_sm8250.git -b lineage-21 kernel/xiaomi/sm8250 --depth=1;fi
 	  		# Hardware xiaomi
      			mkdir -p hardware
-     			git clone https://github.com/LineageOS/android_hardware_xiaomi.git -b lineage-21 hardware/xiaomi
+     			if [[ ! -d hardware/xiaomi ]];then git clone https://github.com/LineageOS/android_hardware_xiaomi.git -b lineage-21 hardware/xiaomi --depth=1;fi
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
-   			if [[ ! -d device/xiaomi/psyche ]];then
-				git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
-			fi
+   			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1;fi
 		else
   			# Use thirteen branch on un-handled occasion
 			dt_branch='thirteen'
-   			if [[ ! -d device/xiaomi/psyche ]];then
-				git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1
-			fi
+   			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1;fi
 		fi
 		
 		source build/envsetup.sh
