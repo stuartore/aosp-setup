@@ -1279,16 +1279,7 @@ psyche_deps(){
   		mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
 		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
-   			# Use Other User's Repos
-   			dt_branch='lineage-21'
-      			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/Rocky7842/android_device_xiaomi_psyche.git -b lineage-21 device/xiaomi/psyche --depth=1;fi
-	 		if [[ ! -d device/xiaomi/sm8250-common ]];then git clone https://github.com/Rocky7842/android_device_xiaomi_sm8250-common -b lineage-21 device/xiaomi/sm8250-common --depth=1;fi
-	 		if [[ ! -d vendor/xiaomi/psyche ]];then git clone https://github.com/Rocky7842/proprietary_vendor_xiaomi_psyche -b lineage-21 vendor/xiaomi/psyche --depth=1;fi
-    			if [[ ! -d vendor/xiaomi/sm8250-common ]];then git clone https://github.com/Rocky7842/proprietary_vendor_xiaomi_sm8250-common.git -b lineage-21 vendor/xiaomi/sm8250-common --depth=1;fi
-       			if [[ ! -d kernel/xiaomi/sm8250 ]];then git clone https://github.com/Rocky7842/android_kernel_xiaomi_sm8250.git -b lineage-21 kernel/xiaomi/sm8250 --depth=1;fi
-	  		# Hardware xiaomi
-     			mkdir -p hardware
-     			if [[ ! -d hardware/xiaomi ]];then git clone https://github.com/LineageOS/android_hardware_xiaomi.git -b lineage-21 hardware/xiaomi --depth=1;fi
+			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/android_device_xiaomi_psyche.git -b lineage-21 device/xiaomi/psyche --depth=1;fi
 			echo "=> Config mannually for Android 14"
 			source build/envsetup.sh && exit
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
