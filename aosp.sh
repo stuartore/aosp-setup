@@ -1280,8 +1280,6 @@ psyche_deps(){
 		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
 			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/android_device_xiaomi_psyche.git -b lineage-21 device/xiaomi/psyche --depth=1;fi
-			echo "=> Config mannually for Android 14"
-			source build/envsetup.sh && exit
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
    			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1;fi
@@ -1292,39 +1290,6 @@ psyche_deps(){
 		fi
 		
 		source build/envsetup.sh
-		cd $AOSP_SETUP_ROOT
-	fi
-}
-
-guacamole_deps(){
-	if [[ $aosp_source_dir != "" ]];then
-		aosp_source_dir_working=$aosp_source_dir
-	fi
-
-	if [[ ${aosp_source_dir_working} != "" ]];then
-
-		cd ${aosp_source_dir_working}
-		mkdir -p device/oneplus
-
-		# hardware
-		git_check_dir https://github.com/PixelExperience/hardware_oplus thirteen hardware/oplus
-
-		# device
-		git_check_dir https://github.com/PixelExperience-Devices/device_oneplus_guacamole thirteen device/oneplus/guacamole
-		git_check_dir https://github.com/PixelExperience-Devices/device_oneplus_sm8150-common thirteen device/oneplus/sm8150-common
-
-		# vendor
-		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus_guacamole thirteen vendor/oneplus/guacamole
-		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus_sm8150-common thirteen vendor/oneplus/sm8150-common
-
-		# vendor - firmware
-		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus-firmware thirteen vendor/oneplus/firmware
-
-		# kernel
-		git_check_dir https://github.com/PixelExperience-Devices/kernel_oneplus_sm8150 thirteen  kernel/oneplus/sm8150
-
-		# Other
-		git_check_dir https://gitlab.pixelexperience.org/android/vendor-blobs/vendor_oneplus_sm8150_apps thirteen vendor/oneplus/sm8150/apps
 		cd $AOSP_SETUP_ROOT
 	fi
 }
@@ -1369,36 +1334,29 @@ auto_build(){
 		local build_device=$(basename ${brand_device})
 
 		# build command
-		local rom_spec_str=$rom_spec_str
-		case $rom_spec_str in
-			"evolution" | "pixys" | "xd")
-				build_rom_cmd="mka ${rom_spec_str}"
-				;;
-			*)
-				build_rom_cmd="mka bacon"
-				;;
-		esac
-
-		source build/envsetup.sh
-		lunch "${rom_spec_str}_${build_device}-user"
-
-		let build_time++
-		eval "${build_rom_cmd} -j$(nproc --all)"
-		if [[ $? != 0 ]];then
-			declare -i cmd_run_time=0
-			build_failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
-			while [[ $cmd_run_time -le 4 ]]
-			do
-				let cmd_run_time++
-				if [[ $cmd_run_time -lt 3 ]];then
-					sh -c "$build_failed_cmd" && continue || handle_build_error
-		      		elif [[ $cmd_run_time -eq 3 ]];then
-		      			eval "${build_rom_cmd} -j$(nproc --all)" || handle_build_error
-		      		elif [[ $cmd_run_time -eq 4 ]];then
-		                        echo "=> ${error_handle_mannually_str}"
-		                        exit 1
-		                fi
-			done
+  		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]]；then
+			case $rom_spec_str in
+				"afterlife")
+					build_rom_cmd="goafterlife $(echo "$brand_device" | cut -d'/' -f2)"
+					;;
+				*)
+					build_rom_cmd="mka bacon"
+					;;
+			esac
+   			source build/envsetup.sh
+			lunch "${rom_spec_str}_${build_device}-user"
+    		else
+			local rom_spec_str=$rom_spec_str
+			case $rom_spec_str in
+				"evolution" | "pixys" | "xd")
+					build_rom_cmd="mka ${rom_spec_str}"
+					;;
+				*)
+					build_rom_cmd="mka bacon"
+					;;
+			esac
+   			source build/envsetup.sh
+			lunch "${rom_spec_str}_${build_device}-user"
 		fi
 	fi
 	cd $AOSP_SETUP_ROOT
