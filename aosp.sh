@@ -1335,7 +1335,7 @@ auto_build(){
 		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
 
 		# build command
-  		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]]；then
+  		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			case $rom_spec_str in
 				"rising")
 					build_rom_cmd = "riseup ${build_device} userdebug && rise fb"
@@ -1345,7 +1345,7 @@ auto_build(){
 					;;
 				
 				*)
-					build_rom_cmd="lunch "${rom_spec_str}_${build_device}-user && mka bacon"
+					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-user && mka bacon"
 					;;
 			esac
 
@@ -1354,10 +1354,10 @@ auto_build(){
 			local rom_spec_str=$rom_spec_str
 			case $rom_spec_str in
 				"evolution" | "pixys" | "xd")
-					build_rom_cmd="lunch "${rom_spec_str}_${build_device}-user && mka ${rom_spec_str}"
+					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-user && mka ${rom_spec_str}"
 					;;
 				*)
-					build_rom_cmd="lunch "${rom_spec_str}_${build_device}-user && mka bacon"
+					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-user && mka bacon"
 					;;
 			esac
    			source build/envsetup.sh
