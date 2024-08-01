@@ -1303,6 +1303,8 @@ auto_build(){
 	# set defailt device xiaomi/psyche
 	local brand_device=xiaomi/psyche
 	if [[ -n $1 ]] && [[ $1 =~ '/' ]];then brand_device=$1;fi
+	local build_brand = "$(echo "$brand_device" | cut -d'/' -f1)"
+	local build_device = "$(echo "$brand_device" | cut -d'/' -f2)"
 	case $brand_device in
 		"xiaomi/psyche")
 			psyche_deps
@@ -1331,34 +1333,37 @@ auto_build(){
 		AOSP_BUILD_ROOT=$(pwd)
 
 		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
-		local build_device=$(basename ${brand_device})
 
 		# build command
   		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]]；then
 			case $rom_spec_str in
-				"afterlife")
-					build_rom_cmd="goafterlife $(echo "$brand_device" | cut -d'/' -f2)"
+				"rising")
+					build_rom_cmd = "riseup ${build_device} userdebug && rise fb"
 					;;
+				"afterlife")
+					build_rom_cmd="goafterlife ${build_device}"
+					;;
+				
 				*)
-					build_rom_cmd="mka bacon"
+					build_rom_cmd="lunch "${rom_spec_str}_${build_device}-user && mka bacon"
 					;;
 			esac
-   			source build/envsetup.sh
-			lunch "${rom_spec_str}_${build_device}-user"
+
+		# default for android 13
     		else
 			local rom_spec_str=$rom_spec_str
 			case $rom_spec_str in
 				"evolution" | "pixys" | "xd")
-					build_rom_cmd="mka ${rom_spec_str}"
+					build_rom_cmd="lunch "${rom_spec_str}_${build_device}-user && mka ${rom_spec_str}"
 					;;
 				*)
-					build_rom_cmd="mka bacon"
+					build_rom_cmd="lunch "${rom_spec_str}_${build_device}-user && mka bacon"
 					;;
 			esac
    			source build/envsetup.sh
-			lunch "${rom_spec_str}_${build_device}-user"
 		fi
 	fi
+	eval "$build_rom_cmd"
 	cd $AOSP_SETUP_ROOT
 }
 
