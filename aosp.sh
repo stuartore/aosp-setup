@@ -1279,7 +1279,7 @@ psyche_deps(){
   		mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
 		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
-			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/android_device_xiaomi_psyche.git -b lineage-21 device/xiaomi/psyche --depth=1;fi
+			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b fourteen device/xiaomi/psyche --depth=1;fi
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
    			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1;fi
