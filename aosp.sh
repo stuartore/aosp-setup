@@ -1303,8 +1303,8 @@ auto_build(){
 	# set defailt device xiaomi/psyche
 	local brand_device=xiaomi/psyche
 	if [[ -n $1 ]] && [[ $1 =~ '/' ]];then brand_device=$1;fi
-	local build_brand = "$(echo "$brand_device" | cut -d'/' -f1)"
-	local build_device = "$(echo "$brand_device" | cut -d'/' -f2)"
+	local build_brand=${brand_device%%/*}
+	local build_device=${brand_device#*/}
 	case $brand_device in
 		"xiaomi/psyche")
 			psyche_deps
