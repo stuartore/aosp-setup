@@ -1398,9 +1398,9 @@ auto_build(){
 	fi
 	eval "$build_rom_cmd"
 	if [[ $? -eq 0 ]];then
-		wxpusher_status "成功"
+		wxpusher_status "成功" >/dev/null 2>&1
 	else
-		wxpusher_status "失败"
+		wxpusher_status "失败" >/dev/null 2>&1
 	fi
 	cd $AOSP_SETUP_ROOT
 }
@@ -1434,7 +1434,7 @@ wxpusher_status(){
 {
   "appToken":"AT_BHMK812m0DaA5wJLqUHoVVdzu7xkUYWe",
   "content":"###${wxpusher_username} 你好！\n##你的脚本已${script_status}运行",
-  "summary":"消息摘要",
+  "summary":"编译运行状态：${script_status}",
   "contentType":3,
   "topicIds":[ 
       123
