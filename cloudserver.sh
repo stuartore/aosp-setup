@@ -13,8 +13,15 @@ git_android_branch="thirteen"
 
 
 cloud_script(){
-  sudo apt update -y
-  sudo apt install -y git
+  if [[ "$(command -v apt)" != "" ]]; then
+		  sudo apt update -y && sudo apt install -y git
+	elif [[ "$(command -v pacman)" != "" ]]; then
+     	sudo pacman -Syu --noconfirm git
+ 	elif [[ "$(command -v yum)" != "" ]]; then
+     	sudo yum update -y && sudo yum install -y git
+	elif [[ "$(command -v eopkg)" != "" ]]; then
+        sudo eopkg update -y && sudo eopkg install -y git
+	fi
   git config --global user.name name
   git config --global user.email example@example.com
 
