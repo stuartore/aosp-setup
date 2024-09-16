@@ -795,7 +795,7 @@ setup_build_deps(){
 }
 
 check_machine_type(){
-	if [[ $run_on_vm -eq 0]];then
+	if [[ $run_on_vm -eq 0 ]];then
 		on_physical_machine
 	else
 		on_cloud_vm_machine
@@ -827,7 +827,7 @@ fi' $HOME/.bashrc
 
 on_cloud_vm_machine(){
 	# skip setup adb tools if run on vm
-	if [[ $run_on_vm -eq 0]];return;fi
+	if [[ $run_on_vm -eq 0 ]];return;fi
 
 	# ssh
 	ssh_enlong_patch
