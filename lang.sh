@@ -50,6 +50,10 @@ lang_en(){
 	upload_check_str='Enter to continue'
 	upload_never_str="Won't upload"
 	upload_auto_check_str="\033[1;32mAuto Continue\033[0m \033[1;33m(2minutes)\033[0m"
+
+	# pusher
+	pusher_script_success_str='Passed'
+	pusher_script_error_str='Error'
 }
 
 lang_zh(){
@@ -102,6 +106,10 @@ lang_zh(){
 	upload_check_str='回车以继续'
 	upload_never_str='不上传'
 	upload_auto_check_str="\033[1;32m自动继续\033[0m \033[1;33m(2分钟)\033[0m"
+
+	# pusher
+	pusher_script_success_str='成功'
+	pusher_script_error_str='失败'
 }
 
 case $LANG in

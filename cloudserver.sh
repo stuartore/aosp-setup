@@ -10,6 +10,8 @@ your_git_username="example"
 your_git_email="example@example.com"
 git_android_manifest="https://github.com/RisingTechOSS/android"
 git_android_branch="thirteen"
+# only if you want to use wxpusher
+wxpusher_uid=""
 
 
 cloud_script(){
@@ -32,7 +34,7 @@ cloud_script(){
 
   # now sync source & build
   cd /home/${USER}/aosp-setup
-  ./aosp.sh -k ${git_android_manifest} ${git_android_branch} --auto_build
+  ./aosp.sh -k ${git_android_manifest} ${git_android_branch} --auto_build --wxpusher_uid ${wxpusher_uid}
 }
 
 cloud_script

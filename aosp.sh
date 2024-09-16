@@ -1398,9 +1398,9 @@ auto_build(){
 	fi
 	eval "$build_rom_cmd"
 	if [[ $? -eq 0 ]];then
-		wxpusher_status "成功" >/dev/null 2>&1
+		wxpusher_status ${pusher_script_success_str} >/dev/null 2>&1
 	else
-		wxpusher_status "失败" >/dev/null 2>&1
+		wxpusher_status ${pusher_script_error_str} >/dev/null 2>&1
 	fi
 	cd $AOSP_SETUP_ROOT
 }
@@ -1421,9 +1421,9 @@ post_tasks(){
 }
 
 wxpusher_status(){
-	if [[ $with_wxpusher -eq 0 ]];then return;fi
+	if [[ $with_wxpusher -eq 0 ]] || [[ ! $wxpusher_uid =~ "UID_" ]];then return;fi
 
-	wxpusher_username="斯图尔特"
+	wxpusher_username="$(git config user.name)"
 	#wxpusher_uid=""
 	script_status=$1
 
@@ -1475,6 +1475,10 @@ arg:
 			    bash aosp.sh --auto_build xiaomi/raphael
 
 			 其他设备手动配置好依赖，目前xiaomi/psyche为默认
+	--with_push	获取脚本运行状态
+				如果希望使用推送，用户可能需要获取UID，具体请查看README
+
+				eg. ./aosp.sh --auto_build --with_push UID_xxx
     --device-org 	自Github用户仓库查找  device/vendor/kernel
     			选项:
 					lineageos | crdroidandroid | aospa | arrowos | pixelexperience
@@ -1520,6 +1524,11 @@ arg:
 			    bash aosp.sh --auto_build xiaomi/raphael
 
 			Other device need to config dependencies mannually. default: xiaomi/psyche
+	--with_push	Get script status on mobile
+				If users wish to use push notifications, they may need to obtain UID. 
+				Please read README for details
+
+				eg. ./aosp.sh --auto_build --with_push UID_xxx
     --device-org 	Search device/vendor/kernel from User
     			select from:
 					lineageos | crdroidandroid | aospa | arrowos | pixelexperience
