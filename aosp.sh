@@ -1421,6 +1421,11 @@ post_tasks(){
 }
 
 wxpusher_status(){
+	# need vars:
+	# 1. with_wxpusher 0/1
+	# 2. wxpusher_uid
+	# 3. wxpusher_username (optional. the same with git username)
+
 	if [[ $with_wxpusher -eq 0 ]] || [[ ! $wxpusher_uid =~ "UID_" ]];then return;fi
 
 	wxpusher_username="$(git config user.name)"
