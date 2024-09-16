@@ -827,7 +827,7 @@ fi' $HOME/.bashrc
 
 on_cloud_vm_machine(){
 	# skip setup adb tools if run on vm
-	if [[ $run_on_vm -eq 0 ]];return;fi
+	if [[ $run_on_vm -eq 0 ]];then return;fi
 
 	# ssh
 	ssh_enlong_patch
