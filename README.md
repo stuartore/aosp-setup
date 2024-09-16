@@ -32,6 +32,10 @@ git clone https://github.com/stuartore/aosp-setup.git && cd aosp-setup
 ```
 > Debug: Still uer to fix error & mannual handle
 
+
+# Get script status
+Get script status on Wechat，[Click me](https://wxpusher.zjiecode.com/wxuser/?type=1&id=83609#/follow).
+
 + LineageOS
 + ArrowOS
 + Pixel Experience

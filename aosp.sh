@@ -1397,6 +1397,11 @@ auto_build(){
 		fi
 	fi
 	eval "$build_rom_cmd"
+	if [[ $? -eq 0 ]];then
+		wxpusher_status "成功"
+	else
+		wxpusher_status "失败"
+	fi
 	cd $AOSP_SETUP_ROOT
 }
 
@@ -1415,6 +1420,44 @@ post_tasks(){
 	eval "$(echo $post_end_task | sed 's/POSTSPACE/ /g')"
 }
 
+wxpusher_status(){
+	if [[ $with_wxpusher -eq 0 ]];then return;fi
+
+	wxpusher_username="斯图尔特"
+	#wxpusher_uid=""
+	script_status=$1
+
+	URL="https://wxpusher.zjiecode.com/api/send/message"
+
+	# 定义JSON数据
+	JSON_DATA=$(cat <<EOF
+{
+  "appToken":"AT_BHMK812m0DaA5wJLqUHoVVdzu7xkUYWe",
+  "content":"###${wxpusher_username} 你好！\n##你的脚本已${script_status}运行",
+  "summary":"消息摘要",
+  "contentType":3,
+  "topicIds":[ 
+      123
+  ],
+
+  "uids":[
+      "${wxpusher_uid}"
+  ],
+  "url":"https://wxpusher.zjiecode.com", 
+  "verifyPay":false, 
+  "verifyPayType":0 
+}
+EOF
+)
+
+# 使用curl发送POST请求
+curl -X POST \
+     -H "Content-Type: application/json" \
+     -d "$JSON_DATA" \
+     $URL
+
+
+}
 ################# INSTRUCTION UNIT #################
 instructions_help(){
 	if [[ $LANG =~ "zh_CN" ]];then
@@ -1512,6 +1555,7 @@ aosp_manifest_branch=
 declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
 sel_mirror_list_str="github aosp"
+with_wxpusher=0
 user_device_org=""
 post_task_str=""
 if [[ $HOSTNAME =~ 'VM' ]];then
@@ -1549,6 +1593,15 @@ while (( "$#" )); do
 				post_task_str="${post_task_str} auto_buildPOSTSPACE${1}"
 			else
 				post_task_str="${post_task_str} auto_build"
+			fi
+			;;
+		--with_push)
+			shift
+			with_wxpusher=1
+			if [[ -n "$1" ]];then
+				wxpusher_uid="${1}"
+			else
+				wxpusher_uid=""
 			fi
 			;;
 		--failed-repo)

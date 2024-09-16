@@ -35,6 +35,9 @@ git clone https://github.com/stuartore/aosp-setup.git && aosp-setup
 ```
 > 实验性：仍然需要用户处理和修复出错
 
+# 运行状态推送
+获取脚本运行状态，[点我](https://wxpusher.zjiecode.com/wxuser/?type=1&id=83609#/follow)
+
 + LineageOS
 + ArrowOS
 + Pixel Experience
