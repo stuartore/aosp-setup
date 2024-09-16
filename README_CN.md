@@ -35,9 +35,6 @@ git clone https://github.com/stuartore/aosp-setup.git && aosp-setup
 ```
 > 实验性：仍然需要用户处理和修复出错
 
-# 运行状态推送
-获取脚本运行状态，[点我](https://wxpusher.zjiecode.com/wxuser/?type=1&id=83609#/follow)
-
 + LineageOS
 + ArrowOS
 + Pixel Experience
@@ -49,3 +46,11 @@ git clone https://github.com/stuartore/aosp-setup.git && aosp-setup
 + PixysOS
 + SuperiorOS
 + PixelPlusUI
+
+#### 运行状态推送
+无人值守，[`点我`](https://wxpusher.zjiecode.com/wxuser/?type=1&id=83609#/follow)
+```
+# 例子， 可能需要在公众号右下方获取UID_xxxx
+./aosp.sh --auto_build --with_push UID_xxxxx
+```
++ 感谢@zjiecode和`wxpusher`
