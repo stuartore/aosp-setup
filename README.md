@@ -32,10 +32,6 @@ git clone https://github.com/stuartore/aosp-setup.git && cd aosp-setup
 ```
 > Debug: Still uer to fix error & mannual handle
 
-
-# Get script status
-Get script status on Wechat，[Click me](https://wxpusher.zjiecode.com/wxuser/?type=1&id=83609#/follow).
-
 + LineageOS
 + ArrowOS
 + Pixel Experience
@@ -48,3 +44,11 @@ Get script status on Wechat，[Click me](https://wxpusher.zjiecode.com/wxuser/?t
 + PixysOS
 + SuperiorOS
 + PixelPlusUI
+
+#### Get script status
+Get running status on Wechat，[`Click me`](https://wxpusher.zjiecode.com/wxuser/?type=1&id=83609#/follow).
+```
+# eg. You need to copy UID on wechat official account
+./aosp.sh --auto_build --with_push UID_xxxxx
+```
++ Thanks to @zjiecode and his `wxpusher`
