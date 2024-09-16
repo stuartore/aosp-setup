@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# EN: If your cloud server supports and requires automatic script execution, please paste this script into the Automatic Script
+#     Assistant (Manager). You may need to adjust the variables in the next section according to your needs.   
+# 中文： 如果你的云服务器支持并且需要自动运行脚本，请把这个脚本粘贴到自动脚本助手（管理器）中。你可能需要根据你的需要调整下一部分的变量。
+
 # setup git
 # only used to pull android pull source
 your_git_username="example"
