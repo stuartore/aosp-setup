@@ -91,6 +91,8 @@ sepolicy_patch(){
 	# 1. system/sepolicy/public |  system/sepolicy/prebuilts/api/33.0/public
 	# 2. system/sepolicy/priviate  |  system/sepolicy/prebuilts/api/33.0/priviate
 
+	# need further research
+
 	# Files system/sepolicy/private/property.te and system/sepolicy/prebuilts/api/33.0/private/property.te differ
 	# Failed to resolve expandtypeattribute statement at /home/ubuntu/aosp-setup/android/Project-Elixir/out/soong/.intermediates/system/sepolicy/compat/system_ext_30.0.cil/android_common/gen/system_ext_30.0.cil:1
 	# 
@@ -718,7 +720,7 @@ repo_check(){
 	if [[ "$(command -v repo)" == "" ]];then
 		repo_tg_path=/usr/bin/repo
 		sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o $repo_tg_path --silent
-		sudo chown ubuntu:ubuntu $repo_tg_path || chown ubuntu:ubuntu $repo_tg_path
+		sudo chown ${USER}:${USER} $repo_tg_path || chown ${USER}:${USER} $repo_tg_path
 		sudo chmod a+x $repo_tg_path || chmod a+x $repo_tg_path
 		sudo chmod 0755 $repo_tg_path || chmod 0755 $repo_tg_path
 		echo -e "\033[1;32m=>\033[0m ${repo_added_str}"
@@ -776,8 +778,39 @@ git_config_user_info(){
 }
 
 setup_build_deps(){
-	#return 5
-	#adb path
+	# lineageos:  bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
+	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
+	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
+
+	if [[ "$(command -v apt)" != "" ]]; then
+		ubuntu_deps
+	elif [[ "$(command -v pacman)" != "" ]]; then
+     	arch_deps
+ 	elif [[ "$(command -v yum)" != "" ]]; then
+     	fedora_deps
+	elif [[ "$(command -v eopkg)" != "" ]]; then
+        solus_deps
+	fi
+
+	check_machine_type
+	cd $AOSP_SETUP_ROOT
+}
+
+check_machine_type(){
+	if [[ $run_on_vm -eq 0]];then
+		on_physical_machine
+	else
+		on_cloud_vm_machine
+	fi
+}
+
+on_physical_machine(){
+	# This function is mainly for setup adb tools* on physical machine
+
+	# skip setup adb tools if run on vm
+	if [[ $run_on_vm -eq 1 ]];then return;fi
+
+	# adb path
 	if [[ $(grep 'add Android SDK platform' -ns $HOME/.bashrc) == "" ]];then
 		sed -i '$a \
 # add Android SDK platform tools to path \
@@ -786,33 +819,33 @@ if [ -d "$HOME/platform-tools" ] ; then \
 fi' $HOME/.bashrc
 	fi
 
-	# lineageos:  bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
-	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
-	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
-
-	if [[ "$(command -v apt)" != "" ]]; then
-		ubuntu_deps
-	elif [[ "$(command -v pacman)" != "" ]]; then
-     		arch_deps
- 	elif [[ "$(command -v yum)" != "" ]]; then
-     		fedora_deps
-	elif [[ "$(command -v eopkg)" != "" ]]; then
-            	solus_deps
-	fi
-
-	# android adb udev rules
-	if [[ $run_on_vm -eq 0 ]];then
-		adb_rules_setup
-	fi
-	cd $AOSP_SETUP_ROOT
-}
-
-adb_rules_setup(){
+	# adb udev rules
 	if [[ ! -f /etc/udev/rules.d/51-android.rules ]];then
 		sudo curl --create-dirs -L -o /etc/udev/rules.d/51-android.rules -O -L https://raw.githubusercontent.com/M0Rf30/android-udev-rules/main/51-android.rules
 	fi
 	sudo chmod 644 /etc/udev/rules.d/51-android.rules
 	sudo chown root /etc/udev/rules.d/51-android.rules
+}
+
+on_cloud_vm_machine(){
+	# skip setup adb tools if run on vm
+	if [[ $run_on_vm -eq 0]];return;fi
+
+	# check ssh-key
+	if [[ ! -f /home/${USER}/.ssh/id_ed25519.pub ]];then
+	echo 'n' | ssh-keygen -t ed25519 -f /home/${USER}/.ssh/id_ed25519 -N '' -q -C "${USER}@VM-${USER}"
+	fi
+	sudo chown -R ${USER}:${USER} /home/${USER}/.ssh
+	sudo chmod -R 700 /home/${USER}/.ssh
+
+	# add login info for profile
+	touch /home/${USER}/.profile
+	if [[ ! $(grep '>>> Your-key' /home/${USER}/.profile) ]];then
+	cat>>/home/${USER}/.profile<<BASHINFO
+echo ">>> Your-key"
+cat /home/${USER}/.ssh/id_ed25519.pub
+BASHINFO
+	fi
 }
 
 env_install_mode(){
@@ -1343,14 +1376,13 @@ auto_build(){
 				"afterlife")
 					build_rom_cmd="goafterlife ${build_device}"
 					;;
-				
 				*)
-					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-user && mka bacon"
+					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-userdebug && mka bacon"
 					;;
 			esac
 
 		# default for android 13
-    		else
+    	else
 			local rom_spec_str=$rom_spec_str
 			case $rom_spec_str in
 				"evolution" | "pixys" | "xd")
