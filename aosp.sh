@@ -113,9 +113,16 @@ sepolicy_patch(){
 }
 
 ssh_enlong_patch(){
-        if [[ $run_on_vm -eq 1 ]];then
+    if [[ $run_on_vm -eq 1 ]];then
 		sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
 		sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 86400/g' /etc/ssh/sshd_config
+		
+		# try: fix git early eof
+		git config --global http.postBuffer 1048576000
+		git config --global core.compression -1
+		git config --global http.lowSpeedLimit 0
+		git config --global http.lowSpeedTime 999999
+
 		sudo systemctl restart sshd
 	fi
 }
@@ -273,20 +280,11 @@ setup_patches(){
 	# check repo
 	repo_check
 
-	# ssh
-	ssh_enlong_patch
-
 	# low RAM patch less than 25Gb
 	patch_when_low_ram
 
 	# fix sepolicy error
 	sepolicy_patch
-
-	# try: fix git early eof
-	git config --global http.postBuffer 1048576000
-	git config --global core.compression -1
-	git config --global http.lowSpeedLimit 0
-	git config --global http.lowSpeedTime 999999
 }
 
 ########################## ERROR HANDLING UNIT ############################
@@ -830,6 +828,9 @@ fi' $HOME/.bashrc
 on_cloud_vm_machine(){
 	# skip setup adb tools if run on vm
 	if [[ $run_on_vm -eq 0]];return;fi
+
+	# ssh
+	ssh_enlong_patch
 
 	# check ssh-key
 	if [[ ! -f /home/${USER}/.ssh/id_ed25519.pub ]];then

@@ -1,34 +1,27 @@
 #!/bin/bash
 
 # setup git
-sudo apt update -y
-sudo apt install -y git
-git config --global user.name name
-git config --global user.email example@example.com
+# only used to pull android pull source
+your_git_username="example"
+your_git_email="example@example.com"
+git_android_manifest="https://github.com/RisingTechOSS/android"
+git_android_branch="thirteen"
 
-# check aosp-setup
-if [[ ! -d /home/ubuntu/aosp-setup ]];then
-  git clone https://github.com/stuartore/aosp-setup.git /home/ubuntu/aosp-setup
-fi
-sudo chown -R ubuntu:ubuntu /home/ubuntu/aosp-setup
-sudo chmod -R 777 /home/ubuntu/aosp-setup
 
-# check ssh-key
-if [[ ! -f /home/ubuntu/.ssh/id_ed25519.pub ]];then
-  echo 'n' | ssh-keygen -t ed25519 -f /home/ubuntu/.ssh/id_ed25519 -N '' -q -C "ubunut@VM-ubuntu"
-fi
-sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh
-sudo chmod -R 700 /home/ubuntu/.ssh
+cloud_script(){
+  sudo apt update -y
+  sudo apt install -y git
+  git config --global user.name name
+  git config --global user.email example@example.com
 
-# add login info for profile
-touch /home/ubuntu/.profile
-if [[ ! $(grep 'Your-key' /home/ubuntu/.profile) ]];then
-cat>>/home/ubuntu/.profile<<BASHINFO
-echo ">>> Your-key"
-cat /home/ubuntu/.ssh/id_ed25519.pub
-BASHINFO
-fi
+  # check aosp-setup
+  if [[ ! -d /home/${USER}/aosp-setup ]];then git clone https://github.com/stuartore/aosp-setup.git /home/${USER}/aosp-setup;fi
+  sudo chown -R ${USER}:${USER} /home/${USER}/aosp-setup
+  sudo chmod -R 777 /home/${USER}/aosp-setup
 
-# now sync source & build
-cd /home/ubuntu/aosp-setup
-./aosp.sh -k https://github.com/RisingTechOSS/android thirteen --auto_build
+  # now sync source & build
+  cd /home/${USER}/aosp-setup
+  ./aosp.sh -k ${git_android_manifest} ${git_android_branch} --auto_build
+}
+
+cloud_script
