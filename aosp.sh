@@ -221,7 +221,7 @@ dt_str_patch(){
 
 	cd $aosp_source_dir_working
 
-	rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
+    rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o -e "{}/version.mk"' \; -print))")"
 	dt_dir=device/$(dirname ${1})/$(basename ${1})
 	cd $dt_dir
 	dt_device_name="$(grep 'PRODUCT_DEVICE' *.mk --max-count=1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')"
@@ -1313,7 +1313,11 @@ psyche_deps(){
   		mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
 		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
-			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b fourteen device/xiaomi/psyche --depth=1;fi
+			# use Rocky7842 repos
+			git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git fourteen device/xiaomi/psyche
+
+			# test: use Flicker372 & SailfishOS community repos
+			git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git fourteen-staging device/xiaomi/psyche
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
    			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1;fi
