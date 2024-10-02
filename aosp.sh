@@ -1381,6 +1381,15 @@ auto_build(){
 				"afterlife")
 					build_rom_cmd="goafterlife ${build_device}"
 					;;
+				"superior")
+					build_rom_cmd="breakfast ${build_device} && m bacon"
+					;;
+				"evolution")
+					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-userdebug && m evolution"
+					;;
+				"pixys")
+					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-ap2a-userdebug && m pixysrelease"
+					;;
 				*)
 					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-userdebug && mka bacon"
 					;;
