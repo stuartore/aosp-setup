@@ -1317,7 +1317,7 @@ psyche_deps(){
 			git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git fourteen device/xiaomi/psyche
 
 			# test: use Flicker372 & SailfishOS community repos
-			git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git fourteen-staging device/xiaomi/psyche
+			# git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git fourteen-staging device/xiaomi/psyche
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
    			if [[ ! -d device/xiaomi/psyche ]];then git clone https://github.com/stuartore/device_xiaomi_psyche.git -b ${dt_branch} device/xiaomi/psyche --depth=1;fi
