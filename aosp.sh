@@ -1370,13 +1370,14 @@ auto_build(){
 		cd ${aosp_source_dir_working}
 		AOSP_BUILD_ROOT=$(pwd)
 
-		local rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
-
+		local rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o
+ -e "{}/version.mk"' \; -print))")"
+ 
 		# build command
   		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			case $rom_spec_str in
 				"rising")
-					build_rom_cmd = "riseup ${build_device} userdebug && rise fb"
+					build_rom_cmd="riseup ${build_device} userdebug && rise fb"
 					;;
 				"afterlife")
 					build_rom_cmd="goafterlife ${build_device}"
