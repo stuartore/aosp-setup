@@ -221,7 +221,12 @@ dt_str_patch(){
 
 	cd $aosp_source_dir_working
 
-    rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o -e "{}/version.mk"' \; -print))")"
+        rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o -e "{}/version.mk"' \; -print))")"
+        case $rom_spec_str in
+     		"rising")
+       			rom_spec_str="lineage"
+	  		;;
+     	esac
 	dt_dir=device/$(dirname ${1})/$(basename ${1})
 	cd $dt_dir
 	dt_device_name="$(grep 'PRODUCT_DEVICE' *.mk --max-count=1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')"
