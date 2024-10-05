@@ -1418,10 +1418,11 @@ auto_build(){
 	fi
 	eval "$build_rom_cmd"
 	if [[ $? -eq 0 ]];then
-		wxpusher_status ${pusher_script_success_str} >/dev/null 2>&1
+ 		local build_log="Build Passed"
+		wxpusher_status ${pusher_script_success_str} "${build_log}" >/dev/null 2>&1
 	else
- 		export build_error_log="$(base64 < out/error.log)"
-		wxpusher_status ${pusher_script_error_str} >/dev/null 2>&1
+ 		local build_log="$(base64 < out/error.log)"
+		wxpusher_status ${pusher_script_error_str} "${build_log}" >/dev/null 2>&1
 	fi
 	cd $AOSP_SETUP_ROOT
 }
@@ -1444,14 +1445,16 @@ post_tasks(){
 wxpusher_status(){
 	# need vars:
 	# 1. with_wxpusher 0/1
-	# 2. wxpusher_uid
-	# 3. wxpusher_username (optional. the same with git username)
+	# 2. wxpusher log
+ 	# 3. wxpusher_uid
+	# 4. wxpusher_username (optional. the same with git username)
 
 	if [[ $with_wxpusher -eq 0 ]] || [[ ! $wxpusher_uid =~ "UID_" ]];then return;fi
 
-	wxpusher_username="$(git config user.name)"
+	local wxpusher_username="$(git config user.name)"
 	#wxpusher_uid=""
-	script_status=$1
+	local script_status=$1
+ 	local wxpusher_log=$2
 
 	URL="https://wxpusher.zjiecode.com/api/send/message"
 
@@ -1460,7 +1463,7 @@ wxpusher_status(){
 	JSON_DATA=$(cat <<EOF
 {
   "appToken":"AT_BHMK812m0DaA5wJLqUHoVVdzu7xkUYWe",
-  "content":"<h3>${wxpusher_username}，你好</h3><p>你的脚本已${script_status}运行，base64日志为（请复制解码）：\n</p><p>${error_log}</p></br></br><p>你可以选择上方点击查看解码</p>",
+  "content":"<h3>${wxpusher_username}，你好</h3><p>你的脚本已${script_status}运行，base64日志为（请复制解码）：\n</p><p>${wxpusher_log}</p></br></br><p>你可以选择上方点击查看解码</p>",
   "summary":"编译运行状态：${script_status}",
   "contentType":2,
   "topicIds":[ 
