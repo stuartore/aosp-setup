@@ -1420,6 +1420,7 @@ auto_build(){
 	if [[ $? -eq 0 ]];then
 		wxpusher_status ${pusher_script_success_str} >/dev/null 2>&1
 	else
+ 		export build_error_log="$(base64 < out/error.log)"
 		wxpusher_status ${pusher_script_error_str} >/dev/null 2>&1
 	fi
 	cd $AOSP_SETUP_ROOT
@@ -1455,12 +1456,13 @@ wxpusher_status(){
 	URL="https://wxpusher.zjiecode.com/api/send/message"
 
 	# 定义JSON数据
+	# 定义JSON数据
 	JSON_DATA=$(cat <<EOF
 {
   "appToken":"AT_BHMK812m0DaA5wJLqUHoVVdzu7xkUYWe",
-  "content":"###${wxpusher_username} 你好！\n##你的脚本已${script_status}运行",
+  "content":"<h3>${wxpusher_username}，你好</h3><p>你的脚本已${script_status}运行，base64日志为（请复制解码）：\n</p><p>${error_log}</p></br></br><p>你可以选择上方点击查看解码</p>",
   "summary":"编译运行状态：${script_status}",
-  "contentType":3,
+  "contentType":2,
   "topicIds":[ 
       123
   ],
@@ -1468,7 +1470,7 @@ wxpusher_status(){
   "uids":[
       "${wxpusher_uid}"
   ],
-  "url":"https://wxpusher.zjiecode.com", 
+  "url":"https://www.toolhelper.cn/EncodeDecode/Base64", 
   "verifyPay":false, 
   "verifyPayType":0 
 }
