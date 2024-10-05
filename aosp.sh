@@ -168,7 +168,7 @@ ccache -M 50G -F 0' $HOME/.bashrc
 
 lineage_sdk_patch(){
 	cd $aosp_source_dir_working
-	rom_spec_str="$(basename "$(find vendor -maxdepth 3 -type f -iname "common.mk" | sed 's/config.*//g')")"
+	rom_spec_str=$rom_spec_str
 
 	git clone https://github.com/LineageOS/android_packages_resources_devicesettings.git -b lineage-20.0 packages/resources/devicesettings
 	git clone https://github.com/LineageOS/android_hardware_lineage_interfaces -b lineage-20.0 hardware/lineage/interfaces
@@ -221,12 +221,8 @@ dt_str_patch(){
 
 	cd $aosp_source_dir_working
 
-        rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o -e "{}/version.mk"' \; -print))")"
-        case $rom_spec_str in
-     		"rising")
-       			rom_spec_str="lineage"
-	  		;;
-     	esac
+        rom_spec_str=$rom_spec_str
+	
 	dt_dir=device/$(dirname ${1})/$(basename ${1})
 	cd $dt_dir
 	dt_device_name="$(grep 'PRODUCT_DEVICE' *.mk --max-count=1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')"
@@ -1100,6 +1096,12 @@ handle_sync(){
 	repo sync -c --no-repo-verify --no-clone-bundle --optimized-fetch --force-sync -j$(nproc --all) || repo_sync_fail_handle
 	
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
+ 		export rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o -e "{}/version.mk"' \; -print))")"
+		case $rom_spec_str in
+			"rising")
+				rom_spec_str="lineage"
+				;;
+		esac
 		cd $AOSP_SETUP_ROOT
 		return 0
 	else
@@ -1375,8 +1377,7 @@ auto_build(){
 		cd ${aosp_source_dir_working}
 		AOSP_BUILD_ROOT=$(pwd)
 
-		local rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o
- -e "{}/version.mk"' \; -print))")"
+		export rom_spec_str=$rom_spec_str
  
 		# build command
   		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
