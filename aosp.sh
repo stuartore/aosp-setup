@@ -449,20 +449,14 @@ select_mirror(){
 						echo -e "\033[1;32m=>\033[0m ${sel_is_str} $gm"
 						git config --global url."${gm}".insteadof https://github.com
 						case $gm in
-							'https://kgithub.com')
-								git config --global url.https://raw.kgithub.com.insteadof https://raw.githubusercontent.com
+							'https://kkgithub.com')
+								git config --global url.https://raw.kkgithub.com.insteadof https://raw.githubusercontent.com
 								;;
-							'https://hub.fgit.ml')
-								git config --global url.https://raw.fgit.ml.insteadof https://raw.githubusercontent.com
+							'https://gitdl.cn/https://github.com')
+								git config --global url.https://gitdl.cn/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
 								;;
-							'https://hub.njuu.cf')
-								git config --global url.https://raw.njuu.cf.insteadof https://raw.githubusercontent.com
-								;;
-							'https://hub.yzuu.cf')
-								git config --global url.https://raw.yzuu.cf.insteadof https://raw.githubusercontent.com
-								;;
-							'https://hub.nuaa.cf')
-								git config --global url.https://raw.nuaa.cf.insteadof https://raw.githubusercontent.com
+							'https://ghproxy.net/https://github.com')
+								git config --global url.https://ghproxy.net/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
 								;;
 							*)
 								# create random raw github mirror list
@@ -471,9 +465,6 @@ select_mirror(){
 								'https://fastly.jsdelivr.net/gh'
 								'https://github.moeyy.xyz/https://raw.githubusercontent.com'
 								'https://ghproxy.net/https://raw.githubusercontent.com'
-								'https://raw.fgit.mxtrans.net'
-								'https://gcore.jsdelivr.net/gh'
-								'https://jsdelivr.b-cdn.net/gh'
 								)
 								declare -i raw_github_list_num=${#ramdom_raw_github_mirror_list[@]}
 								raw_github_gen_i_raw=$(expr $RANDOM % $raw_github_list_num)
