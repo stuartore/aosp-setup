@@ -428,15 +428,10 @@ select_mirror(){
 	'https://githubfast.com'
 	'https://github.moeyy.xyz/https://github.com'
 	'https://ghproxy.net/https://github.com'
-	'https://hub.fgit.mxtrans.net'
-	'https://kgithub.com'
-	'https://hub.fgit.cf'
-	'https://hub.njuu.cf'
-	'https://hub.yzuu.cf'
-	'https://github.moeyy.xyz/https://github.com'
+ 	'https://kkgithub.com'
+	'https://gitdl.cn/https://github.com'
+ 	'https://ghp.ci/https://github.com'
 	'https://slink.ltd/https://github.com'
-	'https://gh.con.sh/https://github.com'
-	'https://ghps.cc/https://github.com'
 	'https://gitclone.com'
 	)
 	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
