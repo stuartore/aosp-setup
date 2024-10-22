@@ -431,7 +431,9 @@ select_mirror(){
  	'https://kkgithub.com'
 	'https://gitdl.cn/https://github.com'
  	'https://ghp.ci/https://github.com'
+  	'https://github.store'
 	'https://slink.ltd/https://github.com'
+ 	'https://github.site'
 	'https://gitclone.com'
 	)
 	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
@@ -458,6 +460,12 @@ select_mirror(){
 							'https://ghproxy.net/https://github.com')
 								git config --global url.https://ghproxy.net/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
 								;;
+							'https://github.store')
+       								git config --global url.https://raw.github.store.insteadof https://raw.githubusercontent.com
+       								;;
+	       						'https://github.site')
+	      							git config --global url.https://raw.github.site.insteadof https://raw.githubusercontent.com
+	      							;;
 							*)
 								# create random raw github mirror list
 								ramdom_raw_github_mirror_list=(
@@ -465,6 +473,8 @@ select_mirror(){
 								'https://fastly.jsdelivr.net/gh'
 								'https://github.moeyy.xyz/https://raw.githubusercontent.com'
 								'https://ghproxy.net/https://raw.githubusercontent.com'
+								'https://raw.github.store'
+								'https://github.site'
 								)
 								declare -i raw_github_list_num=${#ramdom_raw_github_mirror_list[@]}
 								raw_github_gen_i_raw=$(expr $RANDOM % $raw_github_list_num)
