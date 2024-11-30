@@ -1371,11 +1371,18 @@ auto_build(){
 		cd ${aosp_source_dir_working}
 		AOSP_BUILD_ROOT=$(pwd)
 
-		export rom_spec_str=$rom_spec_str
+		export rom_spec_for_build==$rom_spec_str
  
 		# build command
   		if [[ $(grep 'revision="android-15' .repo/manifests/default.xml) ]] || [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
-			case $rom_spec_str in
+    			# rom spec for android 15, android 14
+       			case "$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o -e "{}/version.mk"' \; -print))")" in
+	  			"rising")
+      					rom_spec_for_build="rising"
+	   				;;
+			esac
+   
+			case $rom_spec_for_build in
 				"rising")
 					build_rom_cmd="riseup ${build_device} userdebug && rise fb"
 					;;
@@ -1397,8 +1404,8 @@ auto_build(){
 			esac
 		# default for android 13
 	    	else
-			local rom_spec_str=$rom_spec_str
-			case $rom_spec_str in
+			local rom_spec_for_build=$rom_spec_str
+			case $rom_spec_for_build in
 				"evolution" | "pixys" | "xd")
 					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-user && mka ${rom_spec_str}"
 					;;
