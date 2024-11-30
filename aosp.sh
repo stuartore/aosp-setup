@@ -1374,7 +1374,7 @@ auto_build(){
 		export rom_spec_str=$rom_spec_str
  
 		# build command
-  		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
+  		if [[ $(grep 'revision="android-15' .repo/manifests/default.xml) || $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			case $rom_spec_str in
 				"rising")
 					build_rom_cmd="riseup ${build_device} userdebug && rise fb"
@@ -1395,9 +1395,8 @@ auto_build(){
 					build_rom_cmd="lunch ${rom_spec_str}_${build_device}-userdebug && mka bacon"
 					;;
 			esac
-
 		# default for android 13
-    	else
+	    	else
 			local rom_spec_str=$rom_spec_str
 			case $rom_spec_str in
 				"evolution" | "pixys" | "xd")
