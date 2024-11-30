@@ -1314,18 +1314,20 @@ psyche_deps(){
 	if [[ ${aosp_source_dir_working} != "" ]];then
 		cd ${aosp_source_dir_working}
   		mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
-		if [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
+    		if [[ $(grep 'revision="android-15' .repo/manifests/default.xml) ]];then
+      			dt_branch='fifteen'
+		elif [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
-			git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
 		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
-   			git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
 		else
   			# Use thirteen branch on un-handled occasion
-			dt_branch='thirteen'
-   			git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
+			dt_branch='thirteen'	
 		fi
-		
+  
+  		# clone device tree
+		git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
+  
 		source build/envsetup.sh
 		cd $AOSP_SETUP_ROOT
 	fi
