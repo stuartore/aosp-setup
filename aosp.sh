@@ -86,32 +86,6 @@ patch_when_low_ram(){
 	fi
 }
 
-sepolicy_patch(){
-	# This is a patch for diffrences between
-	# 1. system/sepolicy/public |  system/sepolicy/prebuilts/api/33.0/public
-	# 2. system/sepolicy/priviate  |  system/sepolicy/prebuilts/api/33.0/priviate
-
-	# need further research
-
-	# Files system/sepolicy/private/property.te and system/sepolicy/prebuilts/api/33.0/private/property.te differ
-	# Failed to resolve expandtypeattribute statement at /home/ubuntu/aosp-setup/android/Project-Elixir/out/soong/.intermediates/system/sepolicy/compat/system_ext_30.0.cil/android_common/gen/system_ext_30.0.cil:1
-	# 
-
-	cd $AOSP_SETUP_ROOT
-	if [[ ! -d $aosp_source_dir_working ]];then
-		return
-	else
-		cd ${aosp_source_dir_working}
-		echo -e "\033[1;32m=>\033[0m ${fix_sepolicy_str=} : \033[1;3;36m${aosp_source_dir_working}\033[0m\n"
-
-		if [[ -d system/sepolicy/public ]];then
-			eval "$(diff system/sepolicy/public system/sepolicy/prebuilts/api/33.0/public | grep diff | sed 's/diff/cp -f/g')"
-			eval "$(diff system/sepolicy/private system/sepolicy/prebuilts/api/33.0/private | grep diff | sed 's/diff/cp -f/g')"
-		fi
-	fi
-	cd $AOSP_SETUP_ROOT
-}
-
 ssh_enlong_patch(){
     if [[ $run_on_vm -eq 1 ]];then
 		sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 30/g' /etc/ssh/sshd_config
@@ -283,9 +257,6 @@ setup_patches(){
 
 	# low RAM patch less than 25Gb
 	patch_when_low_ram
-
-	# fix sepolicy error
-	sepolicy_patch
 }
 
 ########################## ERROR HANDLING UNIT ############################
@@ -295,23 +266,6 @@ lineage_sdk_dump_error(){
 	# fix error for aleady defined Android.bp
 	#sh -c "$(cat out/error.log  | grep 'already defined' | sed 's/Android.bp.*/Android.bp/g' | sed 's/.*hardware/hardware/g' | sed 's/^/rm &/g')"
 	echo
-}
-
-sepolicy_differ_error_handle(){
-	log_file=out/error.log
-	tmp_log_file=out/aosp_setup_error.log
-
-	cp -f $log_file $tmp_log_file
-
-	declare -i sepolicy_handle_num=0
-	while [[ $sepolicy_handle_num -lt 2 ]]
-	do
-		sh -c "$(grep differ $tmp_log_file | sed 's/Files/cp/g' | sed 's/and//g' | sed 's/differ//g')"
-		sh -c "$(grep Command $tmp_log_file | sed 's/Command://g')" > $tmp_log_file
-		let sepolicy_handle_num++
-	done
-	sh -c "$(grep Command $tmp_log_file | sed 's/Command://g')"
-	if [[ $? != 0 ]];then exit 1;fi
 }
 
 sysprop_dump_error_handle(){
@@ -356,14 +310,6 @@ ink\.kaleidoscope\..*
 }
 
 handle_build_error(){
-	# FAILED: out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil
-#out/host/linux-x86/bin/checkpolicy -C -M -c 30 -o out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.conf/android_common/plat_policy_for_vendor.conf && cat system/sepolicy/private/technical_debt.cil >>  out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil && out/host/linux-x86/bin/secilc -m -M true -G -c 30 out/soong/.intermediates/system/sepolicy/plat_policy_for_vendor.cil/android_common/plat_policy_for_vendor.cil -o /dev/null -f /dev/null # hash of input list: 6e559a895c8d47ee372fecf016f5b2639b5d5d288a4777b8a065fc673afaa911
-	#device/xiaomi/psyche/sepolicy/public/attributes:9:ERROR 'Duplicate declaration of type' at token ';' on line 6983:
-	
-	#ubuntu@VM-0-12-ubuntu:~/aosp-setup/android/AlphaDroid-Project$ sh -c "$(grep Command out/error.log | sed 's/Command://g')"
-	#device/xiaomi/psyche/sepolicy/public/attributes:10:ERROR 'Duplicate declaration of type' at token ';' on line 7006:
-#attribute hal_touchfeature_server;
-#line 10
 
 	#error: found duplicate sysprop assignments:
 #persist.sys.sf.native_mode=258
@@ -377,12 +323,8 @@ handle_build_error(){
 	local default_error_log=out/error.log
 
 	local failed_cmd=$(grep Command out/error.log | sed 's/Command://g')
-	if [[ $(grep 'Files' $default_error_log) ]] && [[ $(grep 'differ' $default_error_log) ]] && [[ $(grep 'sepolicy' $default_error_log) ]];then
-		local error_type="sepolicy_differ_error"
-	elif [[ $(grep 'Read-only file system' $default_error_log) ]] && [[ $(grep 'ccache:' $default_error_log) ]];then
+	if [[ $(grep 'Read-only file system' $default_error_log) ]] && [[ $(grep 'ccache:' $default_error_log) ]];then
 		local error_type="ccache_readonly_error"
-	elif [[ $(grep 'Duplicate declaration of type' $default_error_log) ]] && [[ $(grep 'sepolicy' $default_error_log) ]];then
-		local error_type="sepolicy_dump_type_error"
 	elif [[ $(grep 'duplicate sysprop' $default_error_log) ]];then
 		local error_type="sysprop_dump_error"
 	elif [[ $(grep 'update-current-api' $default_error_log) ]];then
@@ -394,16 +336,10 @@ handle_build_error(){
 	fi
 	
 	case $error_type in
-		"sepolicy_differ_error")
-			sepolicy_differ_error_handle
-			;;
 		"ccache_readonly_error")
 			# It seems user still need to run command mannually
 			ccache_fix
 			sudo mount --bind /home/$USER/.ccache $custom_ccache_dir
-			;;
-		"sepolicy_dump_type_error")
-			echo
 			;;
 		# typeattribute/ expandtypeattribute
 		"sysprop_dump_error")
