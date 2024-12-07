@@ -652,11 +652,11 @@ aosp_setup_check(){
 		elif [[ "$(command -v pacman)" != "" ]]; then
 			sudo pacman -Syy
 			sudo pacman -Sy curl git
-		elif [[ "$(command -v dnf)"!= "" ]]; then
+		elif [[ "$(command -v dnf)" != "" ]]; then
 			sudo dnf install curl git
 		elif [[ "$(command -v eopkg)" != "" ]]; then
 			sudo eopkg it curl git
-		elif [[ "$(command -v zypper)"!= "" ]]; then
+		elif [[ "$(command -v zypper)" != "" ]]; then
 			sudo zypper install curl git
 		fi
 	fi
@@ -741,7 +741,7 @@ setup_build_deps(){
      	fedora_deps
 	elif [[ "$(command -v eopkg)" != "" ]]; then
         solus_deps
-	elif [[ "$(command -v zypper)"!= "" ]]; then
+	elif [[ "$(command -v zypper)" != "" ]]; then
 		opensuse_deps
 	fi
 
