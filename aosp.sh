@@ -554,7 +554,7 @@ ubuntu_deps(){
 	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
 	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
 	    maven ncftp patch patchelf pkg-config \
-	    pngquant python2.7 python3 re2c squashfs-tools subversion \
+	    pngquant python2.7 python3 python3-pyelftools python-all-dev re2c squashfs-tools subversion \
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip p7zip p7zip-full \
 	    libxml-simple-perl libswitch-perl apt-utils ${other_pkgs}
 
@@ -598,6 +598,22 @@ fedora_deps(){
 	sudo udevadm control --reload-rules
 }
 
+opensuse_deps(){
+	sudo zypper in mirrorsorcerer
+	sudo systemctl enable --now mirrorsorcerer
+
+	sudo zypper install android-tools autoconf213 bc bison bzip2 ccache clang curl flex gawk gpg2 gperf gcc-c++ git git-lfs glibc-devel ImageMagick java-11-openjdk java-1_8_0-openjdk java-1_8_0-openjdk-devel liblz4-1 libncurses5 libncurses6 libpopt0 libressl-devel libstdc++6 libX11-6 libxml2-tools libxslt1 libX11-devel libXrandr2 lzip lzop kernel-devel maven make megatools Mesa-libGL1 Mesa-libGL-devel mokutil nano neofetch ncurses5-devel ncurses-devel openssl opi patch perl-Digest-SHA1 python python-rpm-generators python3-pyelftools readline-devel schedtool screenfetch sha3sum squashfs vim wget wireguard-tools xf86-video-intel zip zlib-devel
+
+	# Devel Basis (https://darryldias.me/2020/devel-basis-on-opensuse-sle/)
+	sudo zypper install -t pattern devel_basis
+
+	# The package libncurses5 is not available, so we need to hack our way by symlinking the required library.
+	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libncurses.so.5
+	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libtinfo.so.5
+	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
+	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libtinfo.so.5
+}
+
 solus_deps(){
 	sudo eopkg it -c system.devel
 	sudo eopkg it openjdk-8-devel curl-devel git gnupg gperf libgcc-32bit libxslt-devel lzop ncurses-32bit-devel ncurses-devel readline-32bit-devel rsync schedtool sdl1-devel squashfs-tools unzip wxwidgets-devel zip zlib-32bit-devel lzip ccache
@@ -636,8 +652,12 @@ aosp_setup_check(){
 		elif [[ "$(command -v pacman)" != "" ]]; then
 			sudo pacman -Syy
 			sudo pacman -Sy curl git
+		elif [[ "$(command -v dnf)"!= "" ]]; then
+			sudo dnf install curl git
 		elif [[ "$(command -v eopkg)" != "" ]]; then
 			sudo eopkg it curl git
+		elif [[ "$(command -v zypper)"!= "" ]]; then
+			sudo zypper install curl git
 		fi
 	fi
 
@@ -717,10 +737,12 @@ setup_build_deps(){
 		ubuntu_deps
 	elif [[ "$(command -v pacman)" != "" ]]; then
      	arch_deps
- 	elif [[ "$(command -v yum)" != "" ]]; then
+ 	elif [[ "$(command -v dnf)" != "" ]]; then
      	fedora_deps
 	elif [[ "$(command -v eopkg)" != "" ]]; then
         solus_deps
+	elif [[ "$(command -v zypper)"!= "" ]]; then
+		opensuse_deps
 	fi
 
 	check_machine_type
