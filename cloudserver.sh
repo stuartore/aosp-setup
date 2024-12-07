@@ -34,7 +34,7 @@ cloud_script(){
 
   # now sync source & build
   cd /home/${USER}/aosp-setup
-  ./aosp.sh -k ${git_android_manifest} ${git_android_branch} --auto_build --wxpusher_uid ${wxpusher_uid}
+  ./aosp.sh -k ${git_android_manifest} ${git_android_branch} --auto_build --with_push ${wxpusher_uid}
 }
 
 cloud_script
