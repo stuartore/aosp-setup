@@ -1342,7 +1342,8 @@ auto_build(){
    
 			case $rom_spec_for_build in
 				"rising")
-					build_rom_cmd="riseup ${build_device} userdebug && rise fb"
+					build_rom_cmd="riseup ${build_device} userdebug"
+     					build_rom_cmd1="rise fb"
 					;;
 				"afterlife")
 					build_rom_cmd="goafterlife ${build_device}"
@@ -1374,7 +1375,15 @@ auto_build(){
    			source build/envsetup.sh
 		fi
 	fi
-	eval "$build_rom_cmd"
+ 	
+ 	# build rom: most rom use one command, while some rom not
+  	if [[ "$build_rom_cmd1" != "" ]];then
+   		eval "$build_rom_cmd"
+   		eval "$build_rom_cmd1"
+     	else
+      		eval "$build_rom_cmd"
+     	fi
+      
 	if [[ $? -eq 0 ]];then
  		local build_log="Build Passed"
 		wxpusher_status ${pusher_script_success_str} "${build_log}" >/dev/null 2>&1
