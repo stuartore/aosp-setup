@@ -1047,8 +1047,13 @@ handle_sync(){
 		fi
 	fi
 
-	repo sync -c --no-repo-verify --no-clone-bundle --optimized-fetch --force-sync -j$(nproc --all) || repo_sync_fail_handle
-	
+	# repo sync by default & handle sync when failed
+	if [[ $skip_aosp_sync == 0 ]] && [[ $env_run_time -le 2 ]];then
+		repo sync -c --no-repo-verify --no-clone-bundle --optimized-fetch --force-sync -j$(nproc --all) || repo_sync_fail_handle
+	else
+		echo -e "\033[1;32m=>\033[0m ${skip_aosp_sync_str1} \033[1;33m${rom_str}\033[0m ${skip_aosp_sync_str2}"
+	fi
+ 
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
  		export rom_spec_str="$(basename "$(dirname $(find vendor -maxdepth 3 -type d -name '*config' -exec sh -c 'test -e "{}/common.mk" -o -e "{}/version.mk"' \; -print))")"
 		case $rom_spec_str in
@@ -1471,8 +1476,10 @@ arg:
 			eg. bash aosp.sh --auto_build
 			    bash aosp.sh --auto_build xiaomi/raphael
 
-			 其他设备手动配置好依赖，目前xiaomi/psyche为默认
-	--with_push	获取脚本运行状态
+			    其他设备手动配置好依赖，目前xiaomi/psyche为默认
+    --skip_sync	        跳过重复同步ROM远码
+				确保完整同步，正常运行工具同步2次后才生效
+    --with_push	        获取脚本运行状态
 				如果希望使用推送，用户可能需要获取UID，具体请查看README
 
 				eg. ./aosp.sh --auto_build --with_push UID_xxx
@@ -1521,7 +1528,9 @@ arg:
 			    bash aosp.sh --auto_build xiaomi/raphael
 
 			Other device need to config dependencies mannually. default: xiaomi/psyche
-	--with_push	Get script status on mobile
+    --skip_sync	        Skip sync ROM source code repeatedly
+				Take effect when run script more than 2 times for complete sync
+    --with_push	        Get script status on mobile
 				If users wish to use push notifications, they may need to obtain UID. 
 				Please read README for details
 
@@ -1558,6 +1567,7 @@ aosp_setup_check $aosp_setup_dir_check_ok
 
 aosp_manifest_url=
 aosp_manifest_branch=
+skip_aosp_sync=0
 declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
 sel_mirror_list_str="github aosp"
@@ -1600,6 +1610,9 @@ while (( "$#" )); do
 			else
 				post_task_str="${post_task_str} auto_build"
 			fi
+			;;
+		--skip_sync)
+			skip_aosp_sync=1
 			;;
 		--with_push)
 			shift
