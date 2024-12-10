@@ -202,27 +202,30 @@ dt_str_patch(){
 	dt_device_name="$(grep 'PRODUCT_DEVICE' *.mk --max-count=1 | sed 's/[[:space:]]//g' | sed 's/.*:=//g')"
 	dt_main_mk=$(grep 'PRODUCT_DEVICE :=' *.mk  --max-count=1 | sed 's/[[:space:]]//g' | sed 's/:PRODUCT_DEVICE.*//g' | head -1)
 	dt_old_str=$(echo $dt_main_mk | sed 's/_.*//g')
+ 	dt_new_main_mk="${rom_spec_str}_${dt_device_name}.mk"
 
-	sed -i 's/'"${dt_old_str}"'/'"${rom_spec_str}"'/g' AndroidProducts.mk
-	sed -i 's/'"${dt_old_str}"'/'"${rom_spec_str}"'/g' $dt_main_mk
-	sed -i 's/vendor\/'"${dt_old_str}"'/vendor\/'"${rom_spec_str}"'/g' BoardConfig*.mk
-
-	dt_new_main_mk="${rom_spec_str}_${dt_device_name}.mk"
-	if [[ -f $dt_main_mk ]] && [[ ! -f $dt_new_main_mk ]];then
-		mv $dt_main_mk $dt_new_main_mk
-	fi
-	if [[ -f ${dt_old_str}.dependencies ]] && [[ ! -f ${rom_spec_str}.dependencies ]];then
-		mv ${dt_old_str}.dependencies ${rom_spec_str}.dependencies
-	fi
-
-	# handle parts. if there are multiple name for device settings, user need to check mannually
-	if [[ -f ../../../packages/resources/devicesettings/Android.bp ]] && [[ -f parts/Android.bp ]];then
-		if [[ $(grep settings.resource ../../../packages/resources/devicesettings/Android.bp | grep -c 'name:') -eq 1 ]];then
-			old_parts_settings_str="$(grep settings.resources parts/Android.bp | sed 's/[[:space:]]//g')"
-			new_parts_settings_str="$(grep name: ../../../packages/resources/devicesettings/Android.bp | sed 's/[[:space:]]//g' | sed 's/name://g')"
-			sed -i 's/'"${old_parts_settings_str}"'/'"${new_parts_settings_str}"'/g' parts/Android.bp
+	if [[ ! $(grep 'revision="android-15' ../../../.repo/manifests/default.xml) ]] && [[ $(pwd) != "psyche" ]] ;then
+		sed -i 's/'"${dt_old_str}"'/'"${rom_spec_str}"'/g' AndroidProducts.mk
+		sed -i 's/'"${dt_old_str}"'/'"${rom_spec_str}"'/g' $dt_main_mk
+		sed -i 's/vendor\/'"${dt_old_str}"'/vendor\/'"${rom_spec_str}"'/g' BoardConfig*.mk
+	
+		
+		if [[ -f $dt_main_mk ]] && [[ ! -f $dt_new_main_mk ]];then
+			mv $dt_main_mk $dt_new_main_mk
 		fi
-	fi
+		if [[ -f ${dt_old_str}.dependencies ]] && [[ ! -f ${rom_spec_str}.dependencies ]];then
+			mv ${dt_old_str}.dependencies ${rom_spec_str}.dependencies
+		fi
+	
+		# handle parts. if there are multiple name for device settings, user need to check mannually
+		if [[ -f ../../../packages/resources/devicesettings/Android.bp ]] && [[ -f parts/Android.bp ]];then
+			if [[ $(grep settings.resource ../../../packages/resources/devicesettings/Android.bp | grep -c 'name:') -eq 1 ]];then
+				old_parts_settings_str="$(grep settings.resources parts/Android.bp | sed 's/[[:space:]]//g')"
+				new_parts_settings_str="$(grep name: ../../../packages/resources/devicesettings/Android.bp | sed 's/[[:space:]]//g' | sed 's/name://g')"
+				sed -i 's/'"${old_parts_settings_str}"'/'"${new_parts_settings_str}"'/g' parts/Android.bp
+			fi
+		fi
+  	fi
 
 	cd $AOSP_SETUP_ROOT
 }
