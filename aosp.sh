@@ -1051,10 +1051,10 @@ handle_sync(){
 	fi
 
 	# repo sync by default & handle sync when failed
-	if [[ $skip_aosp_sync == 0 ]] && [[ $env_run_time -le 2 ]] && [[ -d vendor ]] && [[ -d device ]] && [[ -d kernel ]] && [[ -d build ]];then
+	if [[ $skip_aosp_sync == 1 ]] && [[ $env_run_time -ge 3 ]] && [[ -d out/target/product ]];then
+ 		echo -e "\033[1;32m=>\033[0m ${skip_aosp_sync_str1} \033[1;33m${rom_str}\033[0m ${skip_aosp_sync_str2}"
+ 	else
 		repo sync -c --no-repo-verify --no-clone-bundle --optimized-fetch --force-sync -j$(nproc --all) || repo_sync_fail_handle
-	else
-		echo -e "\033[1;32m=>\033[0m ${skip_aosp_sync_str1} \033[1;33m${rom_str}\033[0m ${skip_aosp_sync_str2}"
 	fi
  
 	if [[ $? -eq 0 ]] && [[ -f build/envsetup.sh ]];then
