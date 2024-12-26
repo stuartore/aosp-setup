@@ -13,27 +13,57 @@ git_android_branch="thirteen"
 # only if you want to use wxpusher
 wxpusher_uid=""
 
+# optional
+user_work_dir=""
 
 cloud_script(){
   if [[ "$(command -v apt)" != "" ]]; then
-		  sudo apt update -y && sudo apt install -y git
-	elif [[ "$(command -v pacman)" != "" ]]; then
-     	sudo pacman -Syu --noconfirm git
- 	elif [[ "$(command -v yum)" != "" ]]; then
-     	sudo yum update -y && sudo yum install -y git
-	elif [[ "$(command -v eopkg)" != "" ]]; then
-        sudo eopkg update -y && sudo eopkg install -y git
-	fi
+    sudo apt update -y && sudo apt install -y git
+  elif [[ "$(command -v pacman)" != "" ]]; then
+    sudo pacman -Syu --noconfirm git
+  elif [[ "$(command -v yum)" != "" ]]; then
+    sudo yum update -y && sudo yum install -y git
+  elif [[ "$(command -v eopkg)" != "" ]]; then
+    sudo eopkg update -y && sudo eopkg install -y git
+  fi
   git config --global user.name name
   git config --global user.email example@example.com
+  
+  script_work_dir(){
+    if [[ $HOSTNAME =~ 'VM' ]];then
+      declare -i run_on_vm=1
+    else
+      declare -i run_on_vm=0
+    fi
+    
+    if [[ $HOSTNAME =~ 'VM' ]] && [[ $HOSTNAME =~ 'ubuntu' ]];then
+      declare -i run_on_vm=1
+      work_dir=/home/ubuntu
+    elif [[ $HOSTNAME =~ 'VM' ]] && [[ $HOSTNAME =~ 'ubuntu' ]];then
+      declare -i run_on_vm=1
+      work_dir=/root
+    elif [[ $HOSTNAME =~ 'VM' ]];then
+      declare -i run_on_vm=1
+      work_dir=/root
+    else
+      work_dir=""
+    fi
+  
+    if [[ ${work_dir} == "" ]];then
+      work_dir=${user_work_dir}
+      if [[ ${work_dir} == "" ]];then
+        work_dir=$HOME
+      fi
+    fi
+  }
 
   # check aosp-setup
-  if [[ ! -d /home/${USER}/aosp-setup ]];then git clone https://github.com/stuartore/aosp-setup.git /home/${USER}/aosp-setup;fi
-  sudo chown -R ${USER}:${USER} /home/${USER}/aosp-setup
-  sudo chmod -R 777 /home/${USER}/aosp-setup
+  work_dir=$(echo $(script_work_dir))
+  if [[ ! -d ${work_dir}/aosp-setup ]];then git clone https://github.com/stuartore/aosp-setup.git ${work_dir}/aosp-setup;fi
+  sudo chmod -R 777 ${work_dir}/aosp-setup
 
   # now sync source & build
-  cd /home/${USER}/aosp-setup
+  cd ${work_dir}/aosp-setup
   ./aosp.sh -k ${git_android_manifest} ${git_android_branch} --auto_build --with_push ${wxpusher_uid}
 }
 
