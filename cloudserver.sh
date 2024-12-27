@@ -55,6 +55,7 @@ cloud_script(){
         work_dir=$HOME
       fi
     fi
+    echo $work_dir
   }
 
   # check aosp-setup
