@@ -15,6 +15,7 @@ env_run_time=0
 aosp_source_dir_working=
 aosp_setup_dir_check_ok=0
 
+# use pkg manager
 str_to_arr(){
 	# arg 1: string
 	# arg 2: split symbol
@@ -22,6 +23,13 @@ str_to_arr(){
 	IFS="$2"
 	str_to_arr_result=($1)
 	IFS="$OLD_IFS"
+}
+
+# use pkg manager
+pkg_mgr(){
+	pkg_cmd_list=(apt pacman dnf eopkg zypper)
+	for pkg_cmd in "${pkg_cmd_list[@]}"; do if [[ "$(command -v ${pkg_cmd})" != "" ]]; then pkg_cmd=${pkg_cmd}; break; fi; done
+	ehco $pkg_cmd
 }
 
 ######################### PATCH & FIX UNIT #########################
@@ -651,21 +659,23 @@ aosp_setup_check(){
 
 	# Install deps for setup configuration
 	if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-		if [[ "$(command -v apt)" != "" ]]; then
-			if [[ "$(command -v curl)" == "" ]] || [[ "$(command -v git)" == "" ]];then
-				sudo apt-get update -yq
-				sudo apt-get install curl git -yq
-			fi
-		elif [[ "$(command -v pacman)" != "" ]]; then
-			sudo pacman -Syy
-			sudo pacman -Sy curl git
-		elif [[ "$(command -v dnf)" != "" ]]; then
-			sudo dnf install curl git
-		elif [[ "$(command -v eopkg)" != "" ]]; then
-			sudo eopkg it curl git
-		elif [[ "$(command -v zypper)" != "" ]]; then
-			sudo zypper install curl git
-		fi
+		case $pkg_cmd in
+			"apt")
+				sudo apt-get update -yq && sudo apt-get install curl git -yq
+				;;
+			"pacman")
+				sudo pacman -Syy && sudo pacman -Sy curl git
+				;;
+			"dnf")
+				sudo dnf update -y && sudo dnf install -y curl git
+				;;
+			"eopkg")
+				sudo eopkg update -y && sudo eopkg install -y curl git
+				;;
+			"zypper")
+				sudo zypper --non-interactive update && sudo zypper install --non-interactive curl git
+				;;
+		esac
 	fi
 
 	clear
@@ -739,18 +749,24 @@ setup_build_deps(){
 	# lineageos:  bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
 	# Ubuntu versions older than 20.04 (focal), libwxgtk3.0-dev
 	# Ubuntu versions older than 16.04 (xenial), libwxgtk2.8-dev
-
-	if [[ "$(command -v apt)" != "" ]]; then
-		ubuntu_deps
-	elif [[ "$(command -v pacman)" != "" ]]; then
-     	arch_deps
- 	elif [[ "$(command -v dnf)" != "" ]]; then
-     	fedora_deps
-	elif [[ "$(command -v eopkg)" != "" ]]; then
-        solus_deps
-	elif [[ "$(command -v zypper)" != "" ]]; then
-		opensuse_deps
-	fi
+	
+	case $pkg_cmd in
+		"apt")
+		    ubuntu_deps
+			;;
+		"pacman")
+			arch_deps
+			;;
+		"dnf")
+			fedora_deps
+			;;
+		"eopkg")
+			solus_deps
+			;;
+		"zypper")
+			opensuse_deps
+			;;
+	esac
 
 	check_machine_type
 	cd $AOSP_SETUP_ROOT
@@ -1577,6 +1593,7 @@ sel_mirror_list_str="github aosp"
 with_wxpusher=0
 user_device_org=""
 post_task_str=""
+pkg_cmd="$(echo $(pkg_mgr))"
 if [[ $HOSTNAME =~ 'VM' ]];then
 	declare -i run_on_vm=1
 else
@@ -1703,7 +1720,6 @@ while (( "$#" )); do
 done
 
 main(){
-
 	# android environment setup
 	android_env_setup $(echo $(env_install_mode))
 

@@ -17,17 +17,27 @@ wxpusher_uid=""
 user_work_dir=""
 
 cloud_script(){
-  if [[ "$(command -v apt)" != "" ]]; then
-    sudo apt update -y && sudo apt install -y git
-  elif [[ "$(command -v pacman)" != "" ]]; then
-    sudo pacman -Syu --noconfirm git
-  elif [[ "$(command -v yum)" != "" ]]; then
-    sudo yum update -y && sudo yum install -y git
-  elif [[ "$(command -v eopkg)" != "" ]]; then
-    sudo eopkg update -y && sudo eopkg install -y git
-  fi
-  git config --global user.name name
-  git config --global user.email example@example.com
+  pkg_cmd_list=(apt pacman dnf eopkg zypper)
+  for pkg_cmd in "${pkg_cmd_list[@]}"; do if [[ "$(command -v ${pkg_cmd})" != "" ]]; then pkg_cmd=${pkg_cmd}; break; fi; done
+  case pkg_cmd in
+    "apt")
+      sudo apt update -yq && sudo apt install -y git
+      ;;
+    "pacman")
+      sudo pacman -Syy --noconfirm git
+      ;;
+    "dnf")
+      sudo dnf update -y && sudo dnf install -y git
+      ;;
+    "eopkg")
+      sudo eopkg update -y && sudo eopkg install -y git
+      ;;
+    "zypper")
+      sudo zypper --non-interactive update && sudo zypper install --non-interactive git
+      ;;
+  esac
+  git config --global user.name ${your_git_username}
+  git config --global user.email ${your_git_email}
   
   script_work_dir(){
     if [[ $HOSTNAME =~ 'VM' ]];then
