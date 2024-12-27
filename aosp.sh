@@ -615,6 +615,10 @@ opensuse_deps(){
 	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libtinfo.so.5
 	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
 	sudo ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libtinfo.so.5
+
+        # libxcrypt-compat
+	sudo ln -s /usr/lib64/libcrypt.so.2 /usr/lib64/libcrypt.so.1
+
 }
 
 solus_deps(){
