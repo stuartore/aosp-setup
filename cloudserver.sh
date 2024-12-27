@@ -59,8 +59,16 @@ cloud_script(){
   }
 
   # check aosp-setup
+  case $LANG in
+ 	  "zh_CN"*)
+		  git_url="https://gitee.com/stuartore/aosp-setup.git"
+		  ;;
+	  *)
+		  git_url="https://github.com/stuartore/aosp-setup.git"
+		  ;;
+  esac
   work_dir=$(echo $(script_work_dir))
-  if [[ ! -d ${work_dir}/aosp-setup ]];then git clone https://github.com/stuartore/aosp-setup.git ${work_dir}/aosp-setup;fi
+  if [[ ! -d ${work_dir}/aosp-setup ]];then git clone ${git_url} ${work_dir}/aosp-setup;fi
   sudo chmod -R 777 ${work_dir}/aosp-setup
 
   # now sync source & build
