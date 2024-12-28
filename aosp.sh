@@ -29,7 +29,7 @@ str_to_arr(){
 pkg_mgr(){
 	pkg_cmd_list=(apt pacman dnf eopkg zypper)
 	for pkg_cmd in "${pkg_cmd_list[@]}"; do if [[ "$(command -v ${pkg_cmd})" != "" ]]; then pkg_cmd=${pkg_cmd}; break; fi; done
-	ehco $pkg_cmd
+	echo $pkg_cmd
 }
 
 ######################### PATCH & FIX UNIT #########################
