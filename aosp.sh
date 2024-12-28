@@ -1405,14 +1405,15 @@ auto_build(){
 	fi
  	
  	# build rom: most rom use one command, while some rom not
-        wxpush_sucess='wxpusher_status ${pusher_script_success_str} "Build Passed" >/dev/null 2>&1'
-	wxpush_error='wxpusher_status ${pusher_script_error_str} "$(base64 < out/error.log)" >/dev/null 2>&1'
- 	trap '$wxpush_error' EXIT
+	wxpush_sucess_str="wxpusher_status ${pusher_script_success_str} 'Build Passed' >/dev/null 2>&1 && trap - SIGINT EXIT"
+	wxpush_error_str="wxpusher_status ${pusher_script_error_str} "$(base64 < out/error.log)"  >/dev/null 2>&1 "
+
+	trap "${wxpush_error_str}" EXIT
   	if [[ "$build_rom_cmd1" != "" ]];then
    		eval "$build_rom_cmd"
-   		eval "$build_rom_cmd1" && eval "$wxpush_sucess" 
+   		eval "$build_rom_cmd1" && eval ${wxpush_sucess_str}
      	else
-      		eval "$build_rom_cmd" && eval "$wxpush_sucess"
+      		eval "$build_rom_cmd" && eval ${wxpush_sucess_str}
      	fi
 
 	cd $AOSP_SETUP_ROOT
