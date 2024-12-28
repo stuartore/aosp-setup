@@ -1458,10 +1458,6 @@ wxpusher_status(){
   "content":"<h3>${wxpusher_username}，你好</h3><p>你的脚本已${script_status}运行，base64日志为（请复制解码）：\n</p><p>${wxpusher_log}</p></br></br><p>你可以选择上方点击查看解码</p>",
   "summary":"编译运行状态：${script_status}",
   "contentType":2,
-  "topicIds":[ 
-      123
-  ],
-
   "uids":[
       "${wxpusher_uid}"
   ],
