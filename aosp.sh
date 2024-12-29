@@ -567,7 +567,7 @@ ubuntu_deps(){
 	    maven ncftp patch patchelf pkg-config \
 	    pngquant python2.7 python3 python3-pyelftools python-all-dev re2c squashfs-tools subversion \
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip p7zip p7zip-full \
-	    libxml-simple-perl libswitch-perl apt-utils rsync ${other_pkgs}
+	    libxml-simple-perl libswitch-perl apt-utils rsync zip ${other_pkgs}
 
 	sudo systemctl restart udev
 }
