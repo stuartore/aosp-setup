@@ -52,3 +52,6 @@ Get running status on Wechat，[`Click me`](https://wxpusher.zjiecode.com/wxuser
 ./aosp.sh --auto_build --with_push UID_xxxxx
 ```
 + Thanks to @zjiecode and his `wxpusher`
+
+#### Solutions
+Ask [Deepseek](https://www.deepseek.com/) or GPT (etc.) if any ROM compile issue.
