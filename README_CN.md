@@ -54,3 +54,6 @@ git clone https://github.com/stuartore/aosp-setup.git && aosp-setup
 ./aosp.sh --auto_build --with_push UID_xxxxx
 ```
 + 感谢@zjiecode和`wxpusher`
+
+#### 解决方法
+如遇到ROM编译问题，请询问 [Deepseek](https://www.deepseek.com/) 或者 GPT (或其它)。
