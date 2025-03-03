@@ -563,7 +563,7 @@ ubuntu_deps(){
 	    g++-multilib gawk gcc gcc-multilib git git-lfs gnupg gperf \
  	    htop imagemagick lib32ncurses5-dev lib32z1-dev libtinfo5 libc6-dev libcap-dev \
 	    libexpat1-dev libgmp-dev '^liblz4-.*' '^liblzma.*' libmpc-dev libmpfr-dev libncurses5-dev \
-	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils '^lzma.*' lzop \
+	    libsdl1.2-dev libssl-dev libtool libxml2 libxml2-utils libavcodec-dev libavformat-dev '^lzma.*' lzop \
 	    maven ncftp patch patchelf pkg-config \
 	    pngquant python2.7 python3 python3-pyelftools python-all-dev re2c squashfs-tools subversion \
 	    texinfo unzip w3m xsltproc zip zlib1g-dev lzip p7zip p7zip-full \
@@ -861,7 +861,7 @@ rom_manifest_config(){
 	else
 
 		#echo -e "\n${sel_rom_source_str}"
-		rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "RisingOS" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
+		rom_sources=("LineageOS" "ArrowOS" "Pixel Experience" "RisingOS-Revived" "Crdroid" "AlphaDroid" "Evolution-X" "Project-Elixir" "Paranoid Android (AOSPA)" "PixysOS" "SuperiorOS" "PixelPlusUI")
 		select aosp_source in "${rom_sources[@]}"
 		do
 			case $aosp_source in
@@ -874,8 +874,8 @@ rom_manifest_config(){
 				"Pixel Experience")
 					ROM_MANIFEST='https://github.com/PixelExperience/manifest.git'
 					;;
-     				"RisingOS")
-					ROM_MANIFEST='https://github.com/RisingTechOSS/android.git'
+     				"RisingOS-Revived")
+					ROM_MANIFEST='https://github.com/RisingOS-Revived/android.git'
 					;;
 				"Crdroid")
 					ROM_MANIFEST='https://github.com/crdroidandroid/android.git'
