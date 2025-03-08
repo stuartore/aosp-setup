@@ -598,7 +598,7 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 
 fedora_deps(){
 	sudo dnf install -y \
-		android-tools autoconf213 bison bzip2 ccache clang curl flex gawk gcc-c++ git git-lfs p7zip glibc-devel glibc-static libstdc++-static libX11-devel make mesa-libGL-devel ncurses-devel openssl patch zlib-devel ncurses-devel.i686 readline-devel.i686 zlib-devel.i686 libX11-devel.i686 mesa-libGL-devel.i686 glibc-devel.i686 libstdc++.i686 libXrandr.i686 zip perl-Digest-SHA python2 python3-pyelftools wget lzop openssl openssl-devel java-1.8.0-openjdk-devel ImageMagick schedtool lzip vboot-utils vim ccache libxcrypt-compat libfreetype.so.6 freetype-devel
+		android-tools autoconf213 bison bzip2 ccache clang curl flex gawk gcc-c++ git git-lfs p7zip glibc-devel glibc-static libstdc++-static libX11-devel make mesa-libGL-devel ncurses-devel openssl patch zlib-devel ncurses-devel.i686 readline-devel.i686  libX11-devel.i686 mesa-libGL-devel.i686 glibc-devel.i686 libstdc++.i686 libXrandr.i686 zip perl-Digest-SHA python2 python3-pyelftools wget lzop openssl openssl-devel java-1.8.0-openjdk-devel ImageMagick schedtool lzip vboot-utils vim ccache libxcrypt-compat libfreetype.so.6 freetype-devel
 
 	# The package libncurses5 is not available, so we need to hack our way by symlinking the required library.
 	sudo ln -s /usr/lib/libncurses.so.6 /usr/lib/libncurses.so.5
@@ -1312,7 +1312,7 @@ psyche_deps(){
 		fi
   
   		# clone device tree
-		git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
+		git_check_dir https://gitcode.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
   
 		source build/envsetup.sh
 		cd $AOSP_SETUP_ROOT
@@ -1579,15 +1579,20 @@ INSTEN
 
 aosp_setup_check $aosp_setup_dir_check_ok
 
+################ user env config #################
+source $(dirname ${BASH_SOURCE[0]})/my_env.sh
+
 ################# parse args #####################
 
-aosp_manifest_url=
-aosp_manifest_branch=
-skip_aosp_sync=0
+aosp_manifest_url=${git_android_manifest}
+aosp_manifest_branch=${git_android_branch}
+custom_git_username=${your_git_username}
+custom_git_email=${your_git_email}
+declare -i skip_aosp_sync=0
 declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
+declare -i with_wxpusher=0
 sel_mirror_list_str="github aosp"
-with_wxpusher=0
 user_device_org=""
 post_task_str=""
 pkg_cmd="$(echo $(pkg_mgr))"
@@ -1598,7 +1603,7 @@ else
 fi
 
 # for global fuction
-while (( "$#" )); do
+while (( "$#" )); do	
 	case "$1" in
 		https://*)
 			aosp_manifest_url=${1}
