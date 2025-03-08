@@ -1312,7 +1312,7 @@ psyche_deps(){
 		fi
   
   		# clone device tree
-		git_check_dir https://github.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
+		git_check_dir https://gitcode.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
   
 		source build/envsetup.sh
 		cd $AOSP_SETUP_ROOT
