@@ -1579,26 +1579,31 @@ INSTEN
 
 aosp_setup_check $aosp_setup_dir_check_ok
 
+################ user env config #################
+source $(dirname ${BASH_SOURCE[0]})/my_env.sh
+
 ################# parse args #####################
 
-aosp_manifest_url=
-aosp_manifest_branch=
-skip_aosp_sync=0
+aosp_manifest_url=${git_android_manifest}
+aosp_manifest_branch=${git_android_branch}
+custom_git_username=${your_git_username}
+custom_git_email=${your_git_email}
+declare -i skip_aosp_sync=0
 declare -i keep_mirror_arg=0
 declare -i only_env_mode=0
+declare -i with_wxpusher=0
 sel_mirror_list_str="github aosp"
-with_wxpusher=0
 user_device_org=""
 post_task_str=""
 pkg_cmd="$(echo $(pkg_mgr))"
 if [[ $HOSTNAME =~ 'VM' ]];then
-	declare -i run_on_vm=1
-else
-	declare -i run_on_vm=0
+		declare -i run_on_vm=1
+else	
+		declare -i run_on_vm=0
 fi
 
 # for global fuction
-while (( "$#" )); do
+while (( "$#" )); do	
 	case "$1" in
 		https://*)
 			aosp_manifest_url=${1}
