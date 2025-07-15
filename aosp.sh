@@ -1300,7 +1300,9 @@ psyche_deps(){
 	if [[ ${aosp_source_dir_working} != "" ]];then
 		cd ${aosp_source_dir_working}
   		mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
-    		if [[ $(grep 'revision="android-15' .repo/manifests/default.xml) ]];then
+		if [[ $(grep 'revision="android-16' .repo/manifests/default.xml) ]];then
+      			dt_branch='sixteen'
+    	elif [[ $(grep 'revision="android-15' .repo/manifests/default.xml) ]];then
       			dt_branch='fifteen'
 		elif [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
