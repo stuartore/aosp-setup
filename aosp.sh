@@ -376,12 +376,14 @@ select_mirror(){
 	'https://github.moeyy.xyz/https://github.com'
 	'https://ghproxy.net/https://github.com'
  	'https://kkgithub.com'
-	'https://gitdl.cn/https://github.com'
- 	'https://ghp.ci/https://github.com'
-  	'https://github.store'
-	'https://slink.ltd/https://github.com'
- 	'https://github.site'
-	'https://gitclone.com'
+	'https://tvv.tw/https://github.com'
+	'https://gitproxy.click/https://github.com'
+	'https://gh.dpik.top/https://github.com'
+	'https://gh.b52m.cn/https://github.com'
+	'https://gh-proxy.com/https://github.com'
+	'https://ghfile.geekertao.top/https://github.com'
+	'https://ghfile.geekertao.top/https://github.com'
+	'https://ghproxy.sakuramoe.dev/https://github.com'
 	)
 	sel_aosp_list=('tuna tsinghua' 'ustc' 'beijing bfsu' 'nanfang sci (not)' 'google')
 
@@ -408,11 +410,11 @@ select_mirror(){
 								git config --global url.https://ghproxy.net/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
 								;;
 							'https://github.store')
-       								git config --global url.https://raw.github.store.insteadof https://raw.githubusercontent.com
-       								;;
-	       						'https://github.site')
-	      							git config --global url.https://raw.github.site.insteadof https://raw.githubusercontent.com
-	      							;;
+       							git config --global url.https://raw.github.store.insteadof https://raw.githubusercontent.com
+       							;;
+	       					'https://github.site')
+	      						git config --global url.https://raw.github.site.insteadof https://raw.githubusercontent.com
+	      						;;
 							*)
 								# create random raw github mirror list
 								ramdom_raw_github_mirror_list=(
