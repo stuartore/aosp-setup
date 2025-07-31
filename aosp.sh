@@ -403,27 +403,36 @@ select_mirror(){
 							'https://kkgithub.com')
 								git config --global url.https://raw.kkgithub.com.insteadof https://raw.githubusercontent.com
 								;;
-							'https://gitdl.cn/https://github.com')
-								git config --global url.https://gitdl.cn/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
-								;;
 							'https://ghproxy.net/https://github.com')
 								git config --global url.https://ghproxy.net/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
 								;;
-							'https://github.store')
-       							git config --global url.https://raw.github.store.insteadof https://raw.githubusercontent.com
-       							;;
-	       					'https://github.site')
-	      						git config --global url.https://raw.github.site.insteadof https://raw.githubusercontent.com
-	      						;;
+							'https://tvv.tw/https://github.com')
+								git config --global url.https://tvv.tw/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://gitproxy.click/https://github.com')
+								git config --global url.https://gitproxy.click/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://gh.dpik.top/https://github.com')
+								git config --global url.https://gh.dpik.top/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://gh.b52m.cn/https://github.com')
+								git config --global url.https://gh.b52m.cn/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://gh-proxy.com/https://github.com')
+								git config --global url.https://gh-proxy.com/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://ghfile.geekertao.top/https://github.com')
+								git config --global url.https://ghfile.geekertao.top/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
+								;;
+							'https://ghproxy.sakuramoe.dev/https://github.com')
+								git config --global url.https://ghproxy.sakuramoe.dev/https://raw.githubusercontent.com.insteadof https://raw.githubusercontent.com
+								;;
 							*)
 								# create random raw github mirror list
 								ramdom_raw_github_mirror_list=(
 								'https://mirror.ghproxy.com/https://raw.githubusercontent.com'
-								'https://fastly.jsdelivr.net/gh'
 								'https://github.moeyy.xyz/https://raw.githubusercontent.com'
 								'https://ghproxy.net/https://raw.githubusercontent.com'
-								'https://raw.github.store'
-								'https://github.site'
 								)
 								declare -i raw_github_list_num=${#ramdom_raw_github_mirror_list[@]}
 								raw_github_gen_i_raw=$(expr $RANDOM % $raw_github_list_num)
