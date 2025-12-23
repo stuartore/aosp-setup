@@ -1311,22 +1311,19 @@ psyche_deps(){
 	if [[ ${aosp_source_dir_working} != "" ]];then
 		cd ${aosp_source_dir_working}
   		mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
+		use_rocky_source=0
 		if [[ $(grep 'android-16' .repo/manifests/default.xml) ]];then
       			dt_branch='sixteen'
 				use_rocky_source=1
     	elif [[ $(grep 'android-15' .repo/manifests/default.xml) ]];then
       			dt_branch='fifteen'
-				use_rocky_source=0
 		elif [[ $(grep 'android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
-			use_rocky_source=0
 		elif [[ $(grep 'android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
-			use_rocky_source=0
 		else
   			# Use thirteen branch on un-handled occasion
 			dt_branch='thirteen'
-			use_rocky_source=0
 		fi
   
   		# clone device tree
