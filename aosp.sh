@@ -1311,21 +1311,40 @@ psyche_deps(){
 	if [[ ${aosp_source_dir_working} != "" ]];then
 		cd ${aosp_source_dir_working}
   		mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
-		if [[ $(grep 'revision="android-16' .repo/manifests/default.xml) ]];then
+		if [[ $(grep 'android-16' .repo/manifests/default.xml) ]];then
       			dt_branch='sixteen'
-    	elif [[ $(grep 'revision="android-15' .repo/manifests/default.xml) ]];then
+				use_rocky_source=1
+    	elif [[ $(grep 'android-15' .repo/manifests/default.xml) ]];then
       			dt_branch='fifteen'
-		elif [[ $(grep 'revision="android-14' .repo/manifests/default.xml) ]];then
+				use_rocky_source=0
+		elif [[ $(grep 'android-14' .repo/manifests/default.xml) ]];then
 			dt_branch='fourteen'
-		elif [[ $(grep 'revision="android-13' .repo/manifests/default.xml) ]];then
+			use_rocky_source=0
+		elif [[ $(grep 'android-13' .repo/manifests/default.xml) ]];then
 			dt_branch='thirteen'
+			use_rocky_source=0
 		else
   			# Use thirteen branch on un-handled occasion
-			dt_branch='thirteen'	
+			dt_branch='thirteen'
+			use_rocky_source=0
 		fi
   
   		# clone device tree
-		git_check_dir https://gitcode.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
+		if [[ $use_rocky_source -eq 1 ]] && [[ $dt_branch -eq "sixteen" ]];then
+		    mkdir -p device/xiaomi vendor/xiaomi kernel/xiaomi
+			
+			# Thanks to Rocky7842 etc.
+			git_check_dir https://github.com/Rocky7842/android_device_xiaomi_psyche device/xiaomi/psyche
+			git_check_dir https://github.com/Rocky7842/proprietary_vendor_xiaomi_psyche lineage-23.0 vendor/xiaomi/psyche
+			git_check_dir https://github.com/Rocky7842/android_device_xiaomi_sm8250-common lineage-23.0 device/xiaomi/sm8250-common
+			git_check_dir https://github.com/Rocky7842/proprietary_vendor_xiaomi_sm8250-common lineage-23.0 vendor/xiaomi/sm8250-common
+			git_check_dir https://github.com/LineageOS/android_kernel_xiaomi_sm8250 lineage-23.0 kernel/xiaomi/sm8250
+
+			# Hardware xiaomi
+			git_check_dir https://github.com/LineageOS/android_hardware_xiaomi lineage-23.0 hardware/xiaomi
+		else
+			git_check_dir https://gitcode.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
+		fi
   
 		source build/envsetup.sh
 		cd $AOSP_SETUP_ROOT
