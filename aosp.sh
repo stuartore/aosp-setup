@@ -601,7 +601,7 @@ Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch \
 		sudo pacman-key --lsign-key "farseerfc@archlinux.org"
 		sudo pacman -Sy --noconfirm archlinuxcn-keyring
 	fi
-	sudo pacman -Syy --noconfirm --needed git git-lfs pcre2 rsync multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle python-pyelftools
+	sudo pacman -Syy --noconfirm --needed git git-lfs pcre2 rsync zip multilib-devel fontconfig ttf-droid yay ccache make yay patch pkg-config maven gradle python-pyelftools
 	packages=(ncurses5-compat-libs lib32-ncurses5-compat-libs aosp-devel xml2 lineageos-devel python-pip python-setuptools p7zip)
 	yay -Sy --noconfirm --norebuild --noredownload ${packages[@]}
 	sudo pacman -S --noconfirm --needed android-tools # android-udev
