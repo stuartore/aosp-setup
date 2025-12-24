@@ -1339,6 +1339,11 @@ psyche_deps(){
 
 			# Hardware xiaomi
 			git_check_dir https://github.com/LineageOS/android_hardware_xiaomi lineage-23.0 hardware/xiaomi
+
+			# Webview patch
+			if [[ -f device/xiaomi/psyche/BoardConfig.mk ]] && [[ ！$(grep PRODUCT_BROKEN_VERIFY_USES_LIBRARIES device/xiaomi/psyche/*.mk) ]];then
+			    echo 'PRODUCT_BROKEN_VERIFY_USES_LIBRARIES := true' >> device/xiaomi/psyche/BoardConfig.mk
+			fi
 		else
 			git_check_dir https://gitcode.com/stuartore/device_xiaomi_psyche.git ${dt_branch} device/xiaomi/psyche
 		fi
