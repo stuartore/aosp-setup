@@ -86,7 +86,7 @@ patch_when_low_ram(){
 			if [[ ! $(grep 'Flag("-J-Xmx' -l $metalava_patch_file) ]];then
 				sed -i '/Flag(config.JavacVmFlags)./a Flag("-J-XmxMEMm")\.' $metalava_patch_file
 			fi
-			sed -i 's/Flag("-J-Xmx.*/Flag("-J-Xmx8192m")\./' $metalava_patch_file
+			sed -i 's/Flag("-J-Xmx.*/Flag("-J-Xmx32768m")\./' $metalava_patch_file
 		fi
 		echo -e "\n\033[1;32m=>\033[0m ${patch_out_of_mem_info_str}\n"
 	else
