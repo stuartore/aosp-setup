@@ -1335,7 +1335,7 @@ psyche_deps(){
 			git_check_dir https://github.com/Rocky7842/proprietary_vendor_xiaomi_psyche lineage-23.0 vendor/xiaomi/psyche
 			git_check_dir https://github.com/Rocky7842/android_device_xiaomi_sm8250-common lineage-23.0 device/xiaomi/sm8250-common
 			git_check_dir https://github.com/Rocky7842/proprietary_vendor_xiaomi_sm8250-common lineage-23.0 vendor/xiaomi/sm8250-common
-			git_check_dir https://github.com/LineageOS/android_kernel_xiaomi_sm8250 lineage-23.0 kernel/xiaomi/sm8250
+			git_check_dir https://github.com/Rocky7842/android_kernel_xiaomi_sm8250 lineage-23.0 kernel/xiaomi/sm8250
 
 			# Hardware xiaomi
 			git_check_dir https://github.com/LineageOS/android_hardware_xiaomi lineage-23.0 hardware/xiaomi
